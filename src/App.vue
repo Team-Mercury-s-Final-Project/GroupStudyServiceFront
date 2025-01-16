@@ -1,13 +1,13 @@
 <template>
-  <div class="layout">
-    <Header />
-    <div class="main">
-      <Sidebar />
+  <div class="app">
+    <Sidebar />
+    <div class="header-layout">
+      <Header />
       <main class="content">
         <h2>Welcome to My Website!</h2>
         <p>This is the main content area.</p>
+        <UserList />
       </main>
-      <UserList />
     </div>
   </div>
 </template>
@@ -17,11 +17,15 @@ import Header from "./components/Header.vue";
 import Sidebar from "./components/Sidebar.vue";
 import UserList from "./components/UserList.vue";
 
+
+
+
+
 export default {
   name: "App",
   components: {
-    Header,
     Sidebar,
+    Header,
     UserList,
   },
 };
@@ -29,56 +33,63 @@ export default {
 
 <style scoped>
 /* 전체 레이아웃 */
-.layout {
+.app {
   display: flex;
-  flex-direction: column;
-  width: 100vw; /* 전체 화면 너비 */
-  height: 100vh; /* 전체 화면 높이 */
-  overflow: hidden;
-}
-
-/* Header */
-header {
-  height: 80px;
-  background-color: #333;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-}
-
-/* 메인 영역 */
-.main {
-  display: flex;
-  flex: 1;
-  overflow: hidden; /* 스크롤 문제 방지 */
 }
 
 /* Sidebar */
 .sidebar {
-  width: 120px; /* 고정된 너비 */
+  position: fixed; /* 화면의 고정 위치 */
+  top: 0;
+  left: 0;
+  width: 70px;
+  height: 100vh; /* 전체 화면 높이 */
   background-color: #d9d9d9;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem; /* 그룹 버튼 간격 */
+  gap: 1rem;
 }
 
-/* Content */
+/* 헤더 Layout */
+.header-layout {
+  margin-left: 70px; /* 사이드바 너비만큼 오른쪽으로 밀림 */
+  width: calc(100% - 70px); /* 사이드바를 제외한 너비 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  height: 70px;
+  background-color: #333;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Main Content */
 .content {
-  flex: 1; /* 중앙 영역을 유연하게 사용 */
-  padding: 1.5rem;
-  background-color: #f4f4f4;
-  overflow-y: auto;
+  flex: 1;
+  padding: 2rem;
+  background-color: #f9f9f9;
 }
 
 /* User List */
+
+/* 유저 리스트 */
 .user-list {
-  width: 200px; /* 고정된 너비 */
-  background-color: #e0e0e0;
+  position: fixed;
+  top: 70px;
+  right: 0px;
+  width: 200px;
+  height: 100%;
+  background-color: #eaeaea;
   padding: 1rem;
-  overflow-y: auto; /* 유저 리스트 스크롤 가능 */
+  display: flex;
+  flex-direction: column;
 }
 </style>
