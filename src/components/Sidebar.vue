@@ -17,7 +17,7 @@ export const fetchData = async () => {
         const response = await api.get('/testData'); // '/data' 엔드포인트 호출
         console.log(response);
         return response.data;
-    } catch (error) {
+    } catch (error) {xw
         console.error("API 호출 중 오류 발생:", error);
         throw error;
     }
@@ -26,6 +26,7 @@ export const fetchData = async () => {
 export default {
   name: "Sidebar",
   methods: {
+
     async handleClick() {
       try {
         const data = await fetchData(); // 비동기 함수 호출
@@ -40,7 +41,8 @@ export default {
 
 <style scoped>
 .group-btn {
-  width: 100%;
+  width: 50px;
+  height: 50px;
   padding: 0.5rem;
   background-color: #ff8888;
   border: none;
