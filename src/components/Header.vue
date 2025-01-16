@@ -1,6 +1,6 @@
 <template>
   <header class="header">
-    <h1>My Website</h1>
+    <h1>S.T.A.R</h1>
     <nav>
       <ul>
         <li><a href="#">Home</a></li>
@@ -42,4 +42,5 @@ export default {
 .header a:hover {
   text-decoration: underline; /* PC 환경에서는 hover 효과 추가 */
 }
+
 </style>
