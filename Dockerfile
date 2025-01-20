@@ -7,7 +7,7 @@ COPY ./package.json ./
 RUN npm install
 
 COPY ./ ./
-CMD [ "npm" , "start" ]
+CMD ["npm", "start"]
 
 # # 1단계: 빌드 단계
 # FROM node:22.13.0 AS builder
