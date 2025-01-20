@@ -1,46 +1,33 @@
 <template>
-  <header class="header">
-    <h1>S.T.A.R</h1>
-    <nav>
-      <ul>
-        <li><a href="#">Home</a></li>
-        <li><a href="#">About</a></li>
-        <li><a href="#">Contact</a></li>
-      </ul>
-    </nav>
-  </header>
+  <fwb-navbar solid class="bg-gray-400">
+    <template #logo>
+      <router-link to="/" class="logo">
+        <fwb-navbar-logo
+          alt="S.T.A.R logo"
+          image-url="https://blog.kakaocdn.net/dn/b3blpi/btrR8iJj38E/VRPwpmSXMGeBEC16SS34x1/img.png"
+        >
+          S.T.A.R
+        </fwb-navbar-logo>
+      </router-link>
+    </template>
+    <template #default="{ isShowMenu }">
+      <fwb-navbar-collapse :is-show-menu="isShowMenu">
+        <router-link to="/">Home </router-link>
+        <router-link to="#">내 정보 </router-link>
+        <router-link to="#">로그아웃 </router-link>
+        <!-- <fwb-navbar-link link="#"> Services </fwb-navbar-link>
+        <fwb-navbar-link link="#"> Pricing </fwb-navbar-link>
+        <fwb-navbar-link link="#"> Contact </fwb-navbar-link> -->
+      </fwb-navbar-collapse>
+    </template>
+  </fwb-navbar>
 </template>
 
-<script>
-export default {
-  name: "Header",
-};
+<script setup>
+import {
+  FwbNavbar,
+  FwbNavbarCollapse,
+  FwbNavbarLink,
+  FwbNavbarLogo,
+} from "flowbite-vue";
 </script>
-
-<style scoped>
-.header {
-  background-color: #333;
-  color: #fff;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.2rem; /* PC 환경에 적합한 크기 */
-}
-
-.header ul {
-  list-style: none;
-  display: flex;
-  gap: 2rem; /* 더 넓은 간격 */
-}
-
-.header a {
-  color: white;
-  text-decoration: none;
-}
-
-.header a:hover {
-  text-decoration: underline; /* PC 환경에서는 hover 효과 추가 */
-}
-
-</style>

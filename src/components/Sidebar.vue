@@ -1,41 +1,52 @@
 <template>
   <aside class="sidebar">
-    <button class="group-btn" @click="handleClick">로고</button>
-    <button class="group-btn">그룹</button>
-    <button class="group-btn">그룹</button>
-    <button class="group-btn">그룹</button>
-    <button class="group-btn">그룹</button>
+    <fwb-tooltip placement="right">
+      <template #trigger>
+        <fwb-avatar
+          img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
+        />
+      </template>
+      <template #content> 수학의 정석 </template>
+    </fwb-tooltip>
+    <fwb-tooltip placement="right">
+      <template #trigger>
+        <fwb-avatar
+          img="https://static.cdn.kmong.com/gigs/UJYvB1717564634.jpg"
+        />
+      </template>
+      <template #content> 토익 스터디 </template>
+    </fwb-tooltip>
+    <fwb-tooltip placement="right">
+      <template #trigger>
+        <fwb-avatar
+          img="https://upload.wikimedia.org/wikipedia/ko/3/38/수특.jpg"
+        />
+      </template>
+      <template #content> 2025 수능대비 </template>
+    </fwb-tooltip>
+    <fwb-tooltip placement="right">
+      <template #trigger>
+        <fwb-avatar
+          img="https://i.namu.wiki/i/K35xg_xOR6xQugv5z7OA5McfGddwP9-mP6_jfh9tKGwTzksPXimI3J6-PJOQWyKCyhkq1JHTttviVHBSCsGC0Q.svg"
+        />
+      </template>
+      <template #content> 공산주의는 어째서 실패하는가? </template>
+    </fwb-tooltip>
+    <fwb-tooltip placement="right">
+      <template #trigger>
+        <fwb-avatar img="/src/assets/capitalism.png" />
+      </template>
+      <template #content> 자본주의와 우리사회 </template>
+    </fwb-tooltip>
   </aside>
 </template>
 
+<script setup>
+import { FwbAvatar, FwbTooltip } from "flowbite-vue";
+</script>
 <script>
-// backend api 데이터 통신 테스트
-import api from '../api';
-
-export const fetchData = async () => {
-    try {
-        const response = await api.get('/testData'); // '/data' 엔드포인트 호출
-        console.log(response);
-        return response.data;
-    } catch (error) {xw
-        console.error("API 호출 중 오류 발생:", error);
-        throw error;
-    }
-};
-
 export default {
   name: "Sidebar",
-  methods: {
-
-    async handleClick() {
-      try {
-        const data = await fetchData(); // 비동기 함수 호출
-        alert(data); // 받아온 데이터를 alert 창에 표시
-      } catch (error) {
-        console.error("데이터를 가져오는 중 오류 발생:", error);
-      }
-    }
-  }
 };
 </script>
 
