@@ -37,4 +37,4 @@ jobs:
             sudo docker stop $(sudo docker ps -a | grep star-fe | awk '{print $1}') || true
             sudo docker rm $(sudo docker ps -a | grep star-fe | awk '{print $1}') || true
             sudo docker pull mafatofu/star-fe
-            sudo docker run -d -p 3001:3001 --name star-fe mafatofu/star-fe
+            sudo docker run -d -p 3001:5173 --name star-fe mafatofu/star-fe
