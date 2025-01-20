@@ -3,7 +3,7 @@ FROM node:22.13.0 AS builder
 WORKDIR /app
 
 # package.json 및 lock 파일 복사
-COPY ./package.json ./package-lock.json /app/
+COPY package.json package-lock.json /app/
 
 # 의존성 설치
 RUN npm install
