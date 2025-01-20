@@ -4,6 +4,8 @@ WORKDIR /app
 
 # package.json 및 lock 파일 복사
 COPY package.json package-lock.json /app/
+# 권한 설정
+RUN chmod 755 /app/package.json /app/package-lock.json
 
 # 의존성 설치
 RUN npm install
@@ -18,6 +20,8 @@ WORKDIR /app
 
 # 빌드 결과물 복사
 COPY --from=builder /app/dist /app/dist
+# 권한 설정
+RUN chmod -R 755 /app
 
 # 포트 열기
 EXPOSE 5173
