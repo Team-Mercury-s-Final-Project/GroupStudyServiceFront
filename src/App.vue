@@ -5,32 +5,8 @@
       <Header />
       <div class="content-container">
         <main class="content">
-          <h2>Welcome to My Website!</h2>
-          <p>This is the main content area.</p>
-          <div class="flex justify-center space-x-4">
-            <fwb-avatar
-              bordered
-              img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
-              rounded
-            />
-          </div>
-          <fwb-tooltip>
-            <template #trigger>
-              <fwb-avatar
-                img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
-              />
-            </template>
-            <template #content> Tooltip content </template>
-          </fwb-tooltip>
-
-          <fwb-tooltip placement="right">
-            <template #trigger>
-              <fwb-avatar
-                img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
-              />
-            </template>
-            <template #content> Tooltip on right </template>
-          </fwb-tooltip>
+          <router-view />
+          <!-- 라우팅된 페이지가 여기 렌더링 -->
         </main>
         <!-- UserList (조건부 렌더링) -->
         <transition name="slide">
