@@ -93,9 +93,9 @@ export default {
 .status-away {
   background-color: yellow;
 }
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
   .user-list {
     display: none;
   }
-}
+} */
 </style>

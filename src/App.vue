@@ -3,23 +3,54 @@
     <Sidebar />
     <div class="header-layout">
       <Header />
-      <main class="content">
-        <h2>Welcome to My Website!</h2>
-        <p>This is the main content area.</p>
-        <UserList />
-      </main>
+      <div class="content-container">
+        <main class="content">
+          <h2>Welcome to My Website!</h2>
+          <p>This is the main content area.</p>
+          <div class="flex justify-center space-x-4">
+            <fwb-avatar
+              bordered
+              img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
+              rounded
+            />
+          </div>
+          <fwb-tooltip>
+            <template #trigger>
+              <fwb-avatar
+                img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
+              />
+            </template>
+            <template #content> Tooltip content </template>
+          </fwb-tooltip>
+
+          <fwb-tooltip placement="right">
+            <template #trigger>
+              <fwb-avatar
+                img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
+              />
+            </template>
+            <template #content> Tooltip on right </template>
+          </fwb-tooltip>
+        </main>
+        <!-- UserList (조건부 렌더링) -->
+        <transition name="slide">
+          <UserList v-if="isUserListVisible" />
+        </transition>
+      </div>
+      <!-- 플로팅 버튼 -->
+      <button class="floating-btn" @click="toggleUserList">
+        {{ isUserListVisible ? "❌" : "👥" }}
+      </button>
     </div>
   </div>
 </template>
-
+<script setup>
+import { FwbButton, FwbAvatar, FwbTooltip } from "flowbite-vue";
+</script>
 <script>
 import Header from "./components/Header.vue";
 import Sidebar from "./components/Sidebar.vue";
 import UserList from "./components/UserList.vue";
-
-
-
-
 
 export default {
   name: "App",
@@ -28,6 +59,16 @@ export default {
     Header,
     UserList,
   },
+  data() {
+    return {
+      isUserListVisible: true, // 기본값: UserList가 보이는 상태
+    };
+  },
+  methods: {
+    toggleUserList() {
+      this.isUserListVisible = !this.isUserListVisible;
+    },
+  },
 };
 </script>
 
@@ -35,9 +76,9 @@ export default {
 /* 전체 레이아웃 */
 .app {
   display: flex;
+  height: 100vh;
 }
 
-/* Sidebar */
 .sidebar {
   position: fixed; /* 화면의 고정 위치 */
   top: 0;
@@ -60,36 +101,62 @@ export default {
   flex-direction: column;
 }
 
-/* Header */
-.header {
-  height: 70px;
-  background-color: #333;
-  color: white;
-  padding: 1rem;
+.content-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex: 1;
+  min-height: 100vh;
 }
 
-/* Main Content */
+/* 메인 콘텐츠 스타일 */
 .content {
   flex: 1;
-  padding: 2rem;
   background-color: #f9f9f9;
+  padding: 32px;
+  transition: flex 0.3s ease; /* 애니메이션 추가 */
+  overflow-y: auto; /* 스크롤 활성화 */
 }
 
-/* User List */
-
-/* 유저 리스트 */
+/* UserList 스타일 */
 .user-list {
-  position: fixed;
-  top: 70px;
-  right: 0px;
   width: 200px;
-  height: 100%;
   background-color: #eaeaea;
-  padding: 1rem;
+  border-left: 1px solid #ccc;
+  transition: all 0.3s ease; /* 애니메이션 추가 */
+}
+
+/* 플로팅 버튼 스타일 */
+.floating-btn {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.floating-btn:hover {
+  transform: scale(1.1);
+}
+
+/* UserList 애니메이션 */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
 }
 </style>
