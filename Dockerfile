@@ -13,6 +13,9 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+# check용
+RUN ls -al /app
+
 # 2단계: 최종 실행 단계
 FROM node:22.13.0
 WORKDIR /app
