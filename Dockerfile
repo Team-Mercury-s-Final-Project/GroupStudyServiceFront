@@ -23,3 +23,4 @@ COPY --from=builder /app/dist /app/dist
 EXPOSE 5173
 
 CMD ["npm", "start"]
+
