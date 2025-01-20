@@ -19,11 +19,7 @@ WORKDIR /app
 # 빌드 결과물 복사
 COPY --from=builder /app/dist /app/dist
 
-# 간단한 HTTP 서버를 위한 라이브러리 설치
-RUN npm install -g serve
-
 # 포트 열기
 EXPOSE 5173
 
-# serve를 사용하여 정적 파일 제공
-CMD ["serve", "-s", "dist", "-l", "5173"]
+CMD ["npm", "start"]
