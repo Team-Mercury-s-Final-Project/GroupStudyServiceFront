@@ -22,7 +22,10 @@ WORKDIR /app
 
 # 빌드 결과물 복사
 COPY --from=builder /app/dist /app/dist
-
+# 패키지 파일 복사 
+COPY --from=builder /app/package.json /app/package.json 
+# 패키지 파일 복사
+COPY --from=builder /app/package-lock.json /app/package-lock.json 
 # 포트 열기
 EXPOSE 5173
 
