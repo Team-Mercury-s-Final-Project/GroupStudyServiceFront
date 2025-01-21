@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomePage from "../pages/HomePage.vue";
 import NextPage from "../pages/NextPage.vue";
+import GroupDetailPage from "../pages/GroupDetailPage.vue";
 
 const routes = [
   {
@@ -12,6 +13,11 @@ const routes = [
     path: "/next",
     name: "Next",
     component: NextPage, // 버튼을 통해 이동할 페이지
+  },
+  {
+    path: "/groups/{groupId}",
+    name: "GroupDetail",
+    component: GroupDetailPage, // 버튼을 통해 이동할 페이지
   },
 ];
 
