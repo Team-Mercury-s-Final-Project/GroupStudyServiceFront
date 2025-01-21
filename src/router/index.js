@@ -16,15 +16,16 @@ const routes = [
     component: NextPage, // 버튼을 통해 이동할 페이지
   },
   {
-    path: "/groups/{groupId}",
+    path: "/groups/:groupId",
     name: "GroupDetail",
-    component: GroupDetailPage, // 버튼을 통해 이동할 페이지
+    component: GroupDetailPage,
+    props: (route) => ({ groupId: Number(route.params.groupId) }),
   },
   {
-    path : "/test",
-    name : "Test",
-    component : TestPage, // front - back data 통신 테스트용 페이지
-  }
+    path: "/test",
+    name: "Test",
+    component: TestPage, // front - back data 통신 테스트용 페이지
+  },
 ];
 
 const router = createRouter({

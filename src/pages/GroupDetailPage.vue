@@ -1,17 +1,53 @@
 <template>
-  <div class="group-container">
-    <fwb-avatar size="lg" img="/src/assets/capitalism.png"> </fwb-avatar>
+  <div class="group-container" v-if="groupData">
+    <fwb-avatar size="lg" :img="groupData.image"> </fwb-avatar>
     <div class="group-info-container">
       <div class="info-item">
-        <a>group Name</a>
+        <a>{{ groupData.name }}</a>
       </div>
       <div class="info-item">
-        <fwb-button color="purple" @click="$router.push('/')">개요</fwb-button>
+        <fwb-tooltip placement="top">
+          <template #trigger>
+            <svg
+              class="h-8 w-8 text-neutral-500"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+          </template>
+          <template #content> {{ groupData.description }} </template>
+        </fwb-tooltip>
       </div>
-      <div class="info-item">
-        <fwb-button color="purple" @click="$router.push('/')">설정</fwb-button>
+      <div class="info-item" >
+        <svg
+          class="h-8 w-8 text-neutral-500"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          fill="none"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path stroke="none" d="M0 0h24v24H0z" />
+          <path
+            d="M9 7 h-3a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-3"
+          />
+          <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
+          <line x1="16" y1="5" x2="19" y2="8" />
+        </svg>
       </div>
     </div>
+    
+  </div>
+  <div v-else>
+    <p>Loading...</p>
   </div>
   <div class="column-container">
     <div class="side-by-side-container">
@@ -75,21 +111,58 @@
   </div>
 </template>
 <script setup>
-import { FwbAvatar, FwbButton, FwbCard, FwbButtonGroup } from "flowbite-vue";
-import { ref } from "vue";
+import {
+  FwbAvatar,
+  FwbButton,
+  FwbCard,
+  FwbButtonGroup,
+  FwbTooltip,
+  FwbModal,
+} from "flowbite-vue";
+import { ref, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
+import api from "../api";
 
+// Router에서 동적 파라미터(groupId)를 가져옴
+const route = useRoute();
+const groupId = ref(Number(route.params.groupId)); // 숫자로 변환하여 저장
+
+// 탭 데이터 및 선택된 탭 상태
 const tabs = ref([
   { name: "일간", content: "일간 랭킹을 보여줍니다." },
   { name: "주간", content: "주간 랭킹을 보여줍니다." },
   { name: "월간", content: "월간 랭킹을 보여줍니다." },
 ]);
 
-const selectedTab = ref(0); // 현재 선택된 탭의 인덱스
-
+const selectedTab = ref(0);
 function selectTab(index) {
-  selectedTab.value = index; // 선택된 탭 업데이트
+  selectedTab.value = index;
 }
+
+// 그룹 데이터 상태
+const groupData = ref(null);
+
+// API 호출 함수
+async function fetchGroupData() {
+  try {
+    if (!groupId.value) {
+      throw new Error("Invalid Group ID");
+    }
+    const response = await api.get(`/groups/${groupId.value}`); // API 호출
+    groupData.value = response.data.data; // 응답 데이터 저장
+    console.log("Fetched Group Data:", groupData.value);
+  } catch (error) {
+    console.error("Failed to fetch group details:", error);
+  }
+}
+
+// Group ID가 변경될 때마다 데이터를 다시 로드
+watch(groupId, fetchGroupData);
+
+// 컴포넌트가 마운트될 때 API 호출
+onMounted(fetchGroupData);
 </script>
+
 <style scoped>
 .group-container {
   display: flex; /* Flexbox를 사용하여 가로 정렬 */
@@ -156,7 +229,6 @@ function selectTab(index) {
   background-color: white; /* 배경색 설정 */
   border-radius: 8px; /* 둥근 모서리 */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
-  
 }
 .column-container {
   display: flex; /* Flexbox 활성화 */
