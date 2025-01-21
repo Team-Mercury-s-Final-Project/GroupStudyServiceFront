@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomePage from "../pages/HomePage.vue";
 import NextPage from "../pages/NextPage.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
+import TestPage from "../pages/TestPage.vue"; // TestPage를 import
 
 const routes = [
   {
@@ -19,6 +20,11 @@ const routes = [
     name: "GroupDetail",
     component: GroupDetailPage, // 버튼을 통해 이동할 페이지
   },
+  {
+    path : "/test",
+    name : "Test",
+    component : TestPage, // front - back data 통신 테스트용 페이지
+  }
 ];
 
 const router = createRouter({
