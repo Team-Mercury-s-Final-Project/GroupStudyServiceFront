@@ -3,6 +3,7 @@
     <Sidebar />
     <div class="header-layout">
       <Header />
+
       <div class="content-container">
         <main class="content">
           <router-view />
@@ -17,6 +18,7 @@
       <button class="floating-btn" @click="toggleUserList">
         {{ isUserListVisible ? "❌" : "👥" }}
       </button>
+
     </div>
   </div>
 </template>
@@ -34,6 +36,7 @@ export default {
     Sidebar,
     Header,
     UserList,
+    FocusRoomTimers,
   },
   data() {
     return {

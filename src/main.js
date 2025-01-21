@@ -7,3 +7,4 @@ import "../node_modules/flowbite-vue/dist/index.css";
 const app = createApp(App);
 app.use(router); // Vue Router 사용 설정
 app.mount("#app");
+
