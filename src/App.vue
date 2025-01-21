@@ -18,7 +18,6 @@
       <button class="floating-btn" @click="toggleUserList">
         {{ isUserListVisible ? "❌" : "👥" }}
       </button>
-
     </div>
   </div>
 </template>
@@ -36,7 +35,7 @@ export default {
     Sidebar,
     Header,
     UserList,
-    FocusRoomTimers,
+    // FocusRoomTimers,
   },
   data() {
     return {
