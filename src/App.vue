@@ -6,6 +6,7 @@
       <main class="content">
         <h2>Welcome to My Website!</h2>
         <p>This is the main content area.</p>
+        <FocusRoomTimers />
         <UserList />
       </main>
     </div>
@@ -16,8 +17,7 @@
 import Header from "./components/Header.vue";
 import Sidebar from "./components/Sidebar.vue";
 import UserList from "./components/UserList.vue";
-
-
+import FocusRoomTimers from "./components/timer/FocusRoomTimers.vue";
 
 
 
@@ -27,6 +27,7 @@ export default {
     Sidebar,
     Header,
     UserList,
+    FocusRoomTimers,
   },
 };
 </script>
