@@ -16,10 +16,10 @@ import { FwbButton } from "flowbite-vue";
 import { useRouter } from "vue-router";
 
 // Vue Router 사용
+
 const router = useRouter();
 
-// 페이지 이동 함수
 function navigateToDetailPage(groupId) {
-  router.push(`/groups/${groupId}`); // groupId를 동적으로 경로에 삽입
+  router.push(`/groups/${groupId}`); // groupId를 URL에 전달
 }
 </script>
