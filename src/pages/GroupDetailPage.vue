@@ -187,7 +187,9 @@
         <div class="card-content">
           <div class="enter-container">
             <p>5/10</p>
-            <fwb-button>입장하기</fwb-button>
+            <fwb-button @click="$router.push(`${groupId}/focusroom`)"
+              >입장하기</fwb-button
+            >
           </div>
         </div>
       </fwb-card>

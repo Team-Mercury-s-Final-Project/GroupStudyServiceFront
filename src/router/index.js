@@ -3,7 +3,7 @@ import HomePage from "../pages/HomePage.vue";
 import NextPage from "../pages/NextPage.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import TestPage from "../pages/TestPage.vue"; // TestPage를 import
-
+import FocusRoomPage from "../pages/FocusRoomPage.vue";
 const routes = [
   {
     path: "/",
@@ -19,6 +19,11 @@ const routes = [
     path: "/groups/:groupId", // :groupId로 pathVariable 정의
     name: "GroupDetail",
     component: GroupDetailPage,
+  },
+  {
+    path: "/groups/:groupId/focusroom",
+    name: "FocusRoom",
+    component: FocusRoomPage,
   },
   {
     path: "/test",
