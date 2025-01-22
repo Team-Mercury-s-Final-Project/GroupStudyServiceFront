@@ -16,10 +16,9 @@ const routes = [
     component: NextPage, // 버튼을 통해 이동할 페이지
   },
   {
-    path: "/groups/:groupId",
+    path: "/groups/:groupId", // :groupId로 pathVariable 정의
     name: "GroupDetail",
     component: GroupDetailPage,
-    props: (route) => ({ groupId: Number(route.params.groupId) }),
   },
   {
     path: "/test",

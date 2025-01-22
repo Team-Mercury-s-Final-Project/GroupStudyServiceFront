@@ -25,7 +25,8 @@
           <template #content> {{ groupData.description }} </template>
         </fwb-tooltip>
       </div>
-      <div class="info-item" >
+      <!-----------------------modal start------------------------------------>
+      <div class="info-item">
         <svg
           class="h-8 w-8 text-neutral-500"
           viewBox="0 0 24 24"
@@ -34,6 +35,7 @@
           fill="none"
           stroke-linecap="round"
           stroke-linejoin="round"
+          @click="showModal"
         >
           <path stroke="none" d="M0 0h24v24H0z" />
           <path
@@ -42,9 +44,101 @@
           <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
           <line x1="16" y1="5" x2="19" y2="8" />
         </svg>
+        <fwb-modal v-if="isShowModal" @close="closeModal">
+          <template #header>
+            <div class="flex items-center text-lg">그룹 정보 수정</div>
+          </template>
+          <template #body>
+            <fwb-input
+              v-model="groupData.name"
+              placeholder="그룹 이름을 입력하세요"
+              label="그룹 이름"
+            />
+            <br />
+            <fwb-input
+              v-model="groupData.description"
+              placeholder="그룹에 대한 소갯말를 입력하세요"
+              label="소개글"
+            />
+            <br />
+            <fwb-file-input v-model="groupData.image" label="Upload file">
+              <p class="!mt-1 text-sm text-gray-500 dark:text-gray-300">
+                JPG, JPEG, PNG, WEBP, SVG, BMP
+              </p>
+            </fwb-file-input>
+            <br />
+            <fwb-input
+              v-model.number="groupData.maxCapacity"
+              placeholder=""
+              label="최대인원"
+              type="number"
+            />
+            <p v-if="!isMaxCapacityValid" class="text-sm text-red-500">
+              최대인원은 2에서 50 사이여야 합니다.
+            </p>
+            <br />
+            <div class="radio-container">
+              <div class="radio-row">
+                <p class="label text-sm">공개 여부</p>
+                <div class="radio-group">
+                  <fwb-radio
+                    v-model="groupData.isPublic"
+                    label="공개"
+                    value="true"
+                  />
+                  <fwb-radio
+                    v-model="groupData.isPublic"
+                    label="비공개"
+                    value="false"
+                  />
+                </div>
+              </div>
+            </div>
+            <br />
+            <div class="radio-container">
+              <div class="radio-row">
+                <p class="label text-sm">비밀번호 여부</p>
+                <div class="radio-group">
+                  <fwb-radio
+                    v-model="groupData.hasPassword"
+                    label="있음"
+                    :value="true"
+                  />
+                  <fwb-radio
+                    v-model="groupData.hasPassword"
+                    label="없음"
+                    :value="false"
+                  />
+                </div>
+              </div>
+            </div>
+            <br />
+            <fwb-input
+              v-if="groupData.hasPassword === 'true'"
+              v-model="groupData.password"
+              placeholder="비밀번호 입력"
+              label="비밀번호"
+            />
+          </template>
+
+          <template #footer>
+            <div class="flex justify-between">
+              <fwb-button @click="closeModal" color="alternative">
+                나가기
+              </fwb-button>
+              <fwb-button
+                :disabled="!isMaxCapacityValid"
+                @click="updateGroup"
+                color="green"
+              >
+                변경하기
+              </fwb-button>
+            </div>
+          </template>
+        </fwb-modal>
       </div>
+      <!-----------------------modal end------------------------------------>
     </div>
-    
   </div>
   <div v-else>
     <p>Loading...</p>
@@ -118,15 +212,58 @@ import {
   FwbButtonGroup,
   FwbTooltip,
   FwbModal,
+  FwbInput,
+  FwbFileInput,
+  FwbRadio,
 } from "flowbite-vue";
-import { ref, onMounted, watch } from "vue";
+
+import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import api from "../api";
+// --------------------modal start----------------
+// maxCapacity 유효성 검사
+const isMaxCapacityValid = computed(() => {
+  return groupData.value.maxCapacity >= 2 && groupData.value.maxCapacity <= 50;
+});
+const isPublic = ref();
+const hasPassword = ref();
+const isShowModal = ref(false);
+
+function closeModal() {
+  isShowModal.value = false;
+}
+function showModal() {
+  isShowModal.value = true;
+}
 
 // Router에서 동적 파라미터(groupId)를 가져옴
 const route = useRoute();
-const groupId = ref(Number(route.params.groupId)); // 숫자로 변환하여 저장
+const groupId = route.params.groupId; // pathVariable에서 groupId 추출
 
+// 그룹 데이터 상태
+const groupData = ref(null);
+
+// API 호출
+onMounted(async () => {
+  try {
+    const response = await api.get(`/groups/${groupId}`);
+    groupData.value = response.data.data; // API 응답 저장
+    console.log(groupData.value);
+  } catch (error) {
+    console.error("Failed to fetch group details:", error);
+  }
+});
+// 그룹 수정 요청 함수
+async function updateGroup() {
+  try {
+    const response = await api.put(`/groups/${groupId}`, groupData.value);
+    console.log("변경 완료:", response.data);
+    closeModal(); // 모달 닫기
+  } catch (error) {
+    console.error("그룹 수정 실패:", error);
+  }
+}
+// --------------------modal end----------------
 // 탭 데이터 및 선택된 탭 상태
 const tabs = ref([
   { name: "일간", content: "일간 랭킹을 보여줍니다." },
@@ -138,29 +275,6 @@ const selectedTab = ref(0);
 function selectTab(index) {
   selectedTab.value = index;
 }
-
-// 그룹 데이터 상태
-const groupData = ref(null);
-
-// API 호출 함수
-async function fetchGroupData() {
-  try {
-    if (!groupId.value) {
-      throw new Error("Invalid Group ID");
-    }
-    const response = await api.get(`/groups/${groupId.value}`); // API 호출
-    groupData.value = response.data.data; // 응답 데이터 저장
-    console.log("Fetched Group Data:", groupData.value);
-  } catch (error) {
-    console.error("Failed to fetch group details:", error);
-  }
-}
-
-// Group ID가 변경될 때마다 데이터를 다시 로드
-watch(groupId, fetchGroupData);
-
-// 컴포넌트가 마운트될 때 API 호출
-onMounted(fetchGroupData);
 </script>
 
 <style scoped>
@@ -255,6 +369,28 @@ onMounted(fetchGroupData);
   font-weight: bold; /* 텍스트 볼드 처리 */
   text-align: center; /* 텍스트 정렬 */
 }
+.radio-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* 텍스트와 버튼 간 간격 */
+  width: 100%;
+}
+
+/* 텍스트 라벨 고정 폭 */
+.label {
+  width: 120px; /* 고정된 폭으로 통일 */
+  min-width: 120px; /* 작은 화면에서도 유지 */
+  text-align: left;
+}
+
+/* 라디오 버튼 그룹 */
+.radio-group {
+  display: flex;
+  flex: 1; /* 나머지 공간을 차지 */
+  justify-content: flex-start; /* 왼쪽 정렬 */
+  gap: 2rem; /* 버튼 간 간격 */
+}
+
 @media (max-width: 768px) {
   .side-by-side-container {
     flex-direction: column; /* 위아래로 배치 */
