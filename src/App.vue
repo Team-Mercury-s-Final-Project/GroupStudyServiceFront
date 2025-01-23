@@ -15,7 +15,7 @@
         </transition>
       </div>
       <!-- 플로팅 버튼 -->
-      <button class="floating-btn" v-if="isUserListVisible" @click="toggleUserList">
+      <button class="floating-btn" v-if="isToggleButtonVisible" @click="toggleUserList">
         {{ isUserListVisible ? "❌" : "👥" }}
       </button>
     </div>
@@ -28,14 +28,21 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 const isUserListVisible = ref(false);
-// route.meta 값 가져오기기
+const isToggleButtonVisible = ref(false);
+
 const isUserListComputed = computed(() => {
   return route.meta?.showUserList === true;
 });
-// route가 변경될 때 값 초기화화
+const isToggleButtonComputed = computed(() => {
+  return route.meta?.showToggleButton === true;
+});
+
+// route가 변경될 때 값 초기화
 watch(route, () => {
   isUserListVisible.value = isUserListComputed.value;
+  isToggleButtonVisible.value = isToggleButtonComputed.value;
 });
+
 // 토글 클릭 시 값 변경
 const toggleUserList = () => {
   isUserListVisible.value = !isUserListVisible.value;
