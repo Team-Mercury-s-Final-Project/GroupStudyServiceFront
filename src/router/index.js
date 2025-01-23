@@ -19,6 +19,7 @@ const routes = [
     path: "/groups/:groupId", // :groupId로 pathVariable 정의
     name: "GroupDetail",
     component: GroupDetailPage,
+    meta: {showUserList: true}
   },
   {
     path: "/test",
