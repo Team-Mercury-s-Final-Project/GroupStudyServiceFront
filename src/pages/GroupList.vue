@@ -52,8 +52,8 @@
                 </div>
                 <div class="flex flex-col">
                     <span class="font-bold">{{ group.name }}</span>
-                    <span class="text-sm text-gray-600">{{ group.description }}</span>
-                    <span class="text-xs text-gray-500">개설일자: {{ group.createdAt }}</span>
+                    <span class="text-sm text-gray-600">{{ truncateDescription(group.description) }}</span>
+                    <span class="text-xs text-gray-500">개설일자: {{ group.createdAt.split('T')[0] }}</span>
                     <span class="text-xs text-gray-500">
                     현재인원: {{ group.memberCount }} / {{ group.maxCapacity }}
                     </span>
@@ -69,7 +69,7 @@
   
   <script setup>
   import { FwbAvatar } from 'flowbite-vue'
-  import { ref, onMounted } from "vue";
+  import { ref, onMounted, computed } from "vue";
   import api from "../api";
   
   const page = ref(0);
@@ -139,6 +139,11 @@
       page.value++;  // 페이지 증가
       fetchGroups();
     }
+  };
+
+  const maxLength = 58; // 최대 길이 설정
+  const truncateDescription = (desc) => {
+    return desc.length > maxLength ? desc.substring(0, maxLength) + "..." : desc;
   };
   
   // ✅ 모달 오픈 (추후 구현 예정)
