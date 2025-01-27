@@ -25,7 +25,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">현재 인원</label>
-              <div class="inline-block text-gray-700 bg-gray-200 border border-gray-300 p-2 rounded w-16">
+              <div class="inline-block text-gray-700 bg-gray-200 border border-gray-300 p-2 rounded w-20">
                     {{ memberCount }}
               </div>
             </div>
