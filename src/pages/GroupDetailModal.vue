@@ -13,7 +13,7 @@
           <div class="flex-1 space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">그룹명</label>
-              <span class="inline-block text-gray-700 bg-gray-200 border border-gray-300 p-2 rounded w-40">
+              <span class="inline-block text-gray-700 bg-gray-200 border border-gray-300 p-2 rounded w-80">
                   {{ group.name }}
               </span>
             </div>
