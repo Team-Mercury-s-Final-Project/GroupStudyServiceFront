@@ -1,15 +1,21 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomePage from "../pages/HomePage.vue";
+import GroupList from "../pages/GroupList.vue";
 import NextPage from "../pages/NextPage.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import TestPage from "../pages/TestPage.vue"; // TestPage를 import
 import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 
 const routes = [
+  // {
+  //   path: "/",
+  //   name: "Home",
+  //   component: HomePage, // 기본 페이지
+  // },
   {
     path: "/",
     name: "Home",
-    component: HomePage, // 기본 페이지
+    component: GroupList, // 기본 페이지
   },
   {
     path: "/next",
@@ -17,10 +23,10 @@ const routes = [
     component: NextPage, // 버튼을 통해 이동할 페이지
   },
   {
-    path: "/groups/:groupId",
+    path: "/groups/:groupId", // :groupId로 pathVariable 정의
     name: "GroupDetail",
     component: GroupDetailPage,
-    props: (route) => ({ groupId: Number(route.params.groupId) }),
+    meta: {showUserList: true, showToggleButton: true}
   },
   {
     path: "/test",
