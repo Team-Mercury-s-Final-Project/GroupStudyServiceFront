@@ -3,6 +3,7 @@ import HomePage from "../pages/HomePage.vue";
 import NextPage from "../pages/NextPage.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import TestPage from "../pages/TestPage.vue"; // TestPage를 import
+import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: "/test",
     name: "Test",
     component: TestPage, // front - back data 통신 테스트용 페이지
+  },
+  {
+    path: "/chats/:chatRoomId",
+    name: "ChattingRoom",
+    component: ChatPage,
   },
 ];
 
