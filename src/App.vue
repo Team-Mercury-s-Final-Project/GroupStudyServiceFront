@@ -35,7 +35,6 @@ export default {
     Sidebar,
     Header,
     UserList,
-    // FocusRoomTimers,
   },
   data() {
     return {

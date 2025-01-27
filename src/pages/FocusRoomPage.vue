@@ -12,15 +12,18 @@
     </div>
     <div class="my-timer-container">
       <UserTimer
+        :time="12"
         :todayTotalTime="'10'"
         :nickname="'김스타'"
         :stomp-client="stompClient"
       />
       <div>
         <p>Connection Status: {{ isConnect }}</p>
-        <button @click="connect">Connect</button>
+        <button @click="connect()">김스타 Connect</button>
+        <button @click="connect('한스타')">한스타 Connect</button>
         <button @click="sendMSG">메시지 테스트</button>
         <button @click="disconnectFromServer">Disconnect</button>
+        <button @click="groupMembersTimerDataInit">datainit</button>
       </div>
     </div>
   </div>
@@ -58,17 +61,32 @@ const groupMembersTimerDataInit = async () => {
   try {
     const response = await api.get(`/groups/${groupId.value}/timers`);
     memberTimers.splice(0, memberTimers.length, ...response.data); // 반응형 배열 업데이트
+    console.log("응답 성공적");
+    
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
   }
 };
 
 // 웹소켓 연결
-const connect = () => {
+const connect = (type) => {
+  let headers = {
+    roomType: "focus",
+    groupId: groupId.value,
+    userId: "76",
+    nickname: "김스타76",
+  };
+  if(type === "한스타") {
+    headers = {
+      roomType: "focus",
+      groupId: groupId.value,
+      userId: "77",
+      nickname: "한스타77",
+    };
+  }
   let socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
-
-  stompClient.value.connect({}, () => {
+  stompClient.value.connect(headers, () => {
     console.log("Connected to the server");
     isConnect.value = true;
 
@@ -117,7 +135,7 @@ const disconnectFromServer = () => {
 };
 onMounted(() => {
   groupMembersTimerDataInit();
-  connect();
+  // connect();
 });
 
 onUnmounted(() => {

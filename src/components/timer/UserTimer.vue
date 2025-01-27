@@ -5,7 +5,7 @@
       <h3>이름:{{ nickname }}</h3>
       <h3>오늘의 총 공부시간: {{ todayTotalTime }}분</h3>
     </span>
-    <TimerDisplay :time="time" />
+    <TimerDisplay :time="localTime" />
     <div class="buttons">
       <button v-if="!interval" @click="start" class="icon-button">
         <i class="fas fa-play"></i>
@@ -29,18 +29,19 @@ export default {
   components: {
     TimerDisplay,
   },
-  props: ["stompClient", "nickname", "todayTotalTime", "groupId"],
+  props: ["stompClient", "nickname", "todayTotalTime","time"],
   data() {
     return {
-      time: 0,
+      localTime: this.time,
       interval: null,
+      groupId: null,
     };
   },
   methods: {
     start() {
       if (!this.interval) {
         this.interval = setInterval(() => {
-          this.time++;
+          this.localTime++;
         }, 1000);
         this.sendStartSign();
       }
@@ -53,21 +54,26 @@ export default {
     },
     reset() {
       this.stop();
-      this.time = 0;
+      this.localTime = 0;
     },
     sendStartSign() {
       if (this.stompClient && this.stompClient.connected) {
         const message = "start!!";
         this.stompClient.send(
           `/pub/groups/${this.groupId}/timers/start`,
-          {},
-          JSON.stringify(message)
+          message,
+          {}
         );
         console.log("Message sent:", message);
       } else {
         console.error("WebSocket is not connected");
       }
     },
+  },
+  mounted() {
+    this.groupId = this.$route.params.groupId;
+    console.log("groupId mounted:", this.groupId);
+    
   },
   beforeDestroy() {
     this.stop();
