@@ -25,7 +25,6 @@
                   <option value="createdAt_asc">오래된순</option>
                   <option value="memberCount_asc">멤버 적은순</option>
                   <option value="memberCount_desc">멤버 많은순</option>
-                  <option value="popular">인기순</option>
                 </select>
               </div>
             </div>
@@ -46,23 +45,27 @@
               v-for="group in studyGroups"
               :key="group.id"
               class="bg-gray-200 h-30 p-4 rounded-md flex transition-transform transform hover:scale-105 hover:bg-gray-300"
+              @click="fetchGroupDetail(group.id)"
               >
                 <div class="w-18 mr-3">
                   <fwb-avatar size="lg" :img="group.image" />
                 </div>
                 <div class="flex flex-col">
                     <span class="font-bold">{{ group.name }}</span>
-                    <span class="text-sm text-gray-600">{{ truncateDescription(group.description) }}</span>
-                    <span class="text-xs text-gray-500">개설일자: {{ group.createdAt.split('T')[0] }}</span>
-                    <span class="text-xs text-gray-500">
+                    <span class="text-sm text-gray-600">{{ truncateDescription(group.description) }}</span> 
+                    <span class="font-bold text-xs text-gray-500">
                     현재인원: {{ group.memberCount }} / {{ group.maxCapacity }}
                     </span>
+                    <span class="text-xs text-gray-500">개설일자: {{ group.createdAt.split('T')[0] }}</span>
                     <span v-if="group.hasPassword" class="text-xs text-gray-500 flex items-center">
                       🔒 비밀번호 설정됨
                     </span>
                 </div>
               </div>
           </div>
+          
+          <!-- 그룹 상세정보 모달 -->
+          <GroupDetailModal :isOpen="isModalOpen" :group="selectedGroup" @close="closeModal" />
         </div>
     </div>
   </template>
@@ -71,6 +74,7 @@
   import { FwbAvatar } from 'flowbite-vue'
   import { ref, onMounted, computed } from "vue";
   import api from "../api";
+  import GroupDetailModal from "./GroupDetailModal.vue";
   
   const page = ref(0);
   const isLoading = ref(false);
@@ -78,6 +82,9 @@
   const searchText = ref("");
   const sortOption = ref("createdAt_desc");
   const studyGroups = ref([]);
+
+  const isModalOpen = ref(false);
+  const selectedGroup = ref(null);
   
   // ✅ 그룹 목록 불러오기
   const fetchGroups = async () => {
@@ -146,9 +153,19 @@
     return desc.length > maxLength ? desc.substring(0, maxLength) + "..." : desc;
   };
   
-  // ✅ 모달 오픈 (추후 구현 예정)
-  const openCreateGroupModal = () => {
-    console.log("그룹 생성 모달 열기");
+  // ✅ 모달 오픈
+  const fetchGroupDetail = async (id) => {
+    try {
+      const response = await api.get(`/groups/${id}`);
+      selectedGroup.value = response.data.data;
+      isModalOpen.value = true;
+    } catch (error) {
+      console.error("그룹 정보를 불러오는 중 오류 발생:", error);
+    }
+  };
+  
+  const closeModal = () => {
+    isModalOpen.value = false;
   };
   
   // ✅ 컴포넌트가 마운트될 때 초기 데이터 가져오기
