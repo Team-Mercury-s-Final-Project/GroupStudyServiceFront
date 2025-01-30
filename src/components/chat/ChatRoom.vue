@@ -71,7 +71,7 @@ export default {
         console.log("Connected: " + frame);
         // 특정 경로를 구독
         this.stompClient.subscribe(
-          `/topic/chat/${this.chatRoomId}`,
+          `/topic/chat.${this.chatRoomId}`,
           (messageOutput) => {
             const message = JSON.parse(messageOutput.body);
             if (Array.isArray(this.messages)) {
@@ -153,7 +153,7 @@ body {
 }
 .content {
   background-color: #fff;
-  color: #333;
+  color: #fff;
   padding: 2rem;
   border-radius: 10px;
   margin-top: 3.5rem; /* 네비게이션 바 높이 조정 */
