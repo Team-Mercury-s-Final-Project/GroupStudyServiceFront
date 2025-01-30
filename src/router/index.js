@@ -63,7 +63,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 });
-
 // 요청 블랙리스트
 const publicPageList = [
   "/",
@@ -71,7 +70,11 @@ const publicPageList = [
   "/oauth2/callback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
+  "/groups/1",
+  "/chats/1",
+  "/groups/1/focusroom",
 ];
+
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
 ];
