@@ -17,7 +17,10 @@
                 <strong>{{ message.nickName }}</strong
                 >: {{ message.content }}
               </div>
-              <div class="message-timestamp">{{ message.createdAt }}</div>
+              <div class="message-timestamp">
+                {{ message.createdAt }}
+                <span class="unread-count">{{ message.unreadCount }}</span>
+              </div>
             </div>
           </div>
           <div v-else class="loading">데이터를 불러오는 중입니다...</div>
@@ -34,6 +37,7 @@
     </div>
   </div>
 </template>
+
 <script>
 import Stomp from "stompjs";
 import * as jwtDecode from "jwt-decode";
@@ -52,6 +56,7 @@ export default {
       isDataLoaded: false,
       nickName: "",
       chatRoomType: "DM",
+      readCount: 0,
     };
   },
 
@@ -90,9 +95,34 @@ export default {
                   nickName: message.data.nickName || "알 수 없음",
                   content: message.data.messageContent,
                   createdAt: new Date(message.data.createdAt).toLocaleString(),
+                  unreadCount: message.data.unreadCount,
                 });
+
+                // 메시지 읽음 정보 업데이트 요청
+                this.updateReadUsers(message.data.id);
+                console.log("메시지 읽음 정보 업데이트 요청");
               } catch (error) {
                 console.error("메시지 파싱 오류:", error);
+              }
+            }
+          );
+
+          // 실시간으로 읽은 사용자 목록 업데이트
+          this.stompClient.subscribe(
+            `/topic/readCheck.${this.chatRoomId}`,
+            (readInfo) => {
+              try {
+                const readData = JSON.parse(readInfo.body);
+                console.log("읽은 사용자 정보", readData);
+                const messageIndex = this.messages.findIndex(
+                  (msg) => msg.id === readData.messageId
+                );
+                if (messageIndex !== -1) {
+                  this.messages[messageIndex].unreadCount =
+                    readData.unreadCount;
+                }
+              } catch (error) {
+                console.error("읽음 정보 파싱 오류:", error);
               }
             }
           );
@@ -129,6 +159,7 @@ export default {
                 nickName: msg.nickName || "알 수 없음",
                 content: msg.content,
                 createdAt: new Date(msg.createdAt).toLocaleString(),
+                unreadCount: msg.unreadCount, // unreadCount 추가
               }));
 
               // JWT ID와 같지 않은 데이터의 ID를 receiverId로 설정
@@ -179,6 +210,24 @@ export default {
         }
 
         this.newMessage = "";
+      }
+    },
+
+    updateReadUsers(messageId) {
+      const readPayload = {
+        chatMessageId: messageId,
+        chatUserId: this.currentUserId,
+        readCount : this.readCount
+      };
+
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/readCheck/${this.chatRoomId}`,
+          {},
+          JSON.stringify(readPayload)
+        );
+      } else {
+        console.error("WebSocket is not connected.");
       }
     },
   },
