@@ -118,7 +118,10 @@ export default {
         .then((response) => {
           if (response.data && response.data.success && response.data.data) {
             const chatData = response.data.data;
-
+            //채팅방 타입 체크
+            if (chatData.chatRoomType === "GROUP") {
+              this.chatRoomType = "GROUP";
+            }
             if (Array.isArray(chatData.messages)) {
               this.messages = chatData.messages.map((msg) => ({
                 id: msg.id,
