@@ -11,16 +11,11 @@
       </div>
     </div>
     <div class="my-timer-container">
-      <UserTimer
-        :time="12"
-        :todayTotalTime="'10'"
-        :nickname="'김스타'"
-        :stomp-client="stompClient"
-      />
+      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" />
       <div>
         <p>Connection Status: {{ isConnect }}</p>
-        <button @click="connect()">김스타 Connect</button>
-        <button @click="connect('한스타')">한스타 Connect</button>
+        <button @click="connect()">구글모 Connect</button>
+        <button @click="connect('네이모')">네이모 Connect</button>
         <button @click="sendMSG">메시지 테스트</button>
         <button @click="disconnectFromServer">Disconnect</button>
         <button @click="groupMembersTimerDataInit">datainit</button>
@@ -30,17 +25,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from "vue";
+import { ref, reactive, onMounted, onUnmounted, toRefs } from "vue";
 import { useRoute } from "vue-router";
-import UserTimer from "../components/timer/UserTimer.vue";
+import MyTimer from "../components/timer/MyTimer.vue";
 import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
 import Stomp from "webstomp-client";
 import api from "../api.js";
 
 //  ==== 상태값 시작 ====
+// 임시 로그인 유저 아이디
+const userId = ref(1);
 
 // 집중방에 있는 유저들의 타이머 데이터 데이터 초기 값
 const memberTimers = reactive([]);
+const myTimerData = reactive({
+  userId: userId.value,
+  nickname: "구글모",
+  todayTotalTime: 0,
+  timeSoFar: 7,
+});
 
 // 집중방 아이디
 const route = useRoute();
@@ -59,10 +62,23 @@ const stompClient = ref(null);
 // 그룹원 타이머 데이터 받아오기
 const groupMembersTimerDataInit = async () => {
   try {
-    const response = await api.get(`/groups/${groupId.value}/timers`);
-    memberTimers.splice(0, memberTimers.length, ...response.data); // 반응형 배열 업데이트
+    const response = await api.get(`/api/groups/${groupId.value}/timers`);
+    const timerDatas = response.data;
+    console.log("timerDatas:=====**", timerDatas);
+
+    timerDatas.forEach((timer) => {
+      if (timer.userId === userId.value) {
+        console.log("내 타이머 데이터!!!!!!!!!!!!!");
+
+        Object.assign(myTimerData, timer);
+      } else {
+        console.log("그룹원 타이머 데이터!!!!!!!!!!!!!");
+
+        memberTimers.push(timer);
+      }
+    });
+
     console.log("응답 성공적");
-    
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
   }
@@ -73,15 +89,19 @@ const connect = (type) => {
   let headers = {
     roomType: "focus",
     groupId: groupId.value,
-    userId: "76",
-    nickname: "김스타76",
+    userId: 1,
+    nickname: "구글모",
   };
-  if(type === "한스타") {
+  if (type === "네이모") {
+    console.log("네이모 연결");
+    userId.value = 2;
+    myTimerData.userId = 2;
+    myTimerData.nickname = "네이모";
     headers = {
       roomType: "focus",
       groupId: groupId.value,
-      userId: "77",
-      nickname: "한스타77",
+      userId: 2,
+      nickname: "네이모",
     };
   }
   let socket = new WebSocket("ws://localhost:8080/timer");
@@ -95,19 +115,82 @@ const connect = (type) => {
       `/sub/groups/${groupId.value}/timers`,
       // 서버로 부터 온 메시지(payload) 수신 후 실행할 함수
       (payload) => {
-        // const data = JSON.parse(payload.body);
-        console.log("Received data:", payload.body);
-
-        //  // 받은 데이터로 memberTimers 업데이트
-        //  const index = memberTimers.findIndex(timer => timer.userId === data.userId);
-        // if (index !== -1) {
-        //   memberTimers[index] = data; // 기존 데이터 업데이트
-        // } else {
-        //   memberTimers.push(data); // 새로운 데이터 추가
-        // }
+        if (payload.body) {
+          const eventData = JSON.parse(payload.body);
+          handleEvent(eventData);
+          console.log("=====Received data=====:", eventData);
+        }
       }
     );
   });
+};
+const handleEvent = (eventData) => {
+  const eventHandler = timerEventHandlers[eventData.event];
+  console.log("이벤트 도착!!!!!", eventData.event);
+  console.log("eventHandler", eventHandler);
+
+  if (eventHandler) {
+    eventHandler(eventData);
+  } else {
+    console.error("이벤트를 찾을 수 없습니다 이벤트:", eventData.event);
+  }
+};
+const timerEventHandlers = {
+  START: (eventData) => {
+    console.log("=====TIMER_START 이벤트 발생=====");
+
+    const { userId } = eventData;
+    const memberTimer = memberTimers.find((timer) => timer.userId === userId);
+    if (memberTimer) {
+      memberTimer.ranking = eventData.ranking;
+      memberTimer.time = eventData.timeSoFar;
+      memberTimer.todayTotalTime = eventData.todayTotalTime;
+      memberTimer.memberTimer.status = "START";
+    }
+  },
+  STOP: (eventData) => {
+    console.log("=====TIMER_STOP 이벤트 발생=====");
+
+    const { userId } = eventData;
+    const memberTimer = memberTimers.find((timer) => timer.userId === userId);
+    if (memberTimer) {
+      memberTimer.ranking = eventData.ranking;
+      memberTimer.todayTotalTime = eventData.todayTotalTime;
+      memberTimer.timeSoFar = eventData.timeSoFar;
+      memberTimer.status = "STOP";
+    }
+  },
+  END: (eventData) => {
+    console.log("=====TIMER_END 이벤트 발생=====");
+    const { userId, nickname } = eventData;
+    const memberTimer = memberTimers.find((timer) => timer.userId === userId);
+    if (memberTimer) {
+      memberTimer.status = "END";
+      memberTimer.time = 0;
+    }
+  },
+  ENTRY: (eventData) => {
+    console.log("=====ENTRY 이벤트 발생=====");
+
+    const { userId, nickname, timeSoFar, todayTotalTime, ranking, status } =
+      eventData;
+    memberTimers.push({
+      userId,
+      nickname,
+      timeSoFar,
+      todayTotalTime,
+      ranking,
+      status,
+    });
+  },
+  DISCONNECT: (eventData) => {
+    console.log("=====DISCONNECT 이벤트 발생=====");
+    const { userId } = eventData;
+    const index = memberTimers.findIndex((timer) => timer.userId === userId);
+    if (index !== -1) {
+      memberTimers.splice(index, 1);
+    }
+  },
 };
 // test msg
 const sendMSG = () => {
@@ -118,9 +201,9 @@ const sendMSG = () => {
   if (stompClient.value && stompClient.value.connected) {
     stompClient.value.send(
       // destination
-      `/pub/groups/${groupId.value}/timers`,
+      `/pub/groups/${groupId.value}/timers/start`,
       // body
-      jsonMsg,
+      myTimerData.userId.toString(),
       // header
       {}
     );
@@ -135,12 +218,12 @@ const disconnectFromServer = () => {
 };
 onMounted(() => {
   groupMembersTimerDataInit();
-  // connect();
+  connect();
 });
 
 onUnmounted(() => {
   if (stompClient.value) {
-    stompClient.value.disconnectFromServer();
+    disconnectFromServer();
   }
 });
 </script>
@@ -161,6 +244,8 @@ onUnmounted(() => {
   background-color: red;
   flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
+  height: 80%;
 }
 
 .group-member-timer {
