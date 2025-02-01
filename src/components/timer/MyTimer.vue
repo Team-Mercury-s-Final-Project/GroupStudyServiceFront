@@ -22,63 +22,65 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, defineProps, watch, onBeforeUnmount } from "vue";
+import { useRoute } from "vue-router";
 import TimerDisplay from "./TimerDisplay.vue";
+const route = useRoute();
+const groupId = route.params.groupId;
 
-export default {
-  components: {
-    TimerDisplay,
-  },
-  props: ["stompClient", "nickname", "todayTotalTime","time"],
-  data() {
-    return {
-      localTime: this.time,
-      interval: null,
-      groupId: null,
-    };
-  },
-  methods: {
-    start() {
-      if (!this.interval) {
-        this.interval = setInterval(() => {
-          this.localTime++;
-        }, 1000);
-        this.sendStartSign();
-      }
-    },
-    stop() {
-      if (this.interval) {
-        clearInterval(this.interval);
-        this.interval = null;
-      }
-    },
-    reset() {
-      this.stop();
-      this.localTime = 0;
-    },
-    sendStartSign() {
-      if (this.stompClient && this.stompClient.connected) {
-        const message = "start!!";
-        this.stompClient.send(
-          `/pub/groups/${this.groupId}/timers/start`,
-          message,
-          {}
-        );
-        console.log("Message sent:", message);
-      } else {
-        console.error("WebSocket is not connected");
-      }
-    },
-  },
-  mounted() {
-    this.groupId = this.$route.params.groupId;
-    console.log("groupId mounted:", this.groupId);
-    
-  },
-  beforeDestroy() {
-    this.stop();
-  },
+const {
+  userId,
+  nickname,
+  todayTotalTime,
+  timeSoFar: time,
+  stompClient,
+} = defineProps([
+  "userId",
+  "nickname",
+  "todayTotalTime",
+  "timeSoFar",
+  "stompClient",
+]);
+
+const localTime = ref(time);
+// props.time이 변경되면 localTime도 업데이트
+const interval = ref(null);
+const start = () => {
+  console.log("MY TIMER START");
+
+  if (!interval.value) {
+    interval.value = setInterval(() => {
+      localTime.value++;
+    }, 1000);
+    sendStartSign();
+  }
 };
+const stop = () => {
+  if (interval.value) {
+    clearInterval(interval.value);
+    interval.value = null;
+  }
+};
+const reset = () => {
+  stop();
+  localTime.value = 0;
+};
+
+const sendStartSign = () => {
+  if (stompClient && stompClient.connected) {
+    console.log("Message sent:", userId.value);
+    console.log("Message sent:", userId.toString());
+    console.log("Message sent:", userId.toString());
+    stompClient.send(`/pub/groups/${groupId}/timers/start`, userId.value, {});
+  } else {
+    console.error("WebSocket is not connected");
+  }
+};
+
+onBeforeUnmount(() => {
+  stop(); // stop 함수 호출
+});
 </script>
 <style scoped>
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css");

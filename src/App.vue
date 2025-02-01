@@ -15,15 +15,25 @@
         </transition>
       </div>
       <!-- 플로팅 버튼 -->
-      <button class="floating-btn" v-if="isToggleButtonVisible" @click="toggleUserList">
+      <button
+        class="floating-btn"
+        v-if="isToggleButtonVisible"
+        @click="toggleUserList"
+      >
         {{ isUserListVisible ? "❌" : "👥" }}
       </button>
     </div>
   </div>
+
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    rel="stylesheet"
+  />
 </template>
 <script setup>
 import { FwbButton, FwbAvatar, FwbTooltip } from "flowbite-vue";
 import { computed, ref, watch } from "vue";
+import { reactive, provide } from "vue";
 import { useRoute } from "vue-router";
 
 const route = useRoute();
@@ -47,6 +57,12 @@ watch(route, () => {
 const toggleUserList = () => {
   isUserListVisible.value = !isUserListVisible.value;
 };
+
+const state = reactive({
+  isLoggedIn: false,
+});
+// 상태 제공
+provide("state", state);
 </script>
 <script>
 import Header from "./components/Header.vue";

@@ -5,26 +5,22 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    time: {
-      type: Number,
-      required: true,
-    },
-  },
-  computed: {
-    formattedTime() {
-      const hours = Math.floor(this.time / 3600);
-      const minutes = Math.floor((this.time % 3600) / 60);
-      const seconds = Math.floor((this.time % 60) / 1);
-      return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-        2,
-        "0"
-      )}:${String(seconds).padStart(2, "0")}`;
-    },
-  },
-};
+<script setup>
+import { defineProps, computed } from "vue";
+
+const props = defineProps({
+  time: Number,
+  required: true,
+});
+const formattedTime = computed(() => {
+  const hours = Math.floor(props.time / 3600);
+  const minutes = Math.floor((props.time % 3600) / 60);
+  const seconds = Math.floor((props.time % 60) / 1);
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
+});
 </script>
 
 <style scoped>
