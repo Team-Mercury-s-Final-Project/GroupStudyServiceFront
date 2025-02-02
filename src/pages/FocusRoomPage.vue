@@ -15,7 +15,7 @@
       <div>
         <p>Connection Status: {{ isConnect }}</p>
         <button @click="connect()">구글모 Connect</button>
-        <button @click="connect('네이모')">네이모 Connect</button>
+        <button @click="connect('구카모')">구카모 Connect</button>
         <button @click="sendMSG">메시지 테스트</button>
         <button @click="disconnectFromServer">Disconnect</button>
         <button @click="groupMembersTimerDataInit">datainit</button>
@@ -85,29 +85,30 @@ const groupMembersTimerDataInit = async () => {
 };
 
 // 웹소켓 연결
-const connect = (type) => {
+async function connect(type) {
   let headers = {
     roomType: "focus",
     groupId: groupId.value,
     userId: 1,
     nickname: "구글모",
   };
-  if (type === "네이모") {
-    console.log("네이모 연결");
+  if (type === "구카모") {
+    console.log("구카모 연결");
     userId.value = 2;
     myTimerData.userId = 2;
-    myTimerData.nickname = "네이모";
+    myTimerData.nickname = "구카모";
     headers = {
       roomType: "focus",
       groupId: groupId.value,
       userId: 2,
-      nickname: "네이모",
+      nickname: "구카모",
     };
   }
   let socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
-  stompClient.value.connect(headers, () => {
-    console.log("Connected to the server");
+
+  await stompClient.value.connect(headers, () => {
+    console.log("스톰프 서버 연결 성공");
     isConnect.value = true;
 
     stompClient.value.subscribe(
@@ -124,6 +125,7 @@ const connect = (type) => {
     );
   });
 };
+
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
   console.log("이벤트 도착!!!!!", eventData.event);
@@ -135,6 +137,7 @@ const handleEvent = (eventData) => {
     console.error("이벤트를 찾을 수 없습니다 이벤트:", eventData.event);
   }
 };
+
 const timerEventHandlers = {
   START: (eventData) => {
     console.log("=====TIMER_START 이벤트 발생=====");
@@ -142,11 +145,17 @@ const timerEventHandlers = {
     const { userId } = eventData;
     const memberTimer = memberTimers.find((timer) => timer.userId === userId);
     if (memberTimer) {
+      console.log(" 아니 해당하는 거 있냐?");
+      
       memberTimer.ranking = eventData.ranking;
       memberTimer.time = eventData.timeSoFar;
       memberTimer.todayTotalTime = eventData.todayTotalTime;
-      memberTimer.memberTimer.status = "START";
+      memberTimer.status = "START";
     }
+    console.log("memberTimers: 변경되나?", memberTimers);
+    console.log("memberTimer: 변경되나?", memberTimer);
+    
+    
   },
   STOP: (eventData) => {
     console.log("=====TIMER_STOP 이벤트 발생=====");
@@ -162,11 +171,19 @@ const timerEventHandlers = {
   },
   END: (eventData) => {
     console.log("=====TIMER_END 이벤트 발생=====");
-    const { userId, nickname } = eventData;
+    
+    const { userId } = eventData;
     const memberTimer = memberTimers.find((timer) => timer.userId === userId);
     if (memberTimer) {
       memberTimer.status = "END";
-      memberTimer.time = 0;
+      memberTimer.timeSoFar = 0;
+      memberTimer.todayTotalTime = eventData.todayTotalTime;
+      memberTimer.ranking = eventData.ranking;
+    }
+  
+    if (myTimerData.userId === userId) {
+      myTimerData.timeSoFar = 0;
+      myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
   },
   ENTRY: (eventData) => {
@@ -211,14 +228,18 @@ const sendMSG = () => {
 };
 // 집중방 나가기
 const disconnectFromServer = () => {
+  console.log("Disconnecting from the server");
   if (stompClient.value) {
     stompClient.value.disconnect();
     isConnect.value = false;
   }
 };
 onMounted(() => {
-  groupMembersTimerDataInit();
   connect();
+  // 1초 뒤에 데이터 받아오기 - 비동기화 문제 해결 필요 backend listener가 오래 동작하는 문제
+  setTimeout(() => {
+    groupMembersTimerDataInit();
+  }, 1000);
 });
 
 onUnmounted(() => {

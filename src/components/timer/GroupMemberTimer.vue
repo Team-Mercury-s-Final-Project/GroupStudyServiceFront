@@ -6,31 +6,52 @@
       <p>오늘의 총 공부시간: {{ timeData.todayTotalTime }}분</p>
       <p>순위: {{ timeData.ranking }}위</p>
     </span>
-    <TimerDisplay :time="timeData.timeSoFar" />
+    <TimerDisplay :time="localTime" />
   </div>
 </template>
 
 <script setup>
-import { defineProps, onMounted, ref } from "vue";
+import { defineProps, onMounted, ref, watch } from "vue";
 import TimerDisplay from "./TimerDisplay.vue";
 const { timeData } = defineProps(["timeData"]);
+const localTime = ref(timeData.timeSoFar);
+const localStatus = ref(timeData.status);
 const interval = ref(null);
-onMounted(() => {
-  eventHandle();
-});
-const eventHandle = () => {
-  console.log(" 이벤트 시작 ");
 
+console.log("그룹원 타이머 데이터: ", timeData);
+
+watch(
+  () => timeData,
+  (newVal, oldVal) => {
+    localTime.value = newVal.timeSoFar;
+    localStatus.value = newVal.status;
+    eventHandle();
+  },
+  { deep: true }
+);
+
+
+const eventHandle = () => {
+  console.log(" 이벤트 시작 GMT",timeData);
+  console.log(" 타이머 ",!interval.value);
+  console.log(" 상태 ",localStatus.value);
+  
   // 타이머 시작
-  if (!interval.value && timeData.status === "START") {
+  if (!interval.value && localStatus.value === "START") {
+    console.log("타이머 시작213");
+    
     interval.value = setInterval(() => {
       localTime.value++;
     }, 1000);
   }
-  // else if (interval.value && timeData.status === "STOP") {
-  //   clearInterval(interval.value);
-  //   interval.value = null;
-  // }
+  else if (interval.value && timeData.status === "STOP") {
+    clearInterval(interval.value);
+    interval.value = null;
+  }else if (interval.value && timeData.status === "END") {
+    clearInterval(interval.value);
+    interval.value = null;
+    localTime.value = 0;
+  }
 };
 </script>
 

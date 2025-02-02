@@ -14,7 +14,7 @@
         <button @click="stop" class="icon-button">
           <i class="fas fa-pause"></i>
         </button>
-        <button @click="reset" class="icon-button">
+        <button @click="end" class="icon-button">
           <i class="fas fa-stop"></i>
         </button>
       </div>
@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, watch, onBeforeUnmount } from "vue";
+import { ref, defineProps, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import TimerDisplay from "./TimerDisplay.vue";
 const route = useRoute();
@@ -33,7 +33,7 @@ const {
   userId,
   nickname,
   todayTotalTime,
-  timeSoFar: time,
+  timeSoFar,
   stompClient,
 } = defineProps([
   "userId",
@@ -43,16 +43,13 @@ const {
   "stompClient",
 ]);
 
-const localTime = ref(time);
+const localTime = ref(timeSoFar);
 // props.time이 변경되면 localTime도 업데이트
 const interval = ref(null);
 const start = () => {
   console.log("MY TIMER START");
 
   if (!interval.value) {
-    interval.value = setInterval(() => {
-      localTime.value++;
-    }, 1000);
     sendStartSign();
   }
 };
@@ -60,23 +57,48 @@ const stop = () => {
   if (interval.value) {
     clearInterval(interval.value);
     interval.value = null;
+    sendStopsign();
   }
 };
-const reset = () => {
-  stop();
-  localTime.value = 0;
+const end = () => {
+  console.log("MY TIMER END");
+  
+  if (interval.value) {
+    clearInterval(interval.value);
+    interval.value = null;
+    localTime.value = 0;
+  }
+  sendEndSign();
 };
 
 const sendStartSign = () => {
   if (stompClient && stompClient.connected) {
-    console.log("Message sent:", userId.value);
-    console.log("Message sent:", userId.toString());
-    console.log("Message sent:", userId.toString());
+    interval.value = setInterval(() => {
+      localTime.value++;
+    }, 1000);
+    console.log("Start Message sent:", userId.value);
     stompClient.send(`/pub/groups/${groupId}/timers/start`, userId.value, {});
   } else {
     console.error("WebSocket is not connected");
   }
 };
+const sendStopsign = () => {
+  if (stompClient && stompClient.connected) {
+    console.log("Stop Message sent:", userId.value);
+    stompClient.send(`/pub/groups/${groupId}/timers/stop`, userId.value, {});
+  } else {
+    console.error("WebSocket is not connected");
+  }
+};
+const sendEndSign = () => {
+  if (stompClient && stompClient.connected) {
+    console.log("End Message sent:", userId.value);
+    stompClient.send(`/pub/groups/${groupId}/timers/end`, userId.value, {});
+  } else {
+    console.error("WebSocket is not connected");
+  }
+};
+
 
 onBeforeUnmount(() => {
   stop(); // stop 함수 호출
