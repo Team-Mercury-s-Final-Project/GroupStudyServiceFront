@@ -82,6 +82,8 @@ export default {
         {},
         (frame) => {
           console.log("Connected: " + frame);
+
+          // 메시지 구독
           this.stompClient.subscribe(
             `/topic/chat.${this.chatRoomId}`,
             (messageOutput) => {
@@ -98,7 +100,7 @@ export default {
                   unreadCount: message.data.unreadCount,
                 });
 
-                // 메시지 읽음 정보 업데이트 요청
+                // 메시지가 화면에 표시되면 읽음 상태 업데이트
                 this.updateReadUsers(message.data.id);
                 console.log("메시지 읽음 정보 업데이트 요청");
               } catch (error) {
@@ -106,23 +108,23 @@ export default {
               }
             }
           );
-
-          // 실시간으로 읽은 사용자 목록 업데이트
+          // 읽음 정보 응답 구독
           this.stompClient.subscribe(
-            `/topic/readCheck.${this.chatRoomId}`,
+            `/topic/readCheck.response.${this.chatRoomId}`,
             (readInfo) => {
               try {
                 const readData = JSON.parse(readInfo.body);
                 console.log("읽은 사용자 정보", readData);
                 const messageIndex = this.messages.findIndex(
-                  (msg) => msg.id === readData.messageId
+                  (msg) => msg.id === readData.chatMessageId
                 );
                 if (messageIndex !== -1) {
+                  // unreadCount를 직접 설정
                   this.messages[messageIndex].unreadCount =
                     readData.unreadCount;
                 }
               } catch (error) {
-                console.error("읽음 정보 파싱 오류:", error);
+                console.error("읽음 정보 파싱 오류 ::", error);
               }
             }
           );
@@ -212,12 +214,10 @@ export default {
         this.newMessage = "";
       }
     },
-
     updateReadUsers(messageId) {
       const readPayload = {
         chatMessageId: messageId,
         chatUserId: this.currentUserId,
-        readCount : this.readCount
       };
 
       if (this.stompClient && this.stompClient.connected) {
