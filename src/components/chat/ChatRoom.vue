@@ -24,7 +24,10 @@
                   <span class="message-timestamp">{{ message.createdAt }}</span>
                 </div>
                 <div class="message-content">
-                  {{ message.content }}
+                  <!-- 이미지인지 확인하는 부분 제거 -->
+                  <span>
+                    {{ message.content }}
+                  </span>
                   <span class="unread-count" v-if="message.unreadCount > 0">
                     {{ message.unreadCount }}
                   </span>
@@ -38,16 +41,21 @@
             <input
               type="file"
               id="file-upload"
-              @change="uploadFile"
+              ref="fileInput"
+              @change="handleFileUpload"
               style="display: none"
             />
             <input
               type="text"
               v-model="newMessage"
-              @keyup.enter="sendMessage"
+              @keyup.enter="uploadFile"
               placeholder="메시지를 입력해주세요"
             />
-            <button @click="sendMessage">보내기</button>
+            <button @click="uploadFile">보내기</button>
+          </div>
+          <div v-if="filePreview" class="file-preview">
+            <img :src="filePreview" alt="파일 미리보기" v-if="isImage" />
+            <p v-else>{{ fileName }}</p>
           </div>
         </div>
       </div>
@@ -76,11 +84,14 @@ export default {
       readCount: 0,
       profileImgUrl: "",
       fileUrl: "",
+      fileType: "",
+      filePreview: "",
+      isImage: false,
     };
   },
 
   mounted() {
-    token = localStorage.getItem("access");
+    const token = localStorage.getItem("access");
     this.chatRoomId = this.$route.params.chatRoomId;
 
     if (token) {
@@ -90,9 +101,12 @@ export default {
 
     this.connectWebSocket();
     this.loadChatHistory();
+    // 이미지 확인 부분 제거됨
   },
 
   methods: {
+    // 이미지 확인 부분 제거됨
+
     connectWebSocket() {
       const socket = new WebSocket(`ws://localhost:8080/chat`);
       this.stompClient = Stomp.over(socket);
@@ -118,6 +132,7 @@ export default {
                   createdAt: new Date(message.data.createdAt).toLocaleString(),
                   profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
+                  // 이미지 확인 부분 제거됨
                 });
 
                 // 메시지가 화면에 표시되면 읽음 상태 업데이트
@@ -183,7 +198,7 @@ export default {
                 content: msg.content,
                 createdAt: new Date(msg.createdAt).toLocaleString(),
                 unreadCount: msg.unreadCount, // unreadCount 추가
-              isImage: this.isImageUrl(msg.content), // 이미지 여부 확인
+                // 이미지 확인 부분 제거됨
               }));
 
               // JWT ID와 같지 않은 데이터의 ID를 receiverId로 설정
@@ -213,13 +228,12 @@ export default {
     },
 
     sendMessage() {
-      //텍스트릅 입력하였는가 / 파일url이 있는가
       if (this.newMessage.trim() !== "" || this.fileUrl) {
         const messageFileDto = {
-          id: null, // id는 backend에서 생성 가능.
+          id: null, // id는 backend에서 생성될 수 있습니다.
           fileUrl: this.fileUrl,
-          fileType: this.file ? this.file.type : null,
-          chatMessageId: null, // chatMessageId는 메시지와 연관된 ID로, backend에서 설정.
+          fileType: this.fileType,
+          chatMessageId: null, // chatMessageId는 메시지와 연관된 ID로, backend에서 설정될 수 있습니다.
         };
 
         const payload = {
@@ -235,11 +249,12 @@ export default {
         if (this.stompClient && this.stompClient.connected) {
           if (this.fileUrl) {
             this.stompClient.send(
-              `/pub/chat/sendFileMessage/${this.chatRoomId}`,
+              `/pub/chat/sendFile/${this.chatRoomId}`,
               {},
               JSON.stringify(payload)
             );
             this.fileUrl = null; // 파일 URL 초기화
+            this.fileType = null; // 파일 타입 초기화
           } else {
             this.stompClient.send(
               `/pub/chat/sendTextMessage/${this.chatRoomId}`,
@@ -259,35 +274,50 @@ export default {
       const file = event.target.files[0];
       if (file) {
         this.file = file;
-        const fileType = file.type;
-        console.log("파일 타입:", fileType);
+        this.fileType = file.type;
+        this.fileName = file.name;
+        console.log("파일 타입:", this.fileType);
+
+        if (this.fileType.startsWith("image/")) {
+          this.isImage = true;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            this.filePreview = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        } else {
+          this.isImage = false;
+          this.filePreview = null;
+        }
       }
     },
-
-    async uploadFile() {
+    uploadFile() {
       if (this.file) {
         try {
           console.log("파일 업로드 시작");
           const formData = new FormData();
           formData.append("file", this.file);
-          const response = await axiosInstance.post("/files/image", formData, {
+          const response = axiosInstance.post("/files/image", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
           });
-          const fileUrl = response.data.url;
+          const fileUrl = response.data.data.url;
           console.log("파일 업로드 완료. URL:", fileUrl);
 
-          this.fileUrl = fileUrl; // 파일 URL 저장
-          this.file = null; // 파일 초기화
+          this.fileUrl = fileUrl;
+          this.file = null;
+          this.filePreview = null;
           this.sendMessage(); // 파일 업로드가 완료되면 sendMessage 함수 호출
         } catch (error) {
           console.error(error);
         }
-      } else {
-        this.sendMessage(); // 파일이 없으면 sendMessage 함수 바로 호출
+      } else if (this.newMessage.trim() !== "") {
+        this.sendMessage(); // 파일이 없고 메시지가 있을 경우 sendMessage 함수 호출
       }
     },
+
+    // 이미지 확인 부분 제거됨
 
     updateReadUsers(messageId) {
       const readPayload = {
@@ -435,5 +465,53 @@ button {
   border-radius: 5px;
   cursor: pointer;
   margin-right: 0.5rem;
+}
+
+.file-preview {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 1000;
+}
+.file-preview img {
+  max-width: 100px;
+  max-height: 100px;
+}
+.file-preview p {
+  margin: 0;
+  padding: 5px 0;
+}
+.message-image {
+  max-width: 200px;
+  max-height: 200px;
+  margin-top: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.file-preview {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 1000;
+}
+.file-preview img {
+  max-width: 100px;
+  max-height: 100px;
+}
+.file-preview p {
+  margin: 0;
+  padding: 5px 0;
 }
 </style>
