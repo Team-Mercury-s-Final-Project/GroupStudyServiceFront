@@ -104,7 +104,7 @@ async function connect(type) {
       nickname: "구카모",
     };
   }
-  let socket = new WebSocket("ws://localhost:8080/timer");
+  const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
 
   await stompClient.value.connect(headers, () => {
@@ -113,7 +113,7 @@ async function connect(type) {
 
     stompClient.value.subscribe(
       // destination 구독 경로
-      `/sub/groups/${groupId.value}/timers`,
+      `/topic/groups.${groupId.value}.timers`,
       // 서버로 부터 온 메시지(payload) 수신 후 실행할 함수
       (payload) => {
         if (payload.body) {
@@ -152,6 +152,10 @@ const timerEventHandlers = {
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.status = "START";
     }
+    if (myTimerData.userId === userId) {
+      myTimerData.timeSoFar = eventData.timeSoFar;
+      myTimerData.todayTotalTime = eventData.todayTotalTime;
+    }
     console.log("memberTimers: 변경되나?", memberTimers);
     console.log("memberTimer: 변경되나?", memberTimer);
     
@@ -167,6 +171,10 @@ const timerEventHandlers = {
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.timeSoFar = eventData.timeSoFar;
       memberTimer.status = "STOP";
+    }
+    if (myTimerData.userId === userId) {
+      myTimerData.timeSoFar = eventData.timeSoFar;
+      myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
   },
   END: (eventData) => {
@@ -218,12 +226,16 @@ const sendMSG = () => {
   if (stompClient.value && stompClient.value.connected) {
     stompClient.value.send(
       // destination
-      `/pub/groups/${groupId.value}/timers/start`,
+      `/pub/groups/${groupId.value}/timers`,
       // body
+      // {},
       myTimerData.userId.toString(),
       // header
       {}
+      // myTimerData.userId.toString()
     );
+    console.log("Message sent");
+    
   }
 };
 // 집중방 나가기
