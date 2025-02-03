@@ -34,11 +34,20 @@
 
         <!-- 그룹 생성 버튼 -->
         <button
-          @click="openCreateGroupModal"
+          @click="openModal('groupForm', 'create')"
           class="ml-auto text-2xl bg-gray-300 px-3 py-1 rounded-md hover:bg-gray-400"
         >
           +
         </button>
+        <!-- 그룹 생성/수정 모달 -->
+        <GroupFormModal
+          v-if="activeModal === 'groupForm'"
+          :visible="true"
+          mode="create"
+          :groupData="newGroupData"
+          @close="closeCreateModal"
+          @submit="createGroup"
+        />
       </div>
 
       <!-- 그룹 목록 -->
@@ -86,9 +95,14 @@
 <script setup>
 import { FwbAvatar } from "flowbite-vue";
 import { ref, onMounted, computed } from "vue";
-// import api from "../api";
+import { useRouter } from "vue-router"; // useRouter 임포트
+import api from "../api";
 import GroupDetailModal from "./GroupDetailModal.vue";
 import axiosInstance from "../api/axiosInstance_test.js";
+import GroupFormModal from "./GroupFormModal.vue";
+
+// 라우터 인스턴스 생성
+const router = useRouter();
 
 const page = ref(0);
 const isLoading = ref(false);
@@ -182,6 +196,67 @@ const fetchGroupDetail = async (id) => {
 const closeModal = () => {
   isModalOpen.value = false;
 };
+
+// ✅ 그룹 생성 모달 불러오기
+
+const activeModal = ref("");
+const modalMode = ref("");
+const newGroupData = ref({
+  name: "",
+  description: "",
+  image: "",
+  maxCapacity: 10,
+  isPublic: true,
+  hasPassword: false,
+  password: "",
+});
+
+function openModal(modalName, mode) {
+  activeModal.value = modalName;
+  modalMode.value = mode;
+}
+
+function closeCreateModal() {
+  activeModal.value = "";
+  modalMode.value = "";
+}
+
+async function createGroup(groupData) {
+  const token = localStorage.getItem("access");
+
+  const payload = {
+    name: groupData.name,
+    description: groupData.description,
+    maxCapacity: groupData.maxCapacity,
+    isPublic: groupData.isPublic,
+    hasPassword: groupData.hasPassword,
+    password: groupData.hasPassword ? groupData.password : null,
+    image: groupData.image,
+  };
+  // 보낼 데이터를 로그에 출력
+  console.log("Payload being sent to API:", payload);
+
+  try {
+    // 백엔드로 그룹 생성 요청
+    // Axios 요청에 Authorization 헤더 추가
+    const response = await api.post("/groups", payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // 토큰 추가
+      },
+    });
+
+    console.log("그룹 생성 성공:", response.data);
+    // API 응답에서 새로 생성된 그룹의 id 추출
+    const newGroupId = response.data.data.id;
+    // 그룹 목록 갱신 로직 추가 가능
+    closeCreateModal();
+    // 생성된 그룹의 상세 페이지로 라우팅 이동
+    router.push(`/groups/${newGroupId}`);
+  } catch (error) {
+    console.error("그룹 생성 실패:", error);
+  }
+}
 
 // ✅ 컴포넌트가 마운트될 때 초기 데이터 가져오기
 onMounted(() => {
