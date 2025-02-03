@@ -13,19 +13,36 @@
                 'other-message': message.senderId !== this.currentUserId,
               }"
             >
-              <div class="message-content">
-                <strong>{{ message.nickName }}</strong
-                >: {{ message.content }}
-              </div>
-              <div class="message-timestamp">
-                {{ message.createdAt }}
-                <span class="unread-count">{{ message.unreadCount }}</span>
+              <img
+                :src="message.profileImgUrl"
+                class="profile-picture"
+                alt="Profile"
+              />
+              <div class="message-details">
+                <div class="message-header">
+                  <strong>{{ message.nickName }}</strong>
+                  <span class="message-timestamp">{{ message.createdAt }}</span>
+                </div>
+                <div class="message-content">
+                  {{ message.content }}
+                  <span class="unread-count" v-if="message.unreadCount > 0">
+                    {{ message.unreadCount }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
           <div v-else class="loading">데이터를 불러오는 중입니다...</div>
           <div class="input-container">
+            <label for="file-upload" class="upload-button">+</label>
             <input
+              type="file"
+              id="file-upload"
+              @change="uploadFile"
+              style="display: none"
+            />
+            <input
+              type="text"
               v-model="newMessage"
               @keyup.enter="sendMessage"
               placeholder="메시지를 입력해주세요"
@@ -57,6 +74,8 @@ export default {
       nickName: "",
       chatRoomType: "DM",
       readCount: 0,
+      profileImgUrl: "",
+      fileUrl: "",
     };
   },
 
@@ -97,6 +116,7 @@ export default {
                   nickName: message.data.nickName || "알 수 없음",
                   content: message.data.messageContent,
                   createdAt: new Date(message.data.createdAt).toLocaleString(),
+                  profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
                 });
 
@@ -159,6 +179,7 @@ export default {
                 id: msg.id,
                 senderId: msg.senderId,
                 nickName: msg.nickName || "알 수 없음",
+                profileImgUrl: msg.profileImgUrl,
                 content: msg.content,
                 createdAt: new Date(msg.createdAt).toLocaleString(),
                 unreadCount: msg.unreadCount, // unreadCount 추가
@@ -191,22 +212,40 @@ export default {
     },
 
     sendMessage() {
-      if (this.newMessage.trim() !== "") {
+      //텍스트릅 입력하였는가 / 파일url이 있는가
+      if (this.newMessage.trim() !== "" || this.fileUrl) {
+        const messageFileDto = {
+          id: null, // id는 backend에서 생성 가능.
+          fileUrl: this.fileUrl,
+          fileType: this.file ? this.file.type : null,
+          chatMessageId: null, // chatMessageId는 메시지와 연관된 ID로, backend에서 설정.
+        };
+
         const payload = {
           chatRoomId: this.chatRoomId,
           senderId: this.currentUserId,
           receiverId: this.receiverId,
           nickName: this.nickName,
-          messageContent: this.newMessage,
+          messageContent: this.newMessage.trim(),
           chatRoomType: this.chatRoomType,
+          messageFiles: this.fileUrl ? [messageFileDto] : [],
         };
 
         if (this.stompClient && this.stompClient.connected) {
-          this.stompClient.send(
-            `/pub/chat/sendTextMessage/${this.chatRoomId}`,
-            {},
-            JSON.stringify(payload)
-          );
+          if (this.fileUrl) {
+            this.stompClient.send(
+              `/pub/chat/sendFileMessage/${this.chatRoomId}`,
+              {},
+              JSON.stringify(payload)
+            );
+            this.fileUrl = null; // 파일 URL 초기화
+          } else {
+            this.stompClient.send(
+              `/pub/chat/sendTextMessage/${this.chatRoomId}`,
+              {},
+              JSON.stringify(payload)
+            );
+          }
         } else {
           console.error("WebSocket is not connected.");
         }
@@ -214,6 +253,41 @@ export default {
         this.newMessage = "";
       }
     },
+
+    handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        this.file = file;
+        const fileType = file.type;
+        console.log("파일 타입:", fileType);
+      }
+    },
+
+    async uploadFile() {
+      if (this.file) {
+        try {
+          console.log("파일 업로드 시작");
+          const formData = new FormData();
+          formData.append("file", this.file);
+          const response = await axiosInstance.post("/files/image", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+          const fileUrl = response.data.url;
+          console.log("파일 업로드 완료. URL:", fileUrl);
+
+          this.fileUrl = fileUrl; // 파일 URL 저장
+          this.file = null; // 파일 초기화
+          this.sendMessage(); // 파일 업로드가 완료되면 sendMessage 함수 호출
+        } catch (error) {
+          console.error(error);
+        }
+      } else {
+        this.sendMessage(); // 파일이 없으면 sendMessage 함수 바로 호출
+      }
+    },
+
     updateReadUsers(messageId) {
       const readPayload = {
         chatMessageId: messageId,
@@ -234,7 +308,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 * {
   margin: 0;
   padding: 0;
@@ -246,24 +320,13 @@ body {
 .layout {
   display: flex;
 }
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 200px;
-  height: 100%;
-  background-color: #444;
-  color: #fff;
-  padding: 1rem;
-}
-
 .main-content {
   margin-left: 200px;
   width: calc(100% - 200px);
 }
 .content {
   background-color: #fff;
-  color: #fff;
+  color: #333;
   padding: 2rem;
   border-radius: 10px;
   margin-top: 3.5rem;
@@ -273,7 +336,7 @@ body {
   height: calc(100vh - 3.5rem);
 }
 .chat-container {
-  background-color: #222;
+  background-color: #f9f9f9;
   padding: 1rem;
   border-radius: 10px;
   width: 100%;
@@ -281,44 +344,95 @@ body {
   height: 80vh;
   display: flex;
   flex-direction: column;
+  border: 1px solid #ddd;
 }
 .messages {
   overflow-y: auto;
   flex-grow: 1;
-  background-color: #222;
   padding: 1rem;
   border-radius: 10px;
 }
 .message {
-  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #e3e3e3;
+  max-width: 75%;
 }
-.message-content {
-  margin: 0.5rem 0;
+.my-message {
+  justify-content: flex-end;
+  background-color: #daf5ff;
+}
+.other-message {
+  justify-content: flex-start;
+}
+.profile-picture {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.message-details {
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  position: relative;
+  max-width: 75%;
+}
+.my-message .message-details {
+  background-color: #fff;
+}
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
 }
 .message-timestamp {
   font-size: 0.8rem;
   color: #888;
 }
+.message-content {
+  display: flex;
+  align-items: center;
+}
+.unread-count {
+  font-size: 0.8rem;
+  color: red;
+  margin-left: 5px;
+}
 .input-container {
   display: flex;
+  align-items: center;
   padding: 0.5rem;
-  background-color: #444;
+  background-color: #fff;
   border-radius: 10px;
   margin-top: 1rem;
 }
-input {
+input[type="text"] {
   flex: 1;
   padding: 0.5rem;
-  border: none;
+  border: 1px solid #ddd;
   border-radius: 5px;
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
 }
 button {
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 5px;
-  margin-left: 0.5rem;
-  background-color: #f7c02b;
-  color: #333;
+  background-color: #007bff;
+  color: #fff;
   cursor: pointer;
+}
+.upload-button {
+  background-color: #007bff;
+  color: #fff;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 0.5rem;
 }
 </style>
