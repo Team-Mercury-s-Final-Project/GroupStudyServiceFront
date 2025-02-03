@@ -1,33 +1,19 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomePage from "../pages/HomePage.vue";
 import GroupList from "../pages/GroupList.vue";
-import NextPage from "../pages/NextPage.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
-import TestPage from "../pages/TestPage.vue"; // TestPage를 import
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
 import { handleOAuthCallback } from "../api/authentication";
-// import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
-// axios
-// import axiosInstance from "../api/axiosInstance";
 
 const routes = [
-  // {
-  //   path: "/",
-  //   name: "Home",
-  //   component: HomePage, // 기본 페이지
-  // },
+
   {
     path: "/",
     name: "Home",
     component: GroupList, // 기본 페이지
   },
-  {
-    path: "/next",
-    name: "Next",
-    component: NextPage, // 버튼을 통해 이동할 페이지
-  },
+
   {
     path: "/groups/:groupId", // :groupId로 pathVariable 정의
     name: "GroupDetail",

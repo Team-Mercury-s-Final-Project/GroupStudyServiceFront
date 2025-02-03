@@ -76,7 +76,7 @@
 import { computed, ref } from "vue";
 import { FwbModal, FwbInput, FwbButton } from "flowbite-vue";
 import { useRouter } from "vue-router";
-import api from "../api";
+import axiosInstance from "../api/axiosInstance_test";
 
 const props = defineProps({
   isOpen: Boolean,
@@ -106,7 +106,7 @@ const joinGroup = async () => {
       requestData.password = password.value; // 비밀번호가 있으면 requestBody에 추가
     }
 
-    const response = await api.post(
+    const response = await axiosInstance.post(
       `/groups/${groupId}/join`,
       requestData,
       {

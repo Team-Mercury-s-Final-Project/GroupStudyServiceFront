@@ -194,7 +194,7 @@ import {
 import GroupFormModal from "./GroupFormModal.vue";
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
-import api from "../api";
+import axiosInstance from "../api/axiosInstance_test";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";
@@ -222,7 +222,7 @@ const notices = ref([]); // 공지사항 리스트
 async function deleteNotice(noticeId) {
   if (confirm("정말로 이 공지사항을 삭제하시겠습니까?")) {
     try {
-      await api.delete(`/groups/${groupId}/notices/${noticeId}`, {
+      await axiosInstance.delete(`/groups/${groupId}/notices/${noticeId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -239,7 +239,7 @@ async function deleteNotice(noticeId) {
 // API 호출하여 공지사항 가져오기
 async function fetchNotices() {
   try {
-    const response = await api.get(`/groups/${groupId}/notices`, {
+    const response = await axiosInstance.get(`/groups/${groupId}/notices`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -277,11 +277,15 @@ function closeModal() {
 async function addNotice(newNotice) {
   try {
     // API 요청 보내기
-    const response = await api.post(`/groups/${groupId}/notices`, newNotice, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosInstance.post(
+      `/groups/${groupId}/notices`,
+      newNotice,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     if (response.status === 200) {
       notices.value.push(response.data);
       alert("공지사항이 추가되었습니다!");
@@ -309,7 +313,7 @@ async function updateNotice(selectedNotice) {
     const token = localStorage.getItem("access");
 
     // API 요청
-    const response = await api.put(
+    const response = await axiosInstance.put(
       `/groups/${groupId}/notices/${noticeId}`,
       selectedNotice,
       {
@@ -347,7 +351,7 @@ const groupData = ref(null);
 // API 호출
 onMounted(async () => {
   try {
-    const response = await api.get(`/groups/${groupId}`);
+    const response = await axiosInstance.get(`/groups/${groupId}`);
     groupData.value = response.data.data; // API 응답 저장
     console.log(groupData.value);
   } catch (error) {
@@ -357,7 +361,10 @@ onMounted(async () => {
 // 그룹 수정 요청 함수
 async function updateGroup() {
   try {
-    const response = await api.put(`/groups/${groupId}`, groupData.value);
+    const response = await axiosInstance.put(
+      `/groups/${groupId}`,
+      groupData.value
+    );
     console.log("변경 완료:", response.data);
     closeModal(); // 모달 닫기
   } catch (error) {
