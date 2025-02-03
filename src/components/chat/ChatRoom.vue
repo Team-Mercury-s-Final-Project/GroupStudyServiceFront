@@ -183,6 +183,7 @@ export default {
                 content: msg.content,
                 createdAt: new Date(msg.createdAt).toLocaleString(),
                 unreadCount: msg.unreadCount, // unreadCount 추가
+              isImage: this.isImageUrl(msg.content), // 이미지 여부 확인
               }));
 
               // JWT ID와 같지 않은 데이터의 ID를 receiverId로 설정
