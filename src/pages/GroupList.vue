@@ -86,8 +86,9 @@
 <script setup>
 import { FwbAvatar } from "flowbite-vue";
 import { ref, onMounted, computed } from "vue";
-import api from "../api";
+// import api from "../api";
 import GroupDetailModal from "./GroupDetailModal.vue";
+import axiosInstance from "../api/axiosInstance_test.js";
 
 const page = ref(0);
 const isLoading = ref(false);
@@ -122,7 +123,7 @@ const fetchGroups = async () => {
       orderParam = "asc";
     }
 
-    const response = await api.get("/api/groups", {
+    const response = await axiosInstance.get("/groups", {
       params: {
         keyword: searchText.value,
         sort: sortParam,

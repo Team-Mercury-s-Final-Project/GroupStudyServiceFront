@@ -35,7 +35,7 @@
           fill="none"
           stroke-linecap="round"
           stroke-linejoin="round"
-          @click="showModal"
+          @click="openModal('groupEdit')"
         >
           <path stroke="none" d="M0 0h24v24H0z" />
           <path
@@ -44,7 +44,7 @@
           <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
           <line x1="16" y1="5" x2="19" y2="8" />
         </svg>
-        <fwb-modal v-if="isShowModal" @close="closeModal">
+        <fwb-modal v-if="activeModal === 'groupEdit'" @close="closeModal">
           <template #header>
             <div class="flex items-center text-lg">그룹 정보 수정</div>
           </template>
@@ -169,8 +169,21 @@
         </div>
       </fwb-card>
       <fwb-card class="card">
-        <!-- 버튼 그룹 -->
-        <div class="title">공지사항</div>
+        <div class="title flex items-center justify-between relative">
+          <!-- 중앙에 위치한 공지사항 -->
+          <span class="absolute left-1/2 -translate-x-1/2">공지사항</span>
+          <!-- 오른쪽 상단 버튼 -->
+          <button
+            @click="openModal('noticeCreate')"
+            class="w-8 h-8 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center justify-center text-lg ml-auto"
+          >
+            +
+          </button>
+          <NoticeCreateModal
+            :visible="activeModal === 'noticeCreate'"
+            @close="closeModal"
+          />
+        </div>
         <div class="card-content">
           <p>1 월 1일 어쩌구 저쩌구</p>
           <p>1 월 1일 어쩌구 저쩌구</p>
@@ -180,6 +193,7 @@
         </div>
       </fwb-card>
     </div>
+
     <div class="side-by-side-container">
       <fwb-card class="card">
         <!-- 버튼 그룹 -->
@@ -222,6 +236,7 @@ import {
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import api from "../api";
+import NoticeCreateModal from "./NoticeCreateModal.vue";
 // --------------------modal start----------------
 // maxCapacity 유효성 검사
 const isMaxCapacityValid = computed(() => {
@@ -229,13 +244,16 @@ const isMaxCapacityValid = computed(() => {
 });
 const isPublic = ref();
 const hasPassword = ref();
-const isShowModal = ref(false);
+
+// 단일 상태 변수로 모달 관리
+const activeModal = ref(null);
+
+function openModal(modalName) {
+  activeModal.value = modalName; // 열고자 하는 모달의 이름을 설정
+}
 
 function closeModal() {
-  isShowModal.value = false;
-}
-function showModal() {
-  isShowModal.value = true;
+  activeModal.value = null; // 모든 모달을 닫음
 }
 
 // Router에서 동적 파라미터(groupId)를 가져옴
