@@ -99,7 +99,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import api from "../api";
+import axiosInstance from "../api/axiosInstance_test";
 
 import {
   FwbAvatar,
@@ -160,7 +160,7 @@ async function handleFileUpload(event) {
     formData.append("file", file);
 
     // 이미지 업로드 요청 전송
-    const response = await api.post("/files/image", formData, {
+    const response = await axiosInstance.post("/files/image", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
