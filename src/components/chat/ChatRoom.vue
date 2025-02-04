@@ -161,7 +161,7 @@ export default {
               }
             }
           );
-          // 읽음 정보 응답 구독
+          // 읽음 정보 응답 구독. 메시지를 받을 때 있었다면 '읽음'처리.
           this.stompClient.subscribe(
             `/topic/readCheck.response.${this.chatRoomId}`,
             (readInfo) => {

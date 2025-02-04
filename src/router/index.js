@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
-import TestPage from "../pages/TestPage.vue"; // TestPage를 import
 import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 import ChatRoomList from "../pages/ChatRoomList.vue";
 import LoginPage from "../pages/LoginPage.vue";
@@ -13,9 +12,7 @@ import { handleOAuthCallback } from "../api/authentication";
 // axios
 // import axiosInstance from "../api/axiosInstance";
 
-
 const routes = [
-
   {
     path: "/",
     name: "Home",

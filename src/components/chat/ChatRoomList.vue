@@ -19,11 +19,11 @@
       <ul v-if="activeTab === 'DM'">
         <li v-for="chat in dmList" :key="chat.id" class="chat-item">
           <img
-            :src="chat.recentMessage.profilePicture"
+            :src="chat.recentMessage.profileImgUrl"
             class="profile-picture"
           />
           <div class="chat-details">
-            <span class="username">{{ chat.recentMessage.nickname }}</span>
+            <span class="username">{{ chat.recentMessage.nickName }}</span>
             <span class="message-preview">{{
               chat.recentMessage.content
             }}</span>
@@ -31,29 +31,29 @@
           <span class="timestamp">{{
             formatTimestamp(chat.recentMessage.createdAt)
           }}</span>
-          <span v-if="chat.recentMessage.unreadCount > 0" class="unread">
-            {{ chat.recentMessage.unreadCount }}
-          </span>
+          <span v-if="chat.unreadMessages.length > 0" class="unread">{{
+            chat.unreadMessages.length
+          }}</span>
         </li>
       </ul>
       <ul v-else>
         <li v-for="chat in groupList" :key="chat.id" class="chat-item">
           <img
-            :src="chat.recentMessage.profilePicture"
+            :src="chat.recentMessage.profileImgUrl"
             class="profile-picture"
           />
           <div class="chat-details">
-            <span class="username">{{ chat.recentMessage.nickname }}</span>
+            <span class="username">{{ chat.recentMessage.nickName }}</span>
             <span class="message-preview">{{
               chat.recentMessage.content
             }}</span>
           </div>
           <span class="timestamp">{{
-            formatTimestamp(chat.recentMessage.timestamp)
+            formatTimestamp(chat.recentMessage.createdAt)
           }}</span>
-          <span v-if="chat.recentMessage.unreadCount > 0" class="unread">
-            {{ chat.recentMessage.unreadCount }}
-          </span>
+          <span v-if="chat.unreadMessages.length > 0" class="unread">{{
+            chat.unreadMessages.length
+          }}</span>
         </li>
       </ul>
     </div>
@@ -141,41 +141,29 @@ export default {
 };
 </script>
 
-<style scoped>
+<style>
 .chat-container {
-  display: flex;
-  flex-direction: column;
-  width: 300px;
-  margin: 0 auto;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+  width: 400px; /* 채팅 목록을 더 넓게 */
 }
 
 .tab-buttons {
   display: flex;
   justify-content: space-around;
-  background-color: #007bff;
 }
 
 .tab-buttons button {
   flex: 1;
   padding: 10px;
-  color: white;
-  background: none;
-  border: none;
   cursor: pointer;
 }
 
-.tab-buttons button.active {
-  background-color: #0056b3;
-  font-weight: bold;
+.tab-buttons .active {
+  background-color: #007bff;
+  color: white;
 }
 
 .chat-list {
-  padding: 10px;
-  background-color: #fff;
+  margin-top: 10px;
 }
 
 .chat-item {
@@ -193,7 +181,7 @@ export default {
 }
 
 .chat-details {
-  flex-grow: 1;
+  flex: 1;
 }
 
 .username {
@@ -201,16 +189,20 @@ export default {
 }
 
 .message-preview {
+  display: block;
   color: #666;
 }
 
 .timestamp {
-  font-size: 0.8em;
+  margin-left: 10px;
   color: #999;
 }
 
 .unread {
-  color: red;
-  font-weight: bold;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 5px 10px;
+  margin-left: 10px;
 }
 </style>
