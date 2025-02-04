@@ -9,8 +9,8 @@
               v-for="(message, index) in messages"
               :key="index"
               :class="{
-                'my-message': message.senderId === this.currentUserId,
-                'other-message': message.senderId !== this.currentUserId,
+                'my-message': message.senderId === currentUserId,
+                'other-message': message.senderId !== currentUserId,
               }"
             >
               <img
@@ -24,10 +24,22 @@
                   <span class="message-timestamp">{{ message.createdAt }}</span>
                 </div>
                 <div class="message-content">
-                  <!-- 이미지인지 확인하는 부분 제거 -->
-                  <span>
+                  <div v-if="isImageUrl(message.content)">
+                    <a
+                      :href="message.content"
+                      target="_blank"
+                      class="link-preview"
+                    >
+                      <img
+                        :src="message.content"
+                        alt="미리보기 이미지"
+                        class="preview-image"
+                      />
+                    </a>
+                  </div>
+                  <div v-else>
                     {{ message.content }}
-                  </span>
+                  </div>
                   <span class="unread-count" v-if="message.unreadCount > 0">
                     {{ message.unreadCount }}
                   </span>
@@ -101,12 +113,18 @@ export default {
 
     this.connectWebSocket();
     this.loadChatHistory();
-    // 이미지 확인 부분 제거됨
   },
 
   methods: {
-    // 이미지 확인 부분 제거됨
-
+    // 이미지 확인 부분
+    // isGoogleStorageUrl(url) {
+    //   return url.startsWith("https://storage.googleapis.com/");
+    // },
+    isImageUrl(url) {
+      return url.startsWith(
+        "https://storage.googleapis.com/mercury-star-bucket/"
+      );
+    },
     connectWebSocket() {
       const socket = new WebSocket(`ws://localhost:8080/chat`);
       this.stompClient = Stomp.over(socket);
@@ -291,13 +309,13 @@ export default {
         }
       }
     },
-    uploadFile() {
+    async uploadFile() {
       if (this.file) {
         try {
           console.log("파일 업로드 시작");
           const formData = new FormData();
           formData.append("file", this.file);
-          const response = axiosInstance.post("/files/image", formData, {
+          const response = await axiosInstance.post("/files/image", formData, {
             headers: {
               "Content-Type": "multipart/form-data",
             },
@@ -513,5 +531,10 @@ button {
 .file-preview p {
   margin: 0;
   padding: 5px 0;
+}
+.preview-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 5px;
 }
 </style>
