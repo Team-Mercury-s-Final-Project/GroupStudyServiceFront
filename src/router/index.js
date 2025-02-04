@@ -1,10 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
 import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
+import TestPage from "../pages/TestPage.vue"; // TestPage를 import
+import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
+import ChatRoomList from "../pages/ChatRoomList.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
-import axiosInstance from "../api/axiosInstance";
+import axiosInstance from "../api/axiosInstance_test";
+// import axiosInstance from "../api/axiosInstance";
 import { handleOAuthCallback } from "../api/authentication";
+// import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
+// axios
+// import axiosInstance from "../api/axiosInstance";
+
 
 const routes = [
 
@@ -38,12 +46,21 @@ const routes = [
     name: "userinfoPage",
     component: userinfoPage, // 소셜 로그인 페이지
   },
+  {
+    path: "/chats/:chatRoomId",
+    name: "ChattingRoom",
+    component: ChatPage,
+  },
+  {
+    path: "/users/:userId/chatRoomList",
+    name: "ChatRoomList",
+    component: ChatRoomList,
+  },
 ];
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
-
 // 요청 블랙리스트
 const publicPageList = [
   "/",
@@ -51,7 +68,11 @@ const publicPageList = [
   "/oauth2/callback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
+  "/groups/1",
+  "/chats/1",
+  "/groups/1/focusroom",
 ];
+
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
 ];
