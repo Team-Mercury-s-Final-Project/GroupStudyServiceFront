@@ -35,7 +35,7 @@
           fill="none"
           stroke-linecap="round"
           stroke-linejoin="round"
-          @click="openModal('groupEdit')"
+          @click="openModal('groupForm', 'edit')"
         >
           <path stroke="none" d="M0 0h24v24H0z" />
           <path
@@ -44,98 +44,15 @@
           <path d="M9 15h3l8.5 -8.5a1.5 1.5 0 0 0 -3 -3l-8.5 8.5v3" />
           <line x1="16" y1="5" x2="19" y2="8" />
         </svg>
-        <fwb-modal v-if="activeModal === 'groupEdit'" @close="closeModal">
-          <template #header>
-            <div class="flex items-center text-lg">그룹 정보 수정</div>
-          </template>
-          <template #body>
-            <fwb-input
-              v-model="groupData.name"
-              placeholder="그룹 이름을 입력하세요"
-              label="그룹 이름"
-            />
-            <br />
-            <fwb-input
-              v-model="groupData.description"
-              placeholder="그룹에 대한 소갯말를 입력하세요"
-              label="소개글"
-            />
-            <br />
-            <fwb-file-input v-model="groupData.image" label="Upload file">
-              <p class="!mt-1 text-sm text-gray-500 dark:text-gray-300">
-                JPG, JPEG, PNG, WEBP, SVG, BMP
-              </p>
-            </fwb-file-input>
-            <br />
-            <fwb-input
-              v-model.number="groupData.maxCapacity"
-              placeholder=""
-              label="최대인원"
-              type="number"
-            />
-            <p v-if="!isMaxCapacityValid" class="text-sm text-red-500">
-              최대인원은 2에서 50 사이여야 합니다.
-            </p>
-            <br />
-            <div class="radio-container">
-              <div class="radio-row">
-                <p class="label text-sm">공개 여부</p>
-                <div class="radio-group">
-                  <fwb-radio
-                    v-model="groupData.isPublic"
-                    label="공개"
-                    value="true"
-                  />
-                  <fwb-radio
-                    v-model="groupData.isPublic"
-                    label="비공개"
-                    value="false"
-                  />
-                </div>
-              </div>
-            </div>
-            <br />
-            <div class="radio-container">
-              <div class="radio-row">
-                <p class="label text-sm">비밀번호 여부</p>
-                <div class="radio-group">
-                  <fwb-radio
-                    v-model="groupData.hasPassword"
-                    label="있음"
-                    :value="true"
-                  />
-                  <fwb-radio
-                    v-model="groupData.hasPassword"
-                    label="없음"
-                    :value="false"
-                  />
-                </div>
-              </div>
-            </div>
-            <br />
-            <fwb-input
-              v-if="groupData.hasPassword === 'true'"
-              v-model="groupData.password"
-              placeholder="비밀번호 입력"
-              label="비밀번호"
-            />
-          </template>
 
-          <template #footer>
-            <div class="flex justify-between">
-              <fwb-button @click="closeModal" color="alternative">
-                나가기
-              </fwb-button>
-              <fwb-button
-                :disabled="!isMaxCapacityValid"
-                @click="updateGroup"
-                color="green"
-              >
-                변경하기
-              </fwb-button>
-            </div>
-          </template>
-        </fwb-modal>
+        <!-- CreateGroupModal 컴포넌트 -->
+        <GroupFormModal
+          :visible="activeModal === 'groupForm'"
+          :groupData="groupData"
+          mode="edit"
+          @close="closeModal"
+          @submit="updateGroup"
+        />
       </div>
       <!-----------------------modal end------------------------------------>
     </div>
@@ -168,30 +85,74 @@
           <p>placeholder</p>
         </div>
       </fwb-card>
+      <!-- 공지사항 시작 -->
       <fwb-card class="card">
         <div class="title flex items-center justify-between relative">
           <!-- 중앙에 위치한 공지사항 -->
           <span class="absolute left-1/2 -translate-x-1/2">공지사항</span>
           <!-- 오른쪽 상단 버튼 -->
           <button
-            @click="openModal('noticeCreate')"
+            @click="openCreateModal"
             class="w-8 h-8 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center justify-center text-lg ml-auto"
           >
             +
           </button>
-          <NoticeCreateModal
-            :visible="activeModal === 'noticeCreate'"
-            @close="closeModal"
-          />
         </div>
-        <div class="card-content">
-          <p>1 월 1일 어쩌구 저쩌구</p>
-          <p>1 월 1일 어쩌구 저쩌구</p>
-          <p>1 월 1일 어쩌구 저쩌구</p>
-          <p>1 월 1일 어쩌구 저쩌구</p>
-          <p>1 월 1일 어쩌구 저쩌구</p>
+        <!-- 공지사항 리스트에 스크롤 추가 -->
+        <div class="card-content space-y-2 overflow-y-auto max-h-48 p-2">
+          <div v-for="notice in notices" :key="notice.id" class="p-2 border-b">
+            <div class="flex justify-between items-center">
+              <h4 class="font-bold" @click="openNoticeDetail(notice)">
+                {{ notice.title }}
+              </h4>
+
+              <!-- 수정 및 삭제 버튼 -->
+              <div class="flex items-center space-x-2">
+                <button
+                  @click="openEditModal(notice)"
+                  class="text-blue-500 hover:underline text-sm"
+                >
+                  수정
+                </button>
+                <button
+                  @click="deleteNotice(notice.id)"
+                  class="text-red-500 hover:underline text-sm"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+            <span class="text-xs text-gray-500"
+              >작성자: {{ notice.writer }}</span
+            >
+            <span class="text-xs text-gray-500 ml-4"
+              >작성일: {{ new Date(notice.createdAt).toLocaleString() }}</span
+            >
+          </div>
         </div>
       </fwb-card>
+
+      <!-- 공지사항 작성 모달 -->
+      <NoticeCreateModal
+        :visible="activeModal === 'noticeCreate'"
+        @close="closeModal"
+        @submit="addNotice"
+      />
+      <!-- 공지사항 수정 모달 -->
+      <NoticeEditModal
+        v-if="selectedNotice"
+        :visible="activeModal === 'noticeEdit'"
+        :noticeData="selectedNotice"
+        @close="closeModal"
+        @submit="updateNotice"
+      />
+      <!-- 공지사항 상세보기 모달 -->
+      <NoticeDetailModal
+        v-if="selectedNoticeDetail"
+        :visible="activeModal === 'noticeDetail'"
+        :notice="selectedNoticeDetail"
+        @close="closeModal"
+      />
     </div>
 
     <div class="side-by-side-container">
@@ -230,18 +191,19 @@ import {
   FwbFileInput,
   FwbRadio,
 } from "flowbite-vue";
-
+import GroupFormModal from "./GroupFormModal.vue";
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
-import api from "../api";
+import axiosInstance from "../api/axiosInstance_test";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
+import NoticeEditModal from "./NoticeEditModal.vue";
+import NoticeDetailModal from "./NoticeDetailModal.vue";
+
 // --------------------modal start----------------
-// maxCapacity 유효성 검사
-const isMaxCapacityValid = computed(() => {
-  return groupData.value.maxCapacity >= 2 && groupData.value.maxCapacity <= 50;
-});
-const isPublic = ref();
-const hasPassword = ref();
+// content 자르기
+function truncateText(text, length) {
+  return text.length > length ? text.substring(0, length) + "..." : text;
+}
 
 // 단일 상태 변수로 모달 관리
 const activeModal = ref(null);
@@ -249,14 +211,139 @@ const activeModal = ref(null);
 function openModal(modalName) {
   activeModal.value = modalName; // 열고자 하는 모달의 이름을 설정
 }
-
-function closeModal() {
-  activeModal.value = null; // 모든 모달을 닫음
-}
-
+const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
 // Router에서 동적 파라미터(groupId)를 가져옴
 const route = useRoute();
 const groupId = route.params.groupId; // pathVariable에서 groupId 추출
+const token = localStorage.getItem("access");
+
+const notices = ref([]); // 공지사항 리스트
+
+async function deleteNotice(noticeId) {
+  if (confirm("정말로 이 공지사항을 삭제하시겠습니까?")) {
+    try {
+      await axiosInstance.delete(`/groups/${groupId}/notices/${noticeId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // 삭제 후 공지사항 리스트 갱신
+      notices.value = notices.value.filter((n) => n.id !== noticeId);
+      fetchNotices();
+    } catch (error) {
+      console.error("공지사항 삭제 실패:", error);
+      alert("공지사항 삭제에 실패했습니다.");
+    }
+  }
+}
+// API 호출하여 공지사항 가져오기
+async function fetchNotices() {
+  try {
+    const response = await axiosInstance.get(`/groups/${groupId}/notices`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    notices.value = response.data.data; // 응답 데이터 저장
+  } catch (error) {
+    console.error("공지사항 가져오기 중 오류 발생:", error);
+  }
+}
+// 모달 열기 함수들
+function openCreateModal() {
+  activeModal.value = "noticeCreate";
+}
+const selectedNotice = ref({ title: "", content: "" });
+function openEditModal(notice) {
+  console.log("받아온 공지사항 데이터:", notice); // 확인용 콘솔 출력
+  selectedNotice.value = notice;
+  activeModal.value = "noticeEdit";
+}
+// 새로 추가: 공지사항 상세보기 모달 열기 함수
+function openNoticeDetail(notice) {
+  selectedNoticeDetail.value = notice;
+  activeModal.value = "noticeDetail";
+}
+
+// 모달 닫기 함수 (모든 모달 닫기)
+function closeModal() {
+  activeModal.value = "";
+  selectedNotice.value = null;
+  selectedNoticeDetail.value = null;
+}
+// 공지사항 보기
+
+// 공지사항 추가
+async function addNotice(newNotice) {
+  try {
+    // API 요청 보내기
+    const response = await axiosInstance.post(
+      `/groups/${groupId}/notices`,
+      newNotice,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    if (response.status === 200) {
+      notices.value.push(response.data);
+      alert("공지사항이 추가되었습니다!");
+      // 공지사항 리스트 갱신
+      // 모달 닫기
+      activeModal.value = "";
+      await fetchNotices();
+    } else {
+      alert("공지사항 추가 실패: " + response.data.message);
+    }
+  } catch (error) {
+    console.error("공지사항 추가 중 오류 발생:", error);
+    alert(
+      "오류가 발생했습니다: " + (error.response?.data?.message || error.message)
+    );
+  }
+  // closeModal();
+}
+
+// 공지사항 수정
+async function updateNotice(selectedNotice) {
+  try {
+    const noticeId = selectedNotice.id;
+    console.log("공지사항 ID:", noticeId); // 로그 출력 확인
+    const token = localStorage.getItem("access");
+
+    // API 요청
+    const response = await axiosInstance.put(
+      `/groups/${groupId}/notices/${noticeId}`,
+      selectedNotice,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      alert("공지사항이 수정되었습니다!");
+
+      // 공지사항 리스트 다시 가져오기
+      await fetchNotices();
+
+      // 모달 닫기
+      closeModal();
+    } else {
+      alert("공지사항 수정 실패: " + response.data.message);
+    }
+  } catch (error) {
+    console.error("공지사항 수정 중 오류 발생:", error);
+    alert("오류가 발생했습니다.");
+  }
+}
+
+// 컴포넌트가 마운트되면 API 호출
+onMounted(() => {
+  fetchNotices();
+});
 
 // 그룹 데이터 상태
 const groupData = ref(null);
@@ -264,7 +351,7 @@ const groupData = ref(null);
 // API 호출
 onMounted(async () => {
   try {
-    const response = await api.get(`/groups/${groupId}`);
+    const response = await axiosInstance.get(`/groups/${groupId}`);
     groupData.value = response.data.data; // API 응답 저장
     console.log(groupData.value);
   } catch (error) {
@@ -274,7 +361,10 @@ onMounted(async () => {
 // 그룹 수정 요청 함수
 async function updateGroup() {
   try {
-    const response = await api.put(`/groups/${groupId}`, groupData.value);
+    const response = await axiosInstance.put(
+      `/groups/${groupId}`,
+      groupData.value
+    );
     console.log("변경 완료:", response.data);
     closeModal(); // 모달 닫기
   } catch (error) {
