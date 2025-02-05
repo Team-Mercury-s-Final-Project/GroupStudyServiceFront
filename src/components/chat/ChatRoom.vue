@@ -70,6 +70,11 @@
             <p v-else>{{ fileName }}</p>
           </div>
         </div>
+        <!-- 여기서 시작 -->
+        <button @click="goToChatRoomList" class="chat-room-list-button">
+          채팅 목록으로 이동
+        </button>
+        <!-- 여기서 끝 -->
       </div>
     </div>
   </div>
@@ -120,6 +125,10 @@ export default {
     // isGoogleStorageUrl(url) {
     //   return url.startsWith("https://storage.googleapis.com/");
     // },
+    //채팅목록으로 이동
+    async goToChatRoomList() {
+      this.$router.push(`/users/${this.currentUserId}/chatRoomList`);
+    },
     isImageUrl(url) {
       return url.startsWith(
         "https://storage.googleapis.com/mercury-star-bucket/"
@@ -178,6 +187,21 @@ export default {
                 }
               } catch (error) {
                 console.error("읽음 정보 파싱 오류 ::", error);
+              }
+            }
+          );
+          //채팅목록에서 다중 읽음 처리 응답 구독. 클라이언트단에서 정보를 받아 읽음 숫자 - 1 처리
+          this.stompClient.subscribe(
+            `/topic/readCheck.bulkResponse.${this.chatRoomId}`,
+            (updatedMessageIds) => {
+              try {
+                const readData = JSON.parse(updatedMessageIds.body);
+                console.log("읽음 처리된 메시지 아이디들", readData);
+              } catch (error) {
+                console.error(
+                  "읽음 처리된 메시지 아이디들을 가져오는데 에러 발생",
+                  error
+                );
               }
             }
           );
