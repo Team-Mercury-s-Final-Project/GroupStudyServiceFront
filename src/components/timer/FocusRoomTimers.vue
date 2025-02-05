@@ -58,7 +58,7 @@ export default {
             }
         },
     connect() {
-        let socket = new WebSocket('ws://localhost:8080/timer');
+        let socket = new WebSocket('ws://34.22.98.26:8080/timer');
         this.stompClient = Stomp.over(socket);
 
         this.stompClient.connect({}, () => {

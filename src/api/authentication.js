@@ -19,7 +19,7 @@ const getCookie = (key) => {
 export const oauthLogin = async (provider) => {
   // export 추가
   try {
-    const baseUrl = "http://localhost:8080/oauth2/authorization";
+    const baseUrl = "http://34.22.98.26:8080/oauth2/authorization";
     const redirectUrl = `${baseUrl}/${provider}`;
     window.location.href = redirectUrl;
   } catch (error) {
