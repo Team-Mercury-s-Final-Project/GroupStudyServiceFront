@@ -6,6 +6,9 @@ WORKDIR /app
 COPY ./package.json ./
 RUN npm install
 
+# 환경 변수 설정
+ENV $(cat .env | xargs)
+
 COPY ./ ./
 CMD ["npm", "start"]
 
