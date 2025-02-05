@@ -222,6 +222,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import {
   FwbAvatar,
@@ -236,8 +237,9 @@ import {
   FwbSpinner,
 } from "flowbite-vue";
 import GroupFormModal from "./GroupFormModal.vue";
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
+import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
 import axiosInstance from "../api/axiosInstance_test";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
@@ -277,6 +279,48 @@ async function exitGroup() {
     isLoading.value = false; // 로딩 종료
   }
 }
+
+
+/** 그룹 페이지 입장 SSE 연결 */
+let eventSource = null;
+
+const connectSSE = () => {
+  eventSource = new EventSourcePolyfill(
+    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  eventSource.addEventListener("connect", (event) => {
+    console.log("SSE connect:", event.data);
+  });
+
+  eventSource.addEventListener("heartbeat", (event) => {
+    console.log("heartbeat 수신:", event.data);
+  });
+
+  eventSource.onerror = (error) => {
+    console.error("SSE 연결 오류:", error);
+    eventSource.close();
+  };
+
+  return eventSource;
+}
+
+const closeSSE = () => {
+  if (eventSource && typeof eventSource.close === "function") {
+    console.log("SSE 연결 종료");
+    eventSource.close();
+  }
+};
+
+onUnmounted(() => {
+  alert("나가기");
+  closeSSE();
+  window.removeEventListener("beforeunload", closeSSE);
+});
+
 
 // --------------------modal start----------------
 // content 자르기
@@ -461,6 +505,7 @@ async function updateNotice(selectedNotice) {
 
 // 컴포넌트가 마운트되면 API 호출
 onMounted(() => {
+  eventSource = connectSSE();
   fetchGroup();
   fetchNotices();
 });

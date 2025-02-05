@@ -126,7 +126,7 @@ export default {
 
 /* UserList 스타일 */
 .user-list {
-  width: 200px;
+  width: 230px;
   background-color: #eaeaea;
   border-left: 1px solid #ccc;
   transition: all 0.3s ease; /* 애니메이션 추가 */
