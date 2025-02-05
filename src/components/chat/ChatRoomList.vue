@@ -17,7 +17,12 @@
 
     <div class="chat-list">
       <ul v-if="activeTab === 'DM'">
-        <li v-for="chat in dmList" :key="chat.id" class="chat-item">
+        <li
+          v-for="chat in dmList"
+          :key="chat.id"
+          class="chat-item"
+          @dblclick="goToChatRoom(chat.id, chat.unreadMessages)"
+        >
           <img
             :src="chat.recentMessage.profileImgUrl"
             class="profile-picture"
@@ -28,16 +33,21 @@
               chat.recentMessage.content
             }}</span>
           </div>
-          <span class="timestamp">{{
-            formatTimestamp(chat.recentMessage.createdAt)
-          }}</span>
-          <span v-if="chat.unreadMessages.length > 0" class="unread">{{
-            chat.unreadMessages.length
-          }}</span>
+          <span class="timestamp">
+            {{ formatTimestamp(chat.recentMessage.createdAt) }}
+          </span>
+          <span v-if="chat.unreadMessages.length > 0" class="unread">
+            {{ chat.unreadMessages.length }}
+          </span>
         </li>
       </ul>
       <ul v-else>
-        <li v-for="chat in groupList" :key="chat.id" class="chat-item">
+        <li
+          v-for="chat in groupList"
+          :key="chat.id"
+          class="chat-item"
+          @dblclick="goToChatRoom(chat.id, chat.unreadMessages)"
+        >
           <img
             :src="chat.recentMessage.profileImgUrl"
             class="profile-picture"
@@ -48,12 +58,12 @@
               chat.recentMessage.content
             }}</span>
           </div>
-          <span class="timestamp">{{
-            formatTimestamp(chat.recentMessage.createdAt)
-          }}</span>
-          <span v-if="chat.unreadMessages.length > 0" class="unread">{{
-            chat.unreadMessages.length
-          }}</span>
+          <span class="timestamp">
+            {{ formatTimestamp(chat.recentMessage.createdAt) }}
+          </span>
+          <span v-if="chat.unreadMessages.length > 0" class="unread">
+            {{ chat.unreadMessages.length }}
+          </span>
         </li>
       </ul>
     </div>
@@ -92,6 +102,24 @@ export default {
     },
   },
   methods: {
+    //채팅방으로 이동
+    async goToChatRoom(chatRoomId, unreadMessages) {
+      //채팅방의 읽지 않은 메시지들 모두 읽음처리
+      try {
+        const response = await axiosInstance.post(
+          `/chats/${chatRoomId}/insertAllUnreadChatMessages`,
+          {
+            unreadMessages: unreadMessages,
+          }
+        );
+        console.log(response.data); // 응답 데이터를 로그로 출력
+      } catch (error) {
+        console.error("읽지 않은 메시지 읽음처리 중 에러 발생:", error);
+      }
+      //읽음 처리 이후 채팅방으로 이동
+      this.$router.push(`/chats/${chatRoomId}`);
+    },
+
     setActiveTab(tab) {
       this.activeTab = tab;
     },
