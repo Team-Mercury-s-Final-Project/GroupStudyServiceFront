@@ -96,7 +96,6 @@
 import { FwbAvatar } from "flowbite-vue";
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router"; // useRouter 임포트
-import api from "../api";
 import GroupDetailModal from "./GroupDetailModal.vue";
 import axiosInstance from "../api/axiosInstance_test.js";
 import GroupFormModal from "./GroupFormModal.vue";
@@ -185,7 +184,7 @@ const truncateDescription = (desc) => {
 // ✅ 모달 오픈
 const fetchGroupDetail = async (id) => {
   try {
-    const response = await api.get(`/groups/${id}`);
+    const response = await axiosInstance.get(`/groups/${id}`);
     selectedGroup.value = response.data.data;
     isModalOpen.value = true;
   } catch (error) {
