@@ -3,6 +3,7 @@
     <Sidebar />
     <div class="header-layout">
       <Header />
+
       <div class="content-container">
         <main class="content">
           <router-view />
@@ -14,14 +15,54 @@
         </transition>
       </div>
       <!-- 플로팅 버튼 -->
-      <button class="floating-btn" @click="toggleUserList">
+      <button
+        class="floating-btn"
+        v-if="isToggleButtonVisible"
+        @click="toggleUserList"
+      >
         {{ isUserListVisible ? "❌" : "👥" }}
       </button>
     </div>
   </div>
+
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    rel="stylesheet"
+  />
 </template>
 <script setup>
 import { FwbButton, FwbAvatar, FwbTooltip } from "flowbite-vue";
+import { computed, ref, watch } from "vue";
+import { reactive, provide } from "vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+const isUserListVisible = ref(false);
+const isToggleButtonVisible = ref(false);
+
+const isUserListComputed = computed(() => {
+  return route.meta?.showUserList === true;
+});
+const isToggleButtonComputed = computed(() => {
+  return route.meta?.showToggleButton === true;
+});
+
+// route가 변경될 때 값 초기화
+watch(route, () => {
+  isUserListVisible.value = isUserListComputed.value;
+  isToggleButtonVisible.value = isToggleButtonComputed.value;
+});
+
+// 토글 클릭 시 값 변경
+const toggleUserList = () => {
+  isUserListVisible.value = !isUserListVisible.value;
+};
+
+const state = reactive({
+  isLoggedIn: false,
+});
+// 상태 제공
+provide("state", state);
 </script>
 <script>
 import Header from "./components/Header.vue";
@@ -34,16 +75,7 @@ export default {
     Sidebar,
     Header,
     UserList,
-  },
-  data() {
-    return {
-      isUserListVisible: true, // 기본값: UserList가 보이는 상태
-    };
-  },
-  methods: {
-    toggleUserList() {
-      this.isUserListVisible = !this.isUserListVisible;
-    },
+    // FocusRoomTimers,
   },
 };
 </script>
@@ -94,7 +126,7 @@ export default {
 
 /* UserList 스타일 */
 .user-list {
-  width: 200px;
+  width: 230px;
   background-color: #eaeaea;
   border-left: 1px solid #ccc;
   transition: all 0.3s ease; /* 애니메이션 추가 */
