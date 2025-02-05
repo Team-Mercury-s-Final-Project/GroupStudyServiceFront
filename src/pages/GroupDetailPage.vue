@@ -316,7 +316,6 @@ const closeSSE = () => {
 };
 
 onUnmounted(() => {
-  alert("나가기");
   closeSSE();
   window.removeEventListener("beforeunload", closeSSE);
 });
