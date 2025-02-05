@@ -33,7 +33,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, reactive, watch } from "vue";
 import { FwbButton, FwbModal, FwbInput, FwbTextarea } from "flowbite-vue";
 
 const emit = defineEmits(["close", "submit"]);
@@ -46,14 +46,24 @@ const props = defineProps({
   },
 });
 
-const localNoticeData = ref({ ...props.noticeData });
+// const localNoticeData = ref({ ...props.noticeData });
+
+// reactive를 사용하여 localNoticeData를 생성
+const localNoticeData = reactive({ ...props.noticeData });
+// 부모로부터 받은 noticeData가 변경될 때마다 localNoticeData를 업데이트
+watch(
+  () => props.noticeData,
+  (newNoticeData) => {
+    Object.assign(localNoticeData, newNoticeData);
+  },
+  { immediate: true }
+);
 
 async function updateNotice() {
   try {
-    // API 요청 전 데이터 확인
-    console.log("수정 데이터:", localNoticeData.value);
-    // API 요청 후 성공 시 이벤트 전송
-    emit("submit", localNoticeData.value);
+    // console.log("수정 데이터:", localNoticeData);
+    emit("submit", localNoticeData);
+    emit("close");
   } catch (error) {
     console.error("공지사항 수정 오류:", error);
   }
