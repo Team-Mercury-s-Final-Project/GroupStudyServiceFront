@@ -1,5 +1,12 @@
 <template>
   <div
+    v-if="isCreating"
+    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
+  >
+    <fwb-spinner size="12" />
+    <div class="text-xl text-gray-800">"그룹을 생성중입니다...."</div>
+  </div>
+  <div
     class="container mx-auto overflow-y-auto h-screen"
     @scroll="handleScroll"
   >
@@ -113,6 +120,7 @@ const router = useRouter();
 
 const page = ref(0);
 const isLoading = ref(false);
+const isCreating = ref(false);
 const isLast = ref(false);
 const searchText = ref("");
 const sortOption = ref("createdAt_desc");
@@ -230,9 +238,10 @@ function closeCreateModal() {
 async function createGroup(groupData) {
   const token = localStorage.getItem("access");
   closeCreateModal();
-  const loadingToastId = toast.warning("그룹을 생성중입니다.", {
-    timeout: false,
-  });
+  isCreating.value = true;
+  // const loadingToastId = toast.warning("그룹을 생성중입니다.", {
+  //   timeout: false,
+  // });
 
   const payload = {
     name: groupData.name,
@@ -260,7 +269,9 @@ async function createGroup(groupData) {
       const newGroupId = response.data.data.id;
       // 생성된 그룹의 상세 페이지로 라우팅 이동
       router.push(`/groups/${newGroupId}`);
-      toast.success("그룹 생성 완료!", { timeout: 2000 });
+      toast.success("그룹 생성 완료! 그룹페이지로 이동합니다.", {
+        timeout: 2000,
+      });
     } else {
       toast.error("그룹 생성 실패: " + response.data.message, {
         timeout: 2000,
@@ -273,7 +284,8 @@ async function createGroup(groupData) {
       { timeout: 2000 }
     );
   } finally {
-    toast.dismiss(loadingToastId);
+    // toast.dismiss(loadingToastId);
+    isLoading.value = false;
   }
 }
 
