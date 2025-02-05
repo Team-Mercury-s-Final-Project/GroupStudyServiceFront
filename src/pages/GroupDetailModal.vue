@@ -132,7 +132,7 @@ const joinGroup = async () => {
 
     if (response.status === 200) {
       router.push({ name: "GroupDetail", params: { groupId: groupId } });
-      toast.success("가입완료!", { timeout: 2000 });
+      toast.success("가입완료! 그룹페이지로 이동합니다.", { timeout: 2000 });
     } else {
       toast.error("가입 실패: " + response.data.message, {
         timeout: 2000,

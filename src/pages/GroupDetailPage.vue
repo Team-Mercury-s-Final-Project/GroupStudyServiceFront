@@ -303,16 +303,19 @@ async function deleteNotice(noticeId) {
   if (confirm("정말로 이 공지사항을 삭제하시겠습니까?")) {
     const loadingToastId = toast.warning("삭제중입니다...", { timeout: false });
     try {
-      await axiosInstance.delete(`/groups/${groupId}/notices/${noticeId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.delete(
+        `/groups/${groupId}/notices/${noticeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.status === 200) {
         // 삭제 후 공지사항 리스트 갱신
         notices.value = notices.value.filter((n) => n.id !== noticeId);
-        toast.success("삭제완료");
+        toast.success("삭제완료!");
       } else {
         // 실패 toast
         toast.error("공지사항 삭제 실패: " + response.data.message, {
@@ -386,7 +389,7 @@ async function addNotice(newNotice) {
       }
     );
     if (response.status === 200) {
-      notices.value.push(response.data.data);
+      notices.value.unshift(response.data.data);
       toast.success("공지사항이 추가되었습니다!", { timeout: 2000 });
 
       // 공지사항 리스트 갱신
@@ -407,7 +410,6 @@ async function addNotice(newNotice) {
   } finally {
     toast.dismiss(loadingToastId);
   }
-  closeModal();
 }
 
 // 공지사항 수정
