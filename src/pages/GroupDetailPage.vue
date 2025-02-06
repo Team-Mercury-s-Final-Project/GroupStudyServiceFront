@@ -161,6 +161,12 @@
                     >
                       삭제
                     </button>
+                    <button
+                      @click="goToGroup"
+                      class="text-purple-500 hover:underline text-sm"
+                    >
+                      이동버튼
+                    </button>
                   </div>
                 </div>
                 <span class="text-xs text-gray-500"
@@ -250,6 +256,41 @@ import { useToast } from "vue-toastification";
 const toast = useToast();
 const router = useRouter();
 const isLoading = ref(false);
+const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
+// Router에서 동적 파라미터(groupId)를 가져옴
+const route = useRoute();
+// const groupId = route.params.groupId; // pathVariable에서 groupId 추출
+const token = localStorage.getItem("access");
+
+const notices = ref([]); // 공지사항 리스트
+const isNoticeLoading = ref(false);
+const groupIdObject = computed(() => route.params.groupId);
+watch(
+  () => groupIdObject.value, // computed 값을 직접 감시
+  async (newG, oldG) => {
+    console.log("groupId 변경 감지:", newG); // 로그로 값 확인
+    groupId = newG;
+    if (newG !== oldG) {
+      closeSSE(); // 기존 SSE 연결 종료
+      eventSource = connectSSE(); // 새로운 SSE 연결
+      await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
+    }
+  }
+);
+let groupId = groupIdObject.value;
+
+async function reloadGroupData() {
+  isLoading.value = true;
+  try {
+    console.log("데이터 불러오기");
+    await Promise.all([fetchGroup(), fetchNotices()]); // 병렬로 데이터 요청
+  } catch (error) {
+    console.error("데이터 로드 중 오류:", error);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 // exit group
 async function exitGroup() {
   if (!confirm("정말 탈퇴하시겠습니까?")) {
@@ -279,19 +320,23 @@ async function exitGroup() {
     isLoading.value = false; // 로딩 종료
   }
 }
-
-
+function goToGroup() {
+  console.log("goto");
+  router.push("/groups/59");
+}
 /** 그룹 페이지 입장 SSE 연결 */
 let eventSource = null;
 
 const connectSSE = () => {
   eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  
+    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
   eventSource.addEventListener("connect", (event) => {
     console.log("SSE connect:", event.data);
   });
@@ -306,7 +351,7 @@ const connectSSE = () => {
   };
 
   return eventSource;
-}
+};
 
 const closeSSE = () => {
   if (eventSource && typeof eventSource.close === "function") {
@@ -320,7 +365,6 @@ onUnmounted(() => {
   window.removeEventListener("beforeunload", closeSSE);
 });
 
-
 // --------------------modal start----------------
 // content 자르기
 function truncateText(text, length) {
@@ -333,14 +377,6 @@ const activeModal = ref(null);
 function openModal(modalName) {
   activeModal.value = modalName; // 열고자 하는 모달의 이름을 설정
 }
-const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
-// Router에서 동적 파라미터(groupId)를 가져옴
-const route = useRoute();
-const groupId = route.params.groupId; // pathVariable에서 groupId 추출
-const token = localStorage.getItem("access");
-
-const notices = ref([]); // 공지사항 리스트
-const isNoticeLoading = ref(false);
 
 async function deleteNotice(noticeId) {
   if (confirm("정말로 이 공지사항을 삭제하시겠습니까?")) {
@@ -505,8 +541,7 @@ async function updateNotice(selectedNotice) {
 // 컴포넌트가 마운트되면 API 호출
 onMounted(() => {
   eventSource = connectSSE();
-  fetchGroup();
-  fetchNotices();
+  reloadGroupData();
 });
 
 // 그룹 데이터 상태
@@ -515,6 +550,7 @@ const groupData = ref(null);
 // 그룹 데이터만 먼저 불러오는 함수
 async function fetchGroup() {
   try {
+    console.log("fetch group 의 groupId" + groupId);
     const response = await axiosInstance.get(`/groups/${groupId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });

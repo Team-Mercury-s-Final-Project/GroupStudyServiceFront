@@ -24,6 +24,7 @@ const routes = [
     name: "GroupDetail",
     component: GroupDetailPage,
     meta: { showUserList: true, showToggleButton: true },
+    
   },
   {
     path: "/oauth2Login",
