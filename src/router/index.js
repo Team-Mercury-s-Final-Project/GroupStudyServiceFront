@@ -5,7 +5,7 @@ import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 import ChatRoomList from "../pages/ChatRoomList.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 // import axiosInstance from "../api/axiosInstance";
 import { handleOAuthCallback } from "../api/authentication";
 // import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
@@ -24,7 +24,6 @@ const routes = [
     name: "GroupDetail",
     component: GroupDetailPage,
     meta: { showUserList: true, showToggleButton: true },
-    
   },
   {
     path: "/oauth2Login",
@@ -36,7 +35,6 @@ const routes = [
     name: "OAuth2Callback",
     component: null, // 콜백은 페이지 컴포넌트가 필요 없음
     beforeEnter: async (to, from, next) => {
-      alert("1");
       await handleOAuthCallback();
     },
   },
@@ -80,8 +78,6 @@ const publicPageList = [
   "/oauth2/LoginFailcallback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
-  "/groups/1",
-  "/chats/1",
   "/groups/1/focusroom",
 ];
 
@@ -104,18 +100,13 @@ function isPublicPage(path) {
 }
 
 // 라우팅 변화 시마다 API 요청을 보낼 수 있도록 설정
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   // 인증 필요 없는 경로는 API 요청 제외
   if (isPublicPage(to.path)) {
     next();
     return;
   }
-  try {
-    // 인증이 필요한 경로에 대해 API 요청
-    await axiosInstance.get(to.path);
-  } catch (error) {
-    console.error("Authentication check failed:", error);
-  }
+  axiosInstance.get(to.path);
 });
 
 export default router;

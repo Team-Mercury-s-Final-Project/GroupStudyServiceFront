@@ -22,8 +22,7 @@
 import { ref, onMounted, inject } from "vue";
 import { FwbAvatar, FwbTooltip } from "flowbite-vue";
 import { useRouter } from "vue-router";
-import router1 from "../router";
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 
 // 컴포넌트 이름 설정
 defineOptions({
@@ -35,29 +34,10 @@ const router = useRouter();
 const token = localStorage.getItem("access");
 const globalState = inject("globalState"); // 전역 상태 가져오기
 
-// async function getMyGroups() {
-//   try {
-//     const response = await axiosInstance.get("/groups/myGroups", {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     if (response.status === 200) {
-//       // local data 에 response.data.data를 넣어줌
-//       myGroups.value = response.data.data;
-//     }
-//   } catch (error) {
-//     console.log(
-//       "내 그룹 데이터를 불러오는 중 오류 발생:" +
-//         (error.response?.data?.message || error.message)
-//     );
-//   }
-// }
-
 // 그룹 상세 페이지로 이동
 async function goToGroupDetail(groupId) {
   // router.push(`/groups/${groupId}`);
+  alert("groupId: " + groupId);
   router.push(`/groups/${groupId}`).then(() => {
     console.log("라우터 이동 성공:", router.currentRoute.value);
   });

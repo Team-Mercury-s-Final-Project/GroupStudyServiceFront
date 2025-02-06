@@ -83,7 +83,7 @@
 import { computed, ref } from "vue";
 import { FwbModal, FwbInput, FwbButton, FwbSpinner } from "flowbite-vue";
 import { useRouter } from "vue-router";
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 import { useToast } from "vue-toastification";
 const isLoading = ref(false);
 const toast = useToast();
@@ -112,7 +112,6 @@ const joinGroup = async () => {
   isLoading.value = true;
   try {
     const groupId = props.group.id;
-    const token = localStorage.getItem("access");
 
     let requestData = {};
     if (props.group.hasPassword) {
@@ -121,13 +120,7 @@ const joinGroup = async () => {
 
     const response = await axiosInstance.post(
       `/groups/${groupId}/join`,
-      requestData,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
+      requestData
     );
 
     if (response.status === 200) {
@@ -137,6 +130,7 @@ const joinGroup = async () => {
       toast.error("가입 실패: " + response.data.message, {
         timeout: 2000,
       });
+      isLoading.value = false;
     }
   } catch (error) {
     toast.error(
