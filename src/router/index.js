@@ -1,38 +1,30 @@
 import { createRouter, createWebHistory } from "vue-router";
-import HomePage from "../pages/HomePage.vue";
 import GroupList from "../pages/GroupList.vue";
-import NextPage from "../pages/NextPage.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
-import TestPage from "../pages/TestPage.vue"; // TestPage를 import
+import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
+import ChatRoomList from "../pages/ChatRoomList.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
-import axiosInstance from "../api/axiosInstance";
+import axiosInstance from "../api/axiosInstance_test";
+// import axiosInstance from "../api/axiosInstance";
 import { handleOAuthCallback } from "../api/authentication";
 // import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
 // axios
 // import axiosInstance from "../api/axiosInstance";
 
 const routes = [
-  // {
-  //   path: "/",
-  //   name: "Home",
-  //   component: HomePage, // 기본 페이지
-  // },
   {
     path: "/",
     name: "Home",
     component: GroupList, // 기본 페이지
   },
-  {
-    path: "/next",
-    name: "Next",
-    component: NextPage, // 버튼을 통해 이동할 페이지
-  },
+
   {
     path: "/groups/:groupId", // :groupId로 pathVariable 정의
     name: "GroupDetail",
     component: GroupDetailPage,
     meta: { showUserList: true, showToggleButton: true },
+    
   },
   {
     path: "/oauth2Login",
@@ -65,12 +57,21 @@ const routes = [
     name: "userinfoPage",
     component: userinfoPage, // 소셜 로그인 페이지
   },
+  {
+    path: "/chats/:chatRoomId",
+    name: "ChattingRoom",
+    component: ChatPage,
+  },
+  {
+    path: "/users/:userId/chatRoomList",
+    name: "ChatRoomList",
+    component: ChatRoomList,
+  },
 ];
 const router = createRouter({
   history: createWebHistory(),
   routes,
 });
-
 // 요청 블랙리스트
 const publicPageList = [
   "/",
@@ -79,7 +80,11 @@ const publicPageList = [
   "/oauth2/LoginFailcallback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
+  "/groups/1",
+  "/chats/1",
+  "/groups/1/focusroom",
 ];
+
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
 ];

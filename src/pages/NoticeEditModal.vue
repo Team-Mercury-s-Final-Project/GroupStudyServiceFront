@@ -1,7 +1,7 @@
 <template>
   <fwb-modal v-if="visible" @close="$emit('close')">
     <template #header>
-      <h3 class="text-lg font-medium">공지사항 작성</h3>
+      <h3 class="text-lg font-medium">공지사항 수정</h3>
     </template>
 
     <!-- 모달  -->
@@ -26,38 +26,46 @@
         <fwb-button @click="$emit('close')" color="alternative">
           나가기
         </fwb-button>
-        <fwb-button color="green" @click="submitNotice"> 작성하기 </fwb-button>
+        <fwb-button color="green" @click="updateNotice"> 수정하기 </fwb-button>
       </div>
     </template>
   </fwb-modal>
 </template>
+
 <script setup>
-import { ref, watch } from "vue";
+import { ref, reactive, watch } from "vue";
 import { FwbButton, FwbModal, FwbInput, FwbTextarea } from "flowbite-vue";
 
 const emit = defineEmits(["close", "submit"]);
-const props = defineProps({ visible: Boolean });
+const props = defineProps({
+  visible: Boolean,
+  noticeData: {
+    type: Object,
+    required: true,
+    default: () => ({ title: "", content: "" }),
+  },
+});
 
-const localNoticeData = ref({ title: "", content: "" });
+// const localNoticeData = ref({ ...props.noticeData });
 
-// 모달이 열릴 때마다 localNoticeData를 초기화
+// reactive를 사용하여 localNoticeData를 생성
+const localNoticeData = reactive({ ...props.noticeData });
+// 부모로부터 받은 noticeData가 변경될 때마다 localNoticeData를 업데이트
 watch(
-  () => props.visible,
-  (newVal) => {
-    if (newVal) {
-      localNoticeData.value = { title: "", content: "" };
-    }
-  }
+  () => props.noticeData,
+  (newNoticeData) => {
+    Object.assign(localNoticeData, newNoticeData);
+  },
+  { immediate: true }
 );
 
-async function submitNotice() {
+async function updateNotice() {
   try {
-    
-    // API 요청 후 성공 시 이벤트 전송
-    emit("submit", localNoticeData.value);
+    // console.log("수정 데이터:", localNoticeData);
+    emit("submit", localNoticeData);
     emit("close");
   } catch (error) {
-    console.error("공지사항 작성 오류:", error);
+    console.error("공지사항 수정 오류:", error);
   }
 }
 </script>

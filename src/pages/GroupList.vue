@@ -1,5 +1,12 @@
 <template>
   <div
+    v-if="isCreating"
+    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
+  >
+    <fwb-spinner size="12" />
+    <div class="text-xl text-gray-800">"그룹을 생성중입니다...."</div>
+  </div>
+  <div
     class="container mx-auto overflow-y-auto h-screen"
     @scroll="handleScroll"
   >
@@ -34,13 +41,28 @@
 
         <!-- 그룹 생성 버튼 -->
         <button
-          @click="openCreateGroupModal"
+          @click="openModal('groupForm', 'create')"
           class="ml-auto text-2xl bg-gray-300 px-3 py-1 rounded-md hover:bg-gray-400"
         >
           +
         </button>
+        <!-- 그룹 생성/수정 모달 -->
+        <GroupFormModal
+          v-if="activeModal === 'groupForm'"
+          :visible="true"
+          mode="create"
+          :groupData="newGroupData"
+          @close="closeCreateModal"
+          @submit="createGroup"
+        />
       </div>
-
+      <!-- 로딩 중.... -->
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 flex items-center justify-center z-50"
+      >
+        <fwb-spinner size="12" />
+      </div>
       <!-- 그룹 목록 -->
       <div class="grid grid-cols-3 gap-4 mt-4">
         <div
@@ -84,14 +106,21 @@
 </template>
 
 <script setup>
-import { FwbAvatar } from "flowbite-vue";
+import { FwbAvatar, FwbSpinner } from "flowbite-vue";
 import { ref, onMounted, computed } from "vue";
-// import api from "../api";
+import { useRouter } from "vue-router"; // useRouter 임포트
 import GroupDetailModal from "./GroupDetailModal.vue";
 import axiosInstance from "../api/axiosInstance_test.js";
+import GroupFormModal from "./GroupFormModal.vue";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
+// 라우터 인스턴스 생성
+const router = useRouter();
 
 const page = ref(0);
 const isLoading = ref(false);
+const isCreating = ref(false);
 const isLast = ref(false);
 const searchText = ref("");
 const sortOption = ref("createdAt_desc");
@@ -141,7 +170,6 @@ const fetchGroups = async () => {
     isLoading.value = false;
   }
 };
-
 // ✅ 검색 API 호출 (Enter 입력 시)
 const searchGroups = () => {
   page.value = 0; // 검색 시 첫 페이지로 초기화
@@ -171,7 +199,7 @@ const truncateDescription = (desc) => {
 // ✅ 모달 오픈
 const fetchGroupDetail = async (id) => {
   try {
-    const response = await api.get(`/groups/${id}`);
+    const response = await axiosInstance.get(`/groups/${id}`);
     selectedGroup.value = response.data.data;
     isModalOpen.value = true;
   } catch (error) {
@@ -182,6 +210,84 @@ const fetchGroupDetail = async (id) => {
 const closeModal = () => {
   isModalOpen.value = false;
 };
+
+// ✅ 그룹 생성 모달 불러오기
+
+const activeModal = ref("");
+const modalMode = ref("");
+const newGroupData = ref({
+  name: "",
+  description: "",
+  image: "",
+  maxCapacity: 10,
+  isPublic: true,
+  hasPassword: false,
+  password: "",
+});
+
+function openModal(modalName, mode) {
+  activeModal.value = modalName;
+  modalMode.value = mode;
+}
+
+function closeCreateModal() {
+  activeModal.value = "";
+  modalMode.value = "";
+}
+
+async function createGroup(groupData) {
+  const token = localStorage.getItem("access");
+  closeCreateModal();
+  isCreating.value = true;
+  // const loadingToastId = toast.warning("그룹을 생성중입니다.", {
+  //   timeout: false,
+  // });
+
+  const payload = {
+    name: groupData.name,
+    description: groupData.description,
+    maxCapacity: groupData.maxCapacity,
+    isPublic: groupData.isPublic,
+    hasPassword: groupData.hasPassword,
+    password: groupData.hasPassword ? groupData.password : null,
+    image: groupData.image,
+  };
+  // 보낼 데이터를 로그에 출력
+  console.log("Payload being sent to API:", payload);
+
+  try {
+    // 백엔드로 그룹 생성 요청
+    // Axios 요청에 Authorization 헤더 추가
+    const response = await axiosInstance.post("/groups", payload, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // 토큰 추가
+      },
+    });
+    if (response.status === 200) {
+      // API 응답에서 새로 생성된 그룹의 id 추출
+      const newGroupId = response.data.data.id;
+      // 생성된 그룹의 상세 페이지로 라우팅 이동
+      router.push(`/groups/${newGroupId}`);
+      toast.success("그룹 생성 완료! 그룹페이지로 이동합니다.", {
+        timeout: 2000,
+      });
+    } else {
+      toast.error("그룹 생성 실패: " + response.data.message, {
+        timeout: 2000,
+      });
+    }
+  } catch (error) {
+    toast.error(
+      "오류가 발생했습니다: " +
+        (error.response?.data?.message || error.message),
+      { timeout: 2000 }
+    );
+  } finally {
+    // toast.dismiss(loadingToastId);
+    isLoading.value = false;
+  }
+}
 
 // ✅ 컴포넌트가 마운트될 때 초기 데이터 가져오기
 onMounted(() => {
