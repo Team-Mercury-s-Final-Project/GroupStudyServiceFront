@@ -93,10 +93,7 @@ export default {
     this.fetchChatList();
     this.connectWebSocket();
   },
-  //컴포넌트파괴시
-  beforeDestroy() {
-    this.disconnectWebSocket();
-  },
+
   computed: {
     dmList() {
       return this.chatList.filter((chat) => chat.chatRoomType === "DM");
@@ -129,6 +126,8 @@ export default {
       } catch (error) {
         console.error("읽지 않은 메시지 읽음처리 중 에러 발생:", error);
       }
+      //웹소켓 연결 해제
+      this.disconnectWebSocket();
       //읽음 처리 이후 채팅방으로 이동
       this.$router.push(`/chats/${chatRoomId}`);
     },

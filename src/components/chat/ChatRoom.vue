@@ -121,12 +121,17 @@ export default {
   },
 
   methods: {
-    // 이미지 확인 부분
-    // isGoogleStorageUrl(url) {
-    //   return url.startsWith("https://storage.googleapis.com/");
-    // },
+    // WebSocket 연결 종료 메서드
+    disconnectWebSocket() {
+      if (this.stompClient) {
+        this.stompClient.disconnect(() => {
+          console.log("WebSocket 연결이 종료되었습니다.");
+        });
+      }
+    },
     //채팅목록으로 이동
     async goToChatRoomList() {
+      this.disconnectWebSocket();
       this.$router.push(`/users/${this.currentUserId}/chatRoomList`);
     },
     isImageUrl(url) {
@@ -142,6 +147,27 @@ export default {
         {},
         (frame) => {
           console.log("Connected: " + frame);
+
+          // 읽음 정보 응답 구독. 메시지를 받을 때 있었다면 '읽음'처리.
+          this.stompClient.subscribe(
+            `/topic/readCheck.response.${this.chatRoomId}`,
+            (readInfo) => {
+              try {
+                const readData = JSON.parse(readInfo.body);
+                console.log("읽은 사용자 정보", readData);
+                const messageIndex = this.messages.findIndex(
+                  (msg) => msg.id === readData.chatMessageId
+                );
+                if (messageIndex !== -1) {
+                  // unreadCount를 직접 설정
+                  this.messages[messageIndex].unreadCount =
+                    readData.unreadCount;
+                }
+              } catch (error) {
+                console.error("읽음 정보 파싱 오류 ::", error);
+              }
+            }
+          );
 
           // 메시지 구독
           this.stompClient.subscribe(
@@ -170,44 +196,7 @@ export default {
               }
             }
           );
-          // 읽음 정보 응답 구독. 메시지를 받을 때 있었다면 '읽음'처리.
-          this.stompClient.subscribe(
-            `/topic/readCheck.response.${this.chatRoomId}`,
-            (readInfo) => {
-              try {
-                const readData = JSON.parse(readInfo.body);
-                console.log("읽은 사용자 정보", readData);
-                const messageIndex = this.messages.findIndex(
-                  (msg) => msg.id === readData.chatMessageId
-                );
-                if (messageIndex !== -1) {
-                  // unreadCount를 직접 설정
-                  this.messages[messageIndex].unreadCount =
-                    readData.unreadCount;
-                }
-              } catch (error) {
-                console.error("읽음 정보 파싱 오류 ::", error);
-              }
-            }
-          );
-          //채팅목록에서 다중 읽음 처리 응답 구독. 클라이언트단에서 정보를 받아 읽음 숫자 - 1 처리
-          // this.stompClient.subscribe(
-          //   `/topic/readCheck.bulkResponse.${this.chatRoomId}`,
-          //   (updatedMessageIds) => {
-          //     try {
-          //       const readData = JSON.parse(updatedMessageIds.body);
-          //       console.log(
-          //         "읽음 처리된 메시지 아이디들",
-          //         readData.unreadMessages
-          //       );
-          //     } catch (error) {
-          //       console.error(
-          //         "읽음 처리된 메시지 아이디들을 가져오는데 에러 발생",
-          //         error
-          //       );
-          //     }
-          //   }
-          // );
+
           this.stompClient.subscribe(
             `/topic/readCheck.bulkResponse.${this.chatRoomId}`,
             (updatedMessageIds) => {
