@@ -56,49 +56,7 @@ const stompClient = ref(null);
 
 // ==== 상태값 끝 ====
 
-// ==== Methods ====
-
-// 내 타이머 데이터 받아오기
-const getMyTimerData = async () => {
-  try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
-    const timerData = response.data;
-    console.log("mytimerData", timerData);
-    Object.assign(myTimerData, timerData);
-  } catch (error) {
-    console.error("API 호출 중 오류 발생:", error);
-  }
-};
-
-// 그룹원 타이머 데이터 받아오기
-const groupMembersTimerDataInit = async () => {
-  try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers`);
-    const timerDatas = response.data;
-    console.log("timerDatas:=====**", timerDatas);
-
-    timerDatas.forEach((timer) => {
-      console.log("누구의 타이머인가? :", timer.userId," 나의 아이디 :", userId.value);
-      console.log(timer.userId == userId.value);
-      console.log(typeof timer.userId);
-      console.log(typeof userId.value);
-      
-      
-      if (timer.userId == userId.value) {
-        console.log("내 타이머 데이터!!!!!!!!!!!!!");
-
-        Object.assign(myTimerData, timer);
-      } else {
-        console.log("그룹원 타이머 데이터!!!!!!!!!!!!!");
-
-        memberTimers.push(timer);
-      }
-    });
-    console.log("응답 성공적");
-  } catch (error) {
-    console.error("API 호출 중 오류 발생:groupMembersTimerDataInit", error);
-  }
-};
+// ==== Methods 시작====
 
 // 웹소켓 연결
 function connect() {
@@ -109,7 +67,6 @@ function connect() {
     nickname: myTimerData.nickname,
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
-  console.log("headers 체크!!!!!!!!!!!1", headers);
   
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
@@ -126,7 +83,6 @@ function connect() {
         if (payload.body) {
           const eventData = JSON.parse(payload.body);
           handleEvent(eventData);
-          console.log("=====Received data=====:", eventData);
         }
       }
     );
@@ -138,9 +94,6 @@ function connect() {
 
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
-  console.log("이벤트 도착!!!!!", eventData.event);
-  console.log("eventHandler", eventHandler);
-
   if (eventHandler) {
     eventHandler(eventData);
   } else {
@@ -155,19 +108,16 @@ const timerEventHandlers = {
     const { userId } = eventData;
     const memberTimer = memberTimers.find((timer) => timer.userId === userId);
     if (memberTimer) {
-      console.log(" 아니 해당하는 거 있냐?");
-      
       memberTimer.ranking = eventData.ranking;
       memberTimer.time = eventData.timeSoFar;
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.status = "START";
     }
+    // Start Event 시, 서버 기준으로 내 타이머 데이터 업데이트
     if (myTimerData.userId === userId) {
       myTimerData.timeSoFar = eventData.timeSoFar;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
-    console.log("memberTimers: 변경되나?", memberTimers);
-    console.log("memberTimer: 변경되나?", memberTimer);
     
     
   },
@@ -230,27 +180,7 @@ const timerEventHandlers = {
     }
   },
 };
-// test msg
-const sendMSG = () => {
-  const msg = { message: "테스트입니다" };
-  const jsonMsg = JSON.stringify(msg);
-  console.log("Sending message:", jsonMsg);
 
-  if (stompClient.value && stompClient.value.connected) {
-    stompClient.value.send(
-      // destination
-      `/pub/groups/${groupId.value}/timers`,
-      // body
-      // {},
-      myTimerData.userId.toString(),
-      // header
-      {}
-      // myTimerData.userId.toString()
-    );
-    console.log("Message sent");
-    
-  }
-};
 // 집중방 나가기
 const disconnectFromServer = () => {
   console.log("Disconnecting from the server");
@@ -271,14 +201,30 @@ const checkLoginAndConnect = async () => {
     groupMembersTimerDataInit();
   }
 };
+// 내 타이머 데이터 받아오기
 const enterAndGetMyTimerData = async () => {
   try {
     const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
     const timerData = response.data;
-    console.log("timerData", timerData);
     Object.assign(myTimerData, timerData);
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
+  }
+};
+// 그룹원 타이머 데이터 받아오기
+const groupMembersTimerDataInit = async () => {
+  try {
+    const response = await axiosInstance.get(`/groups/${groupId.value}/timers`);
+    const timerDatas = response.data;
+    timerDatas.forEach((timer) => {
+      if (timer.userId == userId.value) {
+        Object.assign(myTimerData, timer);
+      } else {
+        memberTimers.push(timer);
+      }
+    });
+  } catch (error) {
+    console.error("API 호출 중 오류 발생:groupMembersTimerDataInit", error);
   }
 };
 

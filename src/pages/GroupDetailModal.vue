@@ -1,4 +1,11 @@
 <template>
+  <div
+    v-if="isLoading"
+    class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
+  >
+    <fwb-spinner size="12" />
+    <div class="text-xl text-gray-800">가입중...</div>
+  </div>
   <fwb-modal v-if="isOpen" @close="closeModal">
     <template #header>
       <div class="text-lg font-bold">그룹 상세 정보</div>
@@ -74,9 +81,12 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { FwbModal, FwbInput, FwbButton } from "flowbite-vue";
+import { FwbModal, FwbInput, FwbButton, FwbSpinner } from "flowbite-vue";
 import { useRouter } from "vue-router";
 import axiosInstance from "../api/axiosInstance_test";
+import { useToast } from "vue-toastification";
+const isLoading = ref(false);
+const toast = useToast();
 
 const props = defineProps({
   isOpen: Boolean,
@@ -97,6 +107,9 @@ const closeModal = () => {
 
 // 가입 요청
 const joinGroup = async () => {
+  // 버튼 클릭 시 즉시 모달 닫기 (낙관적 업데이트)
+  closeModal();
+  isLoading.value = true;
   try {
     const groupId = props.group.id;
     const token = localStorage.getItem("access");
@@ -116,15 +129,23 @@ const joinGroup = async () => {
         },
       }
     );
+
     if (response.status === 200) {
-      alert("가입이 완료되었습니다!");
       router.push({ name: "GroupDetail", params: { groupId: groupId } });
+      toast.success("가입완료! 그룹페이지로 이동합니다.", { timeout: 2000 });
     } else {
-      alert("가입 실패: " + response.data.message);
+      toast.error("가입 실패: " + response.data.message, {
+        timeout: 2000,
+      });
     }
   } catch (error) {
-    console.error("가입 요청 실패:", error);
-    alert("가입 실패: " + (error.response?.data?.message || error.message));
+    toast.error(
+      "오류가 발생했습니다: " +
+        (error.response?.data?.message || error.message),
+      { timeout: 2000 }
+    );
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>

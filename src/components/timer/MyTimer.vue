@@ -50,8 +50,6 @@ const localTime = ref(timeSoFar);
 // props.time이 변경되면 localTime도 업데이트
 const interval = ref(null);
 const start = () => {
-  console.log("MY TIMER START");
-
   if (!interval.value) {
     sendStartSign();
   }
@@ -64,8 +62,6 @@ const stop = () => {
   }
 };
 const end = () => {
-  console.log("MY TIMER END");
-  
   if (interval.value) {
     clearInterval(interval.value);
     interval.value = null;
@@ -79,7 +75,6 @@ const sendStartSign = () => {
     interval.value = setInterval(() => {
       localTime.value++;
     }, 1000);
-    console.log("Start Message sent:", userId.value);
     stompClient.send(`/pub/groups/${groupId}/timers/start`, userId.value, {});
   } else {
     console.error("WebSocket is not connected");
@@ -87,7 +82,6 @@ const sendStartSign = () => {
 };
 const sendStopsign = () => {
   if (stompClient && stompClient.connected) {
-    console.log("Stop Message sent:", userId.value);
     stompClient.send(`/pub/groups/${groupId}/timers/stop`, userId.value, {});
   } else {
     console.error("WebSocket is not connected");
@@ -95,7 +89,6 @@ const sendStopsign = () => {
 };
 const sendEndSign = () => {
   if (stompClient && stompClient.connected) {
-    console.log("End Message sent:", userId.value);
     stompClient.send(`/pub/groups/${groupId}/timers/end`, userId.value, {});
   } else {
     console.error("WebSocket is not connected");

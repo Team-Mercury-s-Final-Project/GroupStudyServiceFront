@@ -11,14 +11,12 @@
 </template>
 
 <script setup>
-import { defineProps, onMounted, ref, watch } from "vue";
+import { defineProps, ref, watch } from "vue";
 import TimerDisplay from "./TimerDisplay.vue";
 const { timeData } = defineProps(["timeData"]);
 const localTime = ref(timeData.timeSoFar);
 const localStatus = ref(timeData.status);
 const interval = ref(null);
-
-console.log("그룹원 타이머 데이터: ", timeData);
 
 watch(
   () => timeData,
@@ -32,13 +30,9 @@ watch(
 
 
 const eventHandle = () => {
-  console.log(" 이벤트 시작 GMT",timeData);
-  console.log(" 타이머 ",!interval.value);
-  console.log(" 상태 ",localStatus.value);
   
   // 타이머 시작
   if (!interval.value && localStatus.value === "START") {
-    console.log("타이머 시작213");
     
     interval.value = setInterval(() => {
       localTime.value++;
