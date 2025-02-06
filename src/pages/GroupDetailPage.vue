@@ -204,7 +204,9 @@
           <div class="card-content">
             <div class="enter-container">
               <p>5/10</p>
-              <fwb-button>입장하기</fwb-button>
+              <fwb-button @click="$router.push(`${groupId}/focusroom`)"
+                >입장하기</fwb-button
+              >
             </div>
           </div>
         </fwb-card>
@@ -232,20 +234,67 @@ import {
   FwbSpinner,
 } from "flowbite-vue";
 import GroupFormModal from "./GroupFormModal.vue";
-import { ref, onMounted, onUnmounted, reactive } from "vue";
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  watch,
+  computed,
+  inject,
+  reactive,
+} from "vue";
 import { useRoute } from "vue-router";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";
 import { useToast } from "vue-toastification";
 import store from "../store/store";
 
+const globalState = inject("globalState");
+if (!globalState) {
+  console.error("globalState가 주입되지 않았습니다.");
+}
 const toast = useToast();
 const router = useRouter();
 const isLoading = ref(false);
+const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
+// Router에서 동적 파라미터(groupId)를 가져옴
+const route = useRoute();
+// const groupId = route.params.groupId; // pathVariable에서 groupId 추출
+const token = localStorage.getItem("access");
+
+const notices = ref([]); // 공지사항 리스트
+const isNoticeLoading = ref(false);
+const groupIdObject = computed(() => route.params.groupId);
+watch(
+  () => groupIdObject.value, // computed 값을 직접 감시
+  async (newG, oldG) => {
+    // console.log("groupId 변경 감지:", newG); // 로그로 값 확인
+    groupId = newG;
+    if (newG !== oldG) {
+      closeSSE(); // 기존 SSE 연결 종료
+      eventSource = connectSSE(); // 새로운 SSE 연결
+      await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
+    }
+  }
+);
+let groupId = groupIdObject.value;
+
+async function reloadGroupData() {
+  isLoading.value = true;
+  try {
+    // console.log("데이터 불러오기");
+    await Promise.all([fetchGroup(), fetchNotices()]); // 병렬로 데이터 요청
+  } catch (error) {
+    // console.error("데이터 로드 중 오류:", error);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 // exit group
 async function exitGroup() {
   if (!confirm("정말 탈퇴하시겠습니까?")) {
@@ -264,7 +313,7 @@ async function exitGroup() {
       router.push("/");
       toast.success("그룹탈퇴가 완료되었습니다");
     } else {
-      console.log(response.data.message);
+      // console.log(response.data.message);
       toast.error("탈퇴 실패: " + response.data.message);
     }
   } catch (error) {
@@ -276,19 +325,20 @@ async function exitGroup() {
   }
 }
 
-
 /** 그룹 페이지 입장 SSE 연결 */
 let eventSource = null;
 const users = reactive({ list: [] });
 
 const connectSSE = () => {
   eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  
+    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
   eventSource.addEventListener("connect", (event) => {
     console.log("SSE connect:", event.data);
   });
@@ -317,7 +367,7 @@ const connectSSE = () => {
   });
 
   return eventSource;
-}
+};
 
 const closeSSE = () => {
   if (eventSource && typeof eventSource.close === "function") {
@@ -332,7 +382,6 @@ onUnmounted(() => {
   closeSSE();
 });
 
-
 // --------------------modal start----------------
 // content 자르기
 function truncateText(text, length) {
@@ -345,14 +394,6 @@ const activeModal = ref(null);
 function openModal(modalName) {
   activeModal.value = modalName; // 열고자 하는 모달의 이름을 설정
 }
-const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
-// Router에서 동적 파라미터(groupId)를 가져옴
-const route = useRoute();
-const groupId = route.params.groupId; // pathVariable에서 groupId 추출
-const token = localStorage.getItem("access");
-
-const notices = ref([]); // 공지사항 리스트
-const isNoticeLoading = ref(false);
 
 async function deleteNotice(noticeId) {
   if (confirm("정말로 이 공지사항을 삭제하시겠습니까?")) {
@@ -400,7 +441,11 @@ async function fetchNotices() {
     });
     notices.value = response.data.data; // 응답 데이터 저장
   } catch (error) {
-    console.error("공지사항 가져오기 중 오류 발생:", error);
+    toast.error(
+      "오류가 발생했습니다: " +
+        (error.response?.data?.message || error.message),
+      { timeout: 2000 }
+    );
   } finally {
     isNoticeLoading.value = false;
   }
@@ -472,7 +517,7 @@ async function updateNotice(selectedNotice) {
   const loadingToastId = toast.warning("수정중입니다...", { timeout: false });
   try {
     const noticeId = selectedNotice.id;
-    console.log("공지사항 ID:", noticeId); // 로그 출력 확인
+    // console.log("공지사항 ID:", noticeId); // 로그 출력 확인
     const token = localStorage.getItem("access");
 
     // API 요청
@@ -490,7 +535,7 @@ async function updateNotice(selectedNotice) {
       toast.success("공지사항이 수정되었습니다!", { timeout: 2000 });
       // 서버 응답으로부터 업데이트된 공지사항 데이터 받아오기
       const updatedNotice = response.data.data;
-      console.log(updatedNotice);
+      // console.log(updatedNotice);
 
       // notices 배열에서 해당 공지사항을 찾아 교체하기 (순서는 유지됨)
       notices.value = notices.value.map((notice) =>
@@ -502,7 +547,7 @@ async function updateNotice(selectedNotice) {
       });
     }
   } catch (error) {
-    console.error("공지사항 수정 중 오류 발생:", error);
+    // console.error("공지사항 수정 중 오류 발생:", error);
     toast.error("공지사항 수정 실패: " + response.data.message, {
       timeout: 2000,
     });
@@ -517,8 +562,7 @@ async function updateNotice(selectedNotice) {
 // 컴포넌트가 마운트되면 API 호출
 onMounted(() => {
   eventSource = connectSSE();
-  fetchGroup();
-  fetchNotices();
+  reloadGroupData();
 });
 
 // 그룹 데이터 상태
@@ -527,22 +571,28 @@ const groupData = ref(null);
 // 그룹 데이터만 먼저 불러오는 함수
 async function fetchGroup() {
   try {
+    // console.log("fetch group 의 groupId" + groupId);
     const response = await axiosInstance.get(`/groups/${groupId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     groupData.value = response.data.data;
   } catch (error) {
-    console.error("그룹 데이터를 불러오는 중 오류 발생:", error);
+    toast.error(
+      "그룹 데이터를 불러오는중 오류가 발생했습니다: " +
+        (error.response?.data?.message || error.message),
+      { timeout: 4000 }
+    );
   }
 }
 
 // 그룹 수정 요청 함수
 async function updateGroup(updatedData) {
+  // console.log(updatedData);
   const isEditingId = toast.warning("그룹정보 수정중입니다...", {
     timeout: false,
   });
-  console.log(groupData.value);
-  console.log("here");
+  // console.log(groupData.value);
+  // console.log("here");
   try {
     const response = await axiosInstance.put(
       `/groups/${groupId}`,
@@ -555,6 +605,13 @@ async function updateGroup(updatedData) {
       // 업로드 성공 시 URL 저장
       toast.success("그룹정보가 성공적으로 수정되었습니다.", { timeout: 2000 });
       groupData.value = response.data.data;
+      const updatedGroup = response.data.data;
+
+      // 전역 상태(myGroups) 업데이트
+      updatedGroup.imageUrl = updatedGroup.image;
+      globalState.myGroups = globalState.myGroups.map((group) => {
+        return group.id === updatedGroup.id ? updatedGroup : group;
+      });
     } else {
       toast.error("그룹정보 수정 실패: " + response.data.message, {
         timeout: 2000,

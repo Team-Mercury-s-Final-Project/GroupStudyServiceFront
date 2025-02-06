@@ -6,6 +6,7 @@
 
       <div class="content-container">
         <main class="content">
+          <LoginModal v-if="modal.isVisible" />
           <router-view />
           <!-- 라우팅된 페이지가 여기 렌더링 -->
         </main>
@@ -34,10 +35,45 @@
 import { computed, ref, watch } from "vue";
 import { reactive, provide } from "vue";
 import { useRoute } from "vue-router";
+import { useStore } from "vuex";
+import store from "./store/store";
+import LoginModal from "./components/modal/LoginPermissionRequired.vue";
+import Sidebar from "./components/Sidebar.vue";
+import axiosInstance from "./api/axiosInstance";
+
+// 전역 상태 정의
+const globalState = reactive({
+  myGroups: [],
+});
+provide("globalState", globalState);
 
 const route = useRoute();
+
+// 라우팅 변화를 감지하여 필요하면 데이터 재요청
+watch(route, async () => {
+  await fetchGroups(); // 라우트 변경 시 그룹 데이터를 다시 가져옴
+});
+
+// 그룹 데이터 가져오는 함수
+async function fetchGroups() {
+  if (isLoggedIn.value) {
+    try {
+      const response = await axiosInstance.get("/groups/myGroups");
+      if (response.status == 200) {
+        globalState.myGroups = response.data.data;
+      }
+    } catch (error) {
+      console.error("그룹 데이터 불러오기 실패:", error);
+    }
+  } else {
+    globalState.myGroups = [];
+  }
+}
+// 로그인 상태 확인
+const isLoggedIn = computed(() => store.state.isLoggedIn);
 const isUserListVisible = ref(false);
 const isToggleButtonVisible = ref(false);
+const modal = computed(() => store.state.modal);
 
 const isUserListComputed = computed(() => {
   return route.meta?.showUserList === true;
@@ -74,6 +110,7 @@ export default {
     Sidebar,
     Header,
     UserList,
+    LoginModal,
     // FocusRoomTimers,
   },
 };

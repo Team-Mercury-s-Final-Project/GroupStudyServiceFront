@@ -36,6 +36,15 @@
 
       <!-- Edit & Save Section -->
       <div class="space-y-4">
+        <!-- 오류 메시지 출력 -->
+        <p
+          v-if="nicknameError"
+          class="text-red-500 text-sm mt-1"
+          style="position: relative; left: 8vw"
+        >
+          닉네임은 특수문자 제외 3자 이상 설정해주세요.
+        </p>
+
         <!-- 닉네임 수정 -->
         <div class="flex items-center space-x-4">
           <label for="nickname" class="text-gray-700 font-medium w-32"
@@ -165,15 +174,16 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import axios from "../api/axiosInstance";
+import axiosInstance from "../api/axiosInstance";
 import { computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
+import { useToast } from "vue-toastification";
 
 const store = useStore();
 const router = useRouter();
 const isLoggedIn = computed(() => store.state.isLoggedIn);
-
+const toast = useToast();
 const userInfo = ref({
   nickname: "",
   email: "",
@@ -187,6 +197,7 @@ const isLoading = ref(true);
 const selectedFile = ref(null);
 const confirmationInput = ref("");
 const editField = ref(""); // 수정할 필드를 추적하는 변수
+const FileValidError = ref(false);
 
 const modalData = ref({
   visible: false,
@@ -206,8 +217,9 @@ const toggleEditing = (field) => {
 
 const fetchUserInfo = async () => {
   try {
-    const response = await axios.get("/api/user-info");
-    console.log(response);
+    const response = await axiosInstance.get("/user-info");
+
+    // console.log(response);
     userInfo.value = response.data;
     originalUserInfo.value = { ...userInfo.value };
   } catch (error) {
@@ -217,45 +229,64 @@ const fetchUserInfo = async () => {
   }
 };
 
+// 이미지 검증 규칙
 const handleFileUpload = async (e) => {
-  if (e.target.files[0]) {
-    selectedFile.value = e.target.files[0];
-    modalData.value = {
-      visible: true,
-      title: "이미지 선택 완료",
-      message: "이미지가 선택되었습니다.",
-    };
+  const file = e.target.files[0];
+
+  if (file) {
+    // 허용되는 이미지 확장자
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp", "image/jpg"];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    // 확장자 및 파일 크기 체크
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("허용되지 않는 이미지 형식입니다. (PNG, JPEG, WEBP만 가능)");
+      FileValidError.value = true;
+      return;
+    }
+
+    if (file.size > maxSize) {
+      toast.error("이미지 크기는 10MB 이하로 업로드 해주세요.");
+      FileValidError.value = true;
+      return;
+    }
+
+    selectedFile.value = file;
+    FileValidError.value = false;
+    toast.success("이미지가 선택되었습니다.");
   }
 };
 
-const saveChanges = async () => {
-  try {
-    const formData = new FormData();
-    if (editField.value === "nickname")
-      formData.append("nickname", userInfo.value.nickname);
+// 닉네임 검증 규칙
+const nicknameError = computed(() => {
+  const nickname = userInfo.value.nickname;
+  return !nickname || !/^[a-zA-Z가-힣\d]{3,}$/.test(nickname);
+});
 
-    if (selectedFile.value) formData.append("profileImg", selectedFile.value);
-    const response = await axios.post("/api/user-info", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    if (response.status === 200) {
-      modalData.value = {
-        visible: true,
-        title: "수정 완료",
-        message: "회원 정보가 수정이 완료되었습니다.",
-      };
-      fetchUserInfo();
+const saveChanges = async () => {
+  if (!nicknameError.value && !FileValidError.value) {
+    try {
+      const formData = new FormData();
+      if (editField.value === "nickname")
+        formData.append("nickname", userInfo.value.nickname);
+
+      if (selectedFile.value) formData.append("profileImg", selectedFile.value);
+      const response = await axiosInstance.post("/user-info", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (response.status === 200) {
+        toast.success("회원 정보 수정이 완료되었습니다.");
+        fetchUserInfo();
+        originalUserInfo.value = { ...userInfo.value };
+        isEditing.value = false;
+        editField.value = ""; // 수정 완료 후 필드 초기화
+      } else {
+        console.log("response: " + response);
+      }
+    } catch (error) {
+      toast.error("회원 정보 수정이 실패하였습니다.");
+      userInfo.value = { ...originalUserInfo.value };
     }
-  } catch (error) {
-    modalData.value = {
-      visible: true,
-      title: "수정 실패",
-      message: "회원 정보 수정이 실패하였습니다.",
-    };
-  } finally {
-    originalUserInfo.value = { ...userInfo.value };
-    isEditing.value = false;
-    editField.value = ""; // 수정 완료 후 필드 초기화
   }
 };
 
@@ -275,7 +306,7 @@ const closeModal = () => {
 
 const deleteAccount = async () => {
   try {
-    const response = await axios.delete("/api/user-info");
+    const response = await axiosInstance.delete("/user-info");
 
     if (response.status === 200) {
       // 탈퇴 완료 후 처리

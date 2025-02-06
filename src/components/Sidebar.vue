@@ -1,53 +1,50 @@
 <template>
   <aside class="sidebar">
-    <fwb-tooltip placement="right">
+    <!-- 반복문으로 그룹 데이터 렌더링 -->
+    <fwb-tooltip
+      v-for="group in globalState.myGroups"
+      :key="group.id"
+      placement="right"
+    >
       <template #trigger>
         <fwb-avatar
-          img="https://www.home-learn.co.kr/common/image.do?imgPath=newsroom&imgName=CK20230317131145039.png&imgGubun=D"
+          :img="group.imageUrl"
+          @click="goToGroupDetail(group.id)"
+          class="clickable-avatar"
         />
       </template>
-      <template #content> 수학의 정석 </template>
-    </fwb-tooltip>
-    <fwb-tooltip placement="right">
-      <template #trigger>
-        <fwb-avatar
-          img="https://static.cdn.kmong.com/gigs/UJYvB1717564634.jpg"
-        />
-      </template>
-      <template #content> 토익 스터디 </template>
-    </fwb-tooltip>
-    <fwb-tooltip placement="right">
-      <template #trigger>
-        <fwb-avatar
-          img="https://upload.wikimedia.org/wikipedia/ko/3/38/수특.jpg"
-        />
-      </template>
-      <template #content> 2025 수능대비 </template>
-    </fwb-tooltip>
-    <fwb-tooltip placement="right">
-      <template #trigger>
-        <fwb-avatar
-          img="https://i.namu.wiki/i/K35xg_xOR6xQugv5z7OA5McfGddwP9-mP6_jfh9tKGwTzksPXimI3J6-PJOQWyKCyhkq1JHTttviVHBSCsGC0Q.svg"
-        />
-      </template>
-      <template #content> 공산주의는 어째서 실패하는가? </template>
-    </fwb-tooltip>
-    <fwb-tooltip placement="right">
-      <template #trigger>
-        <fwb-avatar img="/src/assets/capitalism.png" />
-      </template>
-      <template #content> 자본주의와 우리사회 </template>
+      <template #content>{{ group.name }}</template>
     </fwb-tooltip>
   </aside>
 </template>
 
 <script setup>
+import { ref, onMounted, inject } from "vue";
 import { FwbAvatar, FwbTooltip } from "flowbite-vue";
-</script>
-<script>
-export default {
+import { useRouter } from "vue-router";
+import axiosInstance from "../api/axiosInstance";
+
+// 컴포넌트 이름 설정
+defineOptions({
   name: "Sidebar",
-};
+});
+
+// 필요한 로직 추가 (예시)
+const router = useRouter();
+const token = localStorage.getItem("access");
+const globalState = inject("globalState"); // 전역 상태 가져오기
+
+// 그룹 상세 페이지로 이동
+async function goToGroupDetail(groupId) {
+  router.push(`/groups/${groupId}`);
+  
+  // router.push(`/groups/${groupId}`).then(() => {
+  // });
+}
+
+// onMounted(() => {
+//   getMyGroups();
+// });
 </script>
 
 <style scoped>
