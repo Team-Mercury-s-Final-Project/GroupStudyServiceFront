@@ -2,6 +2,7 @@ import router from "../router/index";
 import axios from "axios";
 // import axiosInstance from "../api/axiosInstance";
 import store from "../store/store";
+import * as jwtDecode from "jwt-decode";
 
 // 경로 상수
 const ROUTE_LOGIN = "/oauth2Login";
@@ -42,6 +43,9 @@ export const handleOAuthCallback = async () => {
       const accessToken = getCookie("access");
       if (accessToken) {
         localStorage.setItem("access", accessToken);
+        // 토큰 디코딩 후 userId localStorage에 저장
+        const decodedToken = jwtDecode.jwtDecode(accessToken);
+        localStorage.setItem("userId", decodedToken.id);
         // 로컬 스토리지에서 리다이렉트 URL을 가져옴
         const redirectUrl =
           localStorage.getItem("redirectUrl").split("=")[1] || ROUTE_DASHBOARD;

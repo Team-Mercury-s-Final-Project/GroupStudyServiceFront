@@ -3,6 +3,7 @@ import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 import ChatRoomList from "../pages/ChatRoomList.vue";
+import FocusRoomPage from "../pages/FocusRoomPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
@@ -24,6 +25,13 @@ const routes = [
     name: "GroupDetail",
     component: GroupDetailPage,
     meta: { showUserList: true, showToggleButton: true },
+
+  },
+  {
+    path: "/groups/:groupId/focusroom",
+    name: "FocusRoom",
+    component: FocusRoomPage,
+
   },
   {
     path: "/oauth2Login",
@@ -83,6 +91,7 @@ const publicPageList = [
 
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
+  "/groups",
 ];
 
 function isPublicPage(path) {
