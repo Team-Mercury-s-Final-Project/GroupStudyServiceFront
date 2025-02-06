@@ -191,12 +191,42 @@ export default {
             }
           );
           //채팅목록에서 다중 읽음 처리 응답 구독. 클라이언트단에서 정보를 받아 읽음 숫자 - 1 처리
+          // this.stompClient.subscribe(
+          //   `/topic/readCheck.bulkResponse.${this.chatRoomId}`,
+          //   (updatedMessageIds) => {
+          //     try {
+          //       const readData = JSON.parse(updatedMessageIds.body);
+          //       console.log(
+          //         "읽음 처리된 메시지 아이디들",
+          //         readData.unreadMessages
+          //       );
+          //     } catch (error) {
+          //       console.error(
+          //         "읽음 처리된 메시지 아이디들을 가져오는데 에러 발생",
+          //         error
+          //       );
+          //     }
+          //   }
+          // );
           this.stompClient.subscribe(
             `/topic/readCheck.bulkResponse.${this.chatRoomId}`,
             (updatedMessageIds) => {
               try {
                 const readData = JSON.parse(updatedMessageIds.body);
                 console.log("읽음 처리된 메시지 아이디들", readData);
+
+                // unreadMessages의 id와 일치하는 메시지의 unreadCount를 -1 감소
+                readData.unreadMessages.forEach((readMessageId) => {
+                  const messageIndex = this.messages.findIndex(
+                    (msg) => msg.id === readMessageId
+                  );
+                  if (
+                    messageIndex !== -1 &&
+                    this.messages[messageIndex].unreadCount > 0
+                  ) {
+                    this.messages[messageIndex].unreadCount--;
+                  }
+                });
               } catch (error) {
                 console.error(
                   "읽음 처리된 메시지 아이디들을 가져오는데 에러 발생",

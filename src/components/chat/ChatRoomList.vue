@@ -110,6 +110,7 @@ export default {
           `/chats/${chatRoomId}/insertAllUnreadChatMessages`,
           {
             unreadMessages: unreadMessages,
+            chatRoomId: chatRoomId,
           }
         );
         console.log(response.data); // 응답 데이터를 로그로 출력
