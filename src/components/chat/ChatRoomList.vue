@@ -72,7 +72,7 @@
 
 <script>
 import * as jwtDecode from "jwt-decode";
-import axiosInstance from "../../api/axiosInstance_test.js";
+import axiosInstance from "../../api/axiosInstance.js";
 
 let token = "";
 export default {

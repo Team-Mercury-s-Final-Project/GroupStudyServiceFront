@@ -32,7 +32,7 @@
   </fwb-modal>
 </template>
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { FwbButton, FwbModal, FwbInput, FwbTextarea } from "flowbite-vue";
 
 const emit = defineEmits(["close", "submit"]);
@@ -40,8 +40,19 @@ const props = defineProps({ visible: Boolean });
 
 const localNoticeData = ref({ title: "", content: "" });
 
+// 모달이 열릴 때마다 localNoticeData를 초기화
+watch(
+  () => props.visible,
+  (newVal) => {
+    if (newVal) {
+      localNoticeData.value = { title: "", content: "" };
+    }
+  }
+);
+
 async function submitNotice() {
   try {
+    
     // API 요청 후 성공 시 이벤트 전송
     emit("submit", localNoticeData.value);
     emit("close");
