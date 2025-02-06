@@ -228,16 +228,11 @@ import {
   FwbAvatar,
   FwbButton,
   FwbCard,
-  FwbButtonGroup,
   FwbTooltip,
-  FwbModal,
-  FwbInput,
-  FwbFileInput,
-  FwbRadio,
   FwbSpinner,
 } from "flowbite-vue";
 import GroupFormModal from "./GroupFormModal.vue";
-import { ref, onMounted, onUnmounted, watch, computed } from "vue";
+import { ref, onMounted, onUnmounted, reactive } from "vue";
 import { useRoute } from "vue-router";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
@@ -246,6 +241,7 @@ import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";
 import { useToast } from "vue-toastification";
+import store from "../store/store";
 
 const toast = useToast();
 const router = useRouter();
@@ -283,6 +279,7 @@ async function exitGroup() {
 
 /** 그룹 페이지 입장 SSE 연결 */
 let eventSource = null;
+const users = reactive({ list: [] });
 
 const connectSSE = () => {
   eventSource = new EventSourcePolyfill(
@@ -305,6 +302,20 @@ const connectSSE = () => {
     eventSource.close();
   };
 
+  eventSource.addEventListener("memberData", (event) => {
+    try {
+      users.list = JSON.parse(event.data);
+      store.commit('setUsers', users);
+    } catch (error) {
+      console.error("데이터 파싱 오류:", error);
+    }
+  });
+
+  eventSource.addEventListener("statusUpdate", (event) => {
+    const data = JSON.parse(event.data);
+    store.commit("updateStatus", data);
+  });
+
   return eventSource;
 }
 
@@ -312,13 +323,13 @@ const closeSSE = () => {
   if (eventSource && typeof eventSource.close === "function") {
     console.log("SSE 연결 종료");
     eventSource.close();
+    // Vuex 상태 초기화
+    store.commit("clearUsers");
   }
 };
 
 onUnmounted(() => {
-  alert("나가기");
   closeSSE();
-  window.removeEventListener("beforeunload", closeSSE);
 });
 
 

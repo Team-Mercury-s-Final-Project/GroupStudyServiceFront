@@ -4,6 +4,7 @@ import createPersistedState from "vuex-persistedstate";
 const store = createStore({
   state: {
     isLoggedIn: false,
+    users: [],
   },
   mutations: {
     login(state) {
@@ -12,6 +13,18 @@ const store = createStore({
     logout(state) {
       state.isLoggedIn = false;
     },
+    setUsers(state, users) {
+      state.users = users;
+    },
+    updateStatus(state, { userId, status }) {
+      const updatedUsers = state.users.list.map(user =>
+        user.id == userId ? { ...user, status } : user
+      );
+      state.users.list = updatedUsers;
+    },
+    clearUsers(state) {
+      state.users.list = [];
+    }
   },
   actions: {
     login({ commit }) {
@@ -19,6 +32,9 @@ const store = createStore({
     },
     logout({ commit }) {
       commit("logout");
+    },
+    fetchUsers({ commit }) {
+      commit('setUsers', data);
     },
   },
   plugins: [

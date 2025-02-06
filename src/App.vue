@@ -20,7 +20,7 @@
         v-if="isToggleButtonVisible"
         @click="toggleUserList"
       >
-        {{ isUserListVisible ? "❌" : "👥" }}
+        {{ isUserListVisible ? "✖️" : "👥" }}
       </button>
     </div>
   </div>
@@ -31,7 +31,6 @@
   />
 </template>
 <script setup>
-import { FwbButton, FwbAvatar, FwbTooltip } from "flowbite-vue";
 import { computed, ref, watch } from "vue";
 import { reactive, provide } from "vue";
 import { useRoute } from "vue-router";
@@ -126,7 +125,7 @@ export default {
 
 /* UserList 스타일 */
 .user-list {
-  width: 230px;
+  width: 270px;
   background-color: #eaeaea;
   border-left: 1px solid #ccc;
   transition: all 0.3s ease; /* 애니메이션 추가 */
