@@ -36,6 +36,7 @@ import { FwbButton, FwbAvatar, FwbTooltip } from "flowbite-vue";
 import { computed, ref, watch } from "vue";
 import { reactive, provide } from "vue";
 import { useRoute } from "vue-router";
+import { useStore } from "vuex";
 import store from "./store/store";
 import LoginModal from "./components/modal/LoginPermissionRequired.vue";
 import Sidebar from "./components/Sidebar.vue";
@@ -56,16 +57,21 @@ watch(route, async () => {
 
 // 그룹 데이터 가져오는 함수
 async function fetchGroups() {
-  try {
-    const response = await axiosInstance.get("/groups/myGroups");
-    if (response.status == 200) {
-      globalState.myGroups = response.data.data;
+  if (isLoggedIn.value) {
+    try {
+      const response = await axiosInstance.get("/groups/myGroups");
+      if (response.status == 200) {
+        globalState.myGroups = response.data.data;
+      }
+    } catch (error) {
+      console.error("그룹 데이터 불러오기 실패:", error);
     }
-  } catch (error) {
-    console.error("그룹 데이터 불러오기 실패:", error);
+  } else {
+    globalState.myGroups = [];
   }
 }
-
+// 로그인 상태 확인
+const isLoggedIn = computed(() => store.state.isLoggedIn);
 const isUserListVisible = ref(false);
 const isToggleButtonVisible = ref(false);
 const modal = computed(() => store.state.modal);
