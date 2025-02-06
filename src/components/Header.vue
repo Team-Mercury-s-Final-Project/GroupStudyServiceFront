@@ -47,9 +47,9 @@ const isLoggedIn = computed(() => store.state.isLoggedIn);
 
 // 로그아웃 처리
 const logout = () => {
-  store.dispatch("logout"); // Vuex 상태 초기화
   localStorage.removeItem("access"); // 토큰 삭제 (예시)
-  localStorage.removeItem("refresh"); // 토큰 삭제 (예시)
+  localStorage.removeItem("redirectUrl"); // 리다이렉트 url 삭제
+  store.dispatch("logout"); // Vuex 상태 초기화
   router.push("/oauth2Login"); // 로그인 페이지로 이동
 };
 </script>
