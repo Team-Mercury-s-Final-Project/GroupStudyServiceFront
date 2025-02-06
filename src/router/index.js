@@ -44,7 +44,20 @@ const routes = [
     name: "OAuth2Callback",
     component: null, // 콜백은 페이지 컴포넌트가 필요 없음
     beforeEnter: async (to, from, next) => {
+      alert("1");
       await handleOAuthCallback();
+    },
+  },
+  {
+    path: "/oauth2/LoginFailcallback",
+    name: "oauth2LoginFailcallback",
+    component: null,
+    beforeEnter: async (to, from, next) => {
+      const errorMessage = to.query.error; // URL에서 error 파라미터를 추출
+      if (errorMessage) {
+        alert(`로그인 실패: ${decodeURIComponent(errorMessage)}`);
+        router.push("/oauth2Login");
+      }
     },
   },
   {
@@ -63,6 +76,7 @@ const publicPageList = [
   "/",
   "/oauth2Login",
   "/oauth2/callback",
+  "/oauth2/LoginFailcallback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
 ];
@@ -93,16 +107,9 @@ router.beforeEach(async (to, from, next) => {
   }
   try {
     // 인증이 필요한 경로에 대해 API 요청
-    await axiosInstance.get(to.path); // 인증 상태 확인용 API
-    next(); // 인증 성공 시 라우팅 계속 진행
+    await axiosInstance.get(to.path);
   } catch (error) {
     console.error("Authentication check failed:", error);
-    // 인증 실패 시 로그인 페이지로 리다이렉트
-    if (to.path !== "/oauth2Login") {
-      next("/oauth2Login");
-    } else {
-      next();
-    }
   }
 });
 

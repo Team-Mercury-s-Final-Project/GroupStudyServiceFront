@@ -6,6 +6,7 @@
 
       <div class="content-container">
         <main class="content">
+          <LoginModal v-if="modal.isVisible" />
           <router-view />
           <!-- 라우팅된 페이지가 여기 렌더링 -->
         </main>
@@ -35,10 +36,13 @@ import { FwbButton, FwbAvatar, FwbTooltip } from "flowbite-vue";
 import { computed, ref, watch } from "vue";
 import { reactive, provide } from "vue";
 import { useRoute } from "vue-router";
+import store from "./store/store";
+import LoginModal from "./components/modal/LoginPermissionRequired.vue";
 
 const route = useRoute();
 const isUserListVisible = ref(false);
 const isToggleButtonVisible = ref(false);
+const modal = computed(() => store.state.modal);
 
 const isUserListComputed = computed(() => {
   return route.meta?.showUserList === true;
@@ -75,6 +79,7 @@ export default {
     Sidebar,
     Header,
     UserList,
+    LoginModal,
     // FocusRoomTimers,
   },
 };

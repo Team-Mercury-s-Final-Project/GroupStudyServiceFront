@@ -16,11 +16,21 @@ axiosInstance.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
-
     return config;
   },
   (error) => {
     return Promise.reject(error);
+  }
+);
+
+// 응답 인터셉터
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await axiosInstance.post("/api/auth/reissue");
+      console.error("토큰 갱신 실패:", refreshError);
+    }
   }
 );
 
