@@ -38,8 +38,10 @@ const getCookie = (key) => {
 
 // 로그인 후 리다이렉트 처리 함수
 const redirectAfterLogin = (alertMessage, redirectUrl) => {
-  setTimeout(() => alert(alertMessage), 100);
-  router.push({ path: "/oauth2Login", query: { redirect: redirectUrl } });
+  alert(alertMessage);
+  setTimeout(() => {
+    router.push({ path: "/oauth2Login", query: { redirect: redirectUrl } });
+  }, 0);
 };
 
 // 토큰 재발급이 완료된 후 기존 요청들을 재시도
@@ -87,11 +89,12 @@ axiosInstance.interceptors.request.use(
     const accessToken = localStorage.getItem("access");
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
-    } else {
-      const redirectUrl = getRedirectUrl(config.url);
-      redirectAfterLogin("로그인 후 이용해주세요.", redirectUrl);
-      return;
     }
+    // } else {
+    //   const redirectUrl = getRedirectUrl(config.url);
+    //   redirectAfterLogin("로그인 후 이용해주세요.", redirectUrl);
+    //   return;
+    // }
     return config;
   },
   (error) => {

@@ -110,7 +110,8 @@ import { FwbAvatar, FwbSpinner } from "flowbite-vue";
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router"; // useRouter 임포트
 import GroupDetailModal from "./GroupDetailModal.vue";
-import axiosInstance from "../api/axiosInstance_test.js";
+// import axiosInstance from "../api/axiosInstance.js";
+import axiosInstance from "../api/axiosInstance";
 import GroupFormModal from "./GroupFormModal.vue";
 import { useToast } from "vue-toastification";
 

@@ -249,7 +249,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";

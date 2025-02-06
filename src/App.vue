@@ -39,7 +39,7 @@ import { useRoute } from "vue-router";
 import store from "./store/store";
 import LoginModal from "./components/modal/LoginPermissionRequired.vue";
 import Sidebar from "./components/Sidebar.vue";
-import axiosInstance from "./api/axiosInstance_test";
+import axiosInstance from "./api/axiosInstance";
 
 // 전역 상태 정의
 const globalState = reactive({
@@ -57,16 +57,9 @@ watch(route, async () => {
 // 그룹 데이터 가져오는 함수
 async function fetchGroups() {
   try {
-    const token = localStorage.getItem("access");
-    const response = await axiosInstance.get("/groups/myGroups", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 200) {
+    const response = await axiosInstance.get("/groups/myGroups");
+    if (response.status == 200) {
       globalState.myGroups = response.data.data;
-      console.log(JSON.stringify(globalState.myGroups));
     }
   } catch (error) {
     console.error("그룹 데이터 불러오기 실패:", error);

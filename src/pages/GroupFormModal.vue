@@ -104,7 +104,7 @@
 
 <script setup>
 import { ref, reactive, watch, computed } from "vue";
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 import { useToast } from "vue-toastification";
 
 import {
