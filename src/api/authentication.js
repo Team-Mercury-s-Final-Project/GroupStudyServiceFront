@@ -2,6 +2,7 @@
 import router from "../router/index";
 import axiosInstance from "axios";
 import store from "../store/store";
+import * as jwtDecode from "jwt-decode";
 
 // 경로 상수
 const ROUTE_LOGIN = "/oauth2Login";
@@ -34,8 +35,11 @@ export const handleOAuthCallback = async () => {
     if (response.status === 200) {
       const accessToken = getCookie("access");
       const refreshToken = getCookie("refresh");
+      
       if (accessToken && refreshToken) {
         localStorage.setItem("access", accessToken);
+        const decodedToken = jwtDecode.jwtDecode(accessToken);
+        localStorage.setItem("userId", decodedToken.id);
         router.push(ROUTE_DASHBOARD);
         console.log("store.dispatch(");
         store.dispatch("login"); // Vuex를 통해 로그인 상태 변경

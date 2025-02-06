@@ -27,6 +27,11 @@ const routes = [
     component: FocusRoomPage,
   },
   {
+    path: "/oauth2Login",
+    name: "oauth2Login",
+    component: LoginPage, // 소셜 로그인 페이지
+  },
+  {
     path: "/oauth2/callback", // 콜백 라우트
     name: "OAuth2Callback",
     component: null, // 콜백은 페이지 컴포넌트가 필요 없음
@@ -52,11 +57,10 @@ const publicPageList = [
   "/oauth2/callback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
-  "/groups/1",
-  "/groups/1/focusroom",
 ];
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
+  "/groups",
 ];
 
 function isPublicPage(path) {

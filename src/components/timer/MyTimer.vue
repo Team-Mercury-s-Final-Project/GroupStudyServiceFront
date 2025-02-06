@@ -4,6 +4,7 @@
     <span>
       <h3>이름:{{ nickname }}</h3>
       <h3>오늘의 총 공부시간: {{ todayTotalTime }}분</h3>
+      <h3>isConnect : {{ isConnect }}</h3>
     </span>
     <TimerDisplay :time="localTime" />
     <div class="buttons">
@@ -23,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, defineProps, onBeforeUnmount } from "vue";
+import { ref, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import TimerDisplay from "./TimerDisplay.vue";
 const route = useRoute();
@@ -35,12 +36,14 @@ const {
   todayTotalTime,
   timeSoFar,
   stompClient,
+  isConnect,
 } = defineProps([
   "userId",
   "nickname",
   "todayTotalTime",
   "timeSoFar",
   "stompClient",
+  "isConnect",
 ]);
 
 const localTime = ref(timeSoFar);

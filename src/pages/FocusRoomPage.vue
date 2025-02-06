@@ -11,11 +11,11 @@
       </div>
     </div>
     <div class="my-timer-container">
-      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" />
+      <span>{{ userId }}</span>
+      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" :isConnect="isConnect"/>
       <div>
         <p>Connection Status: {{ isConnect }}</p>
-        <button @click="connect()">구글모 Connect</button>
-        <button @click="connect('구카모')">구카모 Connect</button>
+        <button @click="connect()">Connect</button>
         <button @click="sendMSG">메시지 테스트</button>
         <button @click="disconnectFromServer">Disconnect</button>
         <button @click="groupMembersTimerDataInit">datainit</button>
@@ -26,23 +26,22 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, toRefs } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import MyTimer from "../components/timer/MyTimer.vue";
 import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
 import Stomp from "webstomp-client";
-import api from "../api.js";
+import axiosInstance from "../api/axiosInstance";
 
 //  ==== 상태값 시작 ====
-// 임시 로그인 유저 아이디
-const userId = ref(1);
+const userId = ref(localStorage.getItem("userId"));
 
 // 집중방에 있는 유저들의 타이머 데이터 데이터 초기 값
 const memberTimers = reactive([]);
 const myTimerData = reactive({
   userId: userId.value,
-  nickname: "구글모",
+  nickname: "서버 접속중",
   todayTotalTime: 0,
-  timeSoFar: 7,
+  timeSoFar: 3,
 });
 
 // 집중방 아이디
@@ -59,15 +58,33 @@ const stompClient = ref(null);
 
 // ==== Methods ====
 
+// 내 타이머 데이터 받아오기
+const getMyTimerData = async () => {
+  try {
+    const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
+    const timerData = response.data;
+    console.log("mytimerData", timerData);
+    Object.assign(myTimerData, timerData);
+  } catch (error) {
+    console.error("API 호출 중 오류 발생:", error);
+  }
+};
+
 // 그룹원 타이머 데이터 받아오기
 const groupMembersTimerDataInit = async () => {
   try {
-    const response = await api.get(`/api/groups/${groupId.value}/timers`);
+    const response = await axiosInstance.get(`/groups/${groupId.value}/timers`);
     const timerDatas = response.data;
     console.log("timerDatas:=====**", timerDatas);
 
     timerDatas.forEach((timer) => {
-      if (timer.userId === userId.value) {
+      console.log("누구의 타이머인가? :", timer.userId," 나의 아이디 :", userId.value);
+      console.log(timer.userId == userId.value);
+      console.log(typeof timer.userId);
+      console.log(typeof userId.value);
+      
+      
+      if (timer.userId == userId.value) {
         console.log("내 타이머 데이터!!!!!!!!!!!!!");
 
         Object.assign(myTimerData, timer);
@@ -77,37 +94,27 @@ const groupMembersTimerDataInit = async () => {
         memberTimers.push(timer);
       }
     });
-
     console.log("응답 성공적");
   } catch (error) {
-    console.error("API 호출 중 오류 발생:", error);
+    console.error("API 호출 중 오류 발생:groupMembersTimerDataInit", error);
   }
 };
 
 // 웹소켓 연결
-async function connect(type) {
-  let headers = {
+function connect() {
+  const headers = {
     roomType: "focus",
     groupId: groupId.value,
-    userId: 1,
-    nickname: "구글모",
+    userId: userId.value,
+    nickname: myTimerData.nickname,
+    Authorization: "Bearer " + localStorage.getItem("access"),
   };
-  if (type === "구카모") {
-    console.log("구카모 연결");
-    userId.value = 2;
-    myTimerData.userId = 2;
-    myTimerData.nickname = "구카모";
-    headers = {
-      roomType: "focus",
-      groupId: groupId.value,
-      userId: 2,
-      nickname: "구카모",
-    };
-  }
+  console.log("headers 체크!!!!!!!!!!!1", headers);
+  
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
 
-  await stompClient.value.connect(headers, () => {
+  stompClient.value.connect(headers, () => {
     console.log("스톰프 서버 연결 성공");
     isConnect.value = true;
 
@@ -123,8 +130,11 @@ async function connect(type) {
         }
       }
     );
+    // sub 완료
+
   });
 };
+
 
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
@@ -199,6 +209,9 @@ const timerEventHandlers = {
 
     const { userId, nickname, timeSoFar, todayTotalTime, ranking, status } =
       eventData;
+    if (userId === myTimerData.userId) {
+      return;
+    }
     memberTimers.push({
       userId,
       nickname,
@@ -243,14 +256,38 @@ const disconnectFromServer = () => {
   console.log("Disconnecting from the server");
   if (stompClient.value) {
     stompClient.value.disconnect();
-    isConnect.value = false;
+    // isConnect.value = false;
   }
 };
+const checkLoginAndConnect = async () => {
+  const userId = localStorage.getItem("userId");
+  if (!localStorage.getItem("access")&&userId === null) {
+    alert("로그인이 필요합니다.");
+    const router = useRouter();
+    router.push("/login");
+  }else{
+    await enterAndGetMyTimerData();
+    await connect();
+    groupMembersTimerDataInit();
+  }
+};
+const enterAndGetMyTimerData = async () => {
+  try {
+    const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
+    const timerData = response.data;
+    console.log("timerData", timerData);
+    Object.assign(myTimerData, timerData);
+  } catch (error) {
+    console.error("API 호출 중 오류 발생:", error);
+  }
+};
+
 onMounted(() => {
-  connect();
+  // getMyTimerData();
+  checkLoginAndConnect();
   // 1초 뒤에 데이터 받아오기 - 비동기화 문제 해결 필요 backend listener가 오래 동작하는 문제
   setTimeout(() => {
-    groupMembersTimerDataInit();
+    // groupMembersTimerDataInit();
   }, 1000);
 });
 

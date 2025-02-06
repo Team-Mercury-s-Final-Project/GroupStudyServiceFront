@@ -50,6 +50,7 @@ const logout = () => {
   store.dispatch("logout"); // Vuex 상태 초기화
   localStorage.removeItem("access"); // 토큰 삭제 (예시)
   localStorage.removeItem("refresh"); // 토큰 삭제 (예시)
+  localStorage.removeItem("userId"); // 사용자 ID 삭제
   router.push("/oauth2Login"); // 로그인 페이지로 이동
 };
 </script>
