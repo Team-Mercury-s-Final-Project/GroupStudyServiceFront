@@ -567,9 +567,9 @@ async function updateNotice(selectedNotice) {
 }
 
 // 컴포넌트가 마운트되면 API 호출
-onMounted(() => {
+onMounted(async () => {
+  await reloadGroupData();
   eventSource = connectSSE();
-  reloadGroupData();
 });
 
 // 그룹 데이터 상태
