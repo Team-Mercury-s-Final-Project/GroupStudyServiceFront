@@ -51,7 +51,6 @@ const routes = [
     beforeEnter: async (to, from, next) => {
       const errorMessage = to.query.error; // URL에서 error 파라미터를 추출
       if (errorMessage) {
-        alert(`로그인 실패: ${decodeURIComponent(errorMessage)}`);
         router.push("/oauth2Login");
       }
     },
@@ -88,7 +87,11 @@ const publicPageList = [
 ];
 
 // 채팅 방 페이지
+
+const Chatregex = /^\/api\/users\/\d+\/chatRoomList$/;
+
 // const Chatregex = /^/api/users/\d+/chatRoomList$/;
+
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
   "/groups",
@@ -102,6 +105,9 @@ function isPublicPage(path) {
     return true;
   }
   // 정규표현식 경로 체크
+  if (Chatregex.test(path)) {
+    return true;
+  }
   // if (Chatregex.test(path)) {
   //   return true;
   // }

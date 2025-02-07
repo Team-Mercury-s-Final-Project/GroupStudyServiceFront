@@ -14,7 +14,7 @@
       <fwb-navbar-collapse :is-show-menu="isShowMenu">
         <!-- 로그인된 경우에만 '내 정보'와 '로그아웃' 메뉴 표시 -->
         <template v-if="isLoggedIn">
-          <router-link to="userinfoPage" class="mr-4 hover:underline"
+          <router-link to="#" @click="goToMyInfo" class="mr-4 hover:underline"
             >내 정보</router-link
           >
           <router-link to="#" @click="logout" class="hover:underline"
@@ -45,12 +45,17 @@ const router = useRouter(); // Vue Router 사용
 // 로그인 상태 확인
 const isLoggedIn = computed(() => store.state.isLoggedIn);
 
+// 그룹 상세 페이지로 이동
+const goToMyInfo = () => {
+  router.push("/userinfoPage");
+};
+
 // 로그아웃 처리
 const logout = () => {
   localStorage.removeItem("access"); // 토큰 삭제 (예시)
   localStorage.removeItem("redirectUrl"); // 리다이렉트 url 삭제
-  store.dispatch("logout"); // Vuex 상태 초기화
   localStorage.removeItem("userId"); // 사용자 ID 삭제
+  store.dispatch("logout"); // Vuex 상태 초기화
   router.push("/oauth2Login"); // 로그인 페이지로 이동
 };
 </script>

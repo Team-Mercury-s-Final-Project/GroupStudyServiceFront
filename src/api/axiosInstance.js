@@ -5,7 +5,7 @@ import router from "../router";
 const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: import.meta.env.VITE_SERVER_HOST,
   headers: {
     "Content-Type": "application/json",
   },
@@ -38,7 +38,6 @@ const getCookie = (key) => {
 
 // 로그인 후 리다이렉트 처리 함수
 const redirectAfterLogin = (alertMessage, redirectUrl) => {
-  alert(alertMessage);
   setTimeout(() => {
     router.push({ path: "/oauth2Login", query: { redirect: redirectUrl } });
   }, 0);
