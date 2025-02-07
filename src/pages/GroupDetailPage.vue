@@ -578,7 +578,7 @@ async function fetchGroup() {
     groupData.value = response.data.data;
   } catch (error) {
     toast.error(
-      "그룹 데이터를 불러오는중 오류가 발생했습니다: " +
+      "그룹 데이터를러오는중 오류가 발생했습니다: " +
         (error.response?.data?.message || error.message),
       { timeout: 4000 }
     );
