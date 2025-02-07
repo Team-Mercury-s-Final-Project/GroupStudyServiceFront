@@ -1,11 +1,18 @@
 <template>
   <div>
     <div
-      v-if="isLoading"
+      v-if="isOutLoading"
       class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
     >
       <fwb-spinner size="12" />
       <div class="text-xl text-gray-800">탈퇴중...</div>
+    </div>
+    <div
+      v-if="isLoading"
+      class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
+    >
+      <fwb-spinner size="12" />
+      <div class="text-xl text-gray-800">로딩중...</div>
     </div>
     <div class="group-container" v-if="groupData">
       <fwb-avatar size="lg" :img="groupData.image" :key="groupData.image">
@@ -216,7 +223,7 @@
           <div class="card-content">
             <div class="enter-container">
               <p>5/10</p>
-              <fwb-button>입장하기</fwb-button>
+              <fwb-button @click="enterChatRoom">입장하기</fwb-button>
             </div>
           </div>
         </fwb-card>
@@ -260,6 +267,7 @@ if (!globalState) {
 const toast = useToast();
 const router = useRouter();
 const isLoading = ref(false);
+const isOutLoading = ref(false);
 const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
 // Router에서 동적 파라미터(groupId)를 가져옴
 const route = useRoute();
@@ -302,14 +310,10 @@ async function exitGroup() {
     return;
   }
 
-  isLoading.value = true;
+  isOutLoading.value = true;
   try {
     // API 요청 보내기
-    const response = await axiosInstance.delete(`/groups/${groupId}/exit`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosInstance.delete(`/groups/${groupId}/exit`);
     if (response.status === 200) {
       router.push("/");
       toast.success("그룹탈퇴가 완료되었습니다");
@@ -322,7 +326,7 @@ async function exitGroup() {
       "오류가 발생했습니다: " + (error.response?.data?.message || error.message)
     );
   } finally {
-    isLoading.value = false; // 로딩 종료
+    isOutLoading.value = false; // 로딩 종료
   }
 }
 
@@ -356,7 +360,7 @@ const connectSSE = async () => {
   eventSource.addEventListener("memberData", (event) => {
     try {
       users.list = JSON.parse(event.data);
-      store.commit('setUsers', users);
+      store.commit("setUsers", users);
     } catch (error) {
       console.error("데이터 파싱 오류:", error);
     }
@@ -575,13 +579,13 @@ const groupData = ref(null);
 async function fetchGroup() {
   try {
     // console.log("fetch group 의 groupId" + groupId);
-    const response = await axiosInstance.get(`/groups/${groupId}`, {
+    const response = await axiosInstance.get(`/groups/${groupId}/enter`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     groupData.value = response.data.data;
   } catch (error) {
     toast.error(
-      "그룹 데이터를 불러오는중 오류가 발생했습니다: " +
+      "그룹 데이터를러오는중 오류가 발생했습니다: " +
         (error.response?.data?.message || error.message),
       { timeout: 4000 }
     );
@@ -628,6 +632,28 @@ async function updateGroup(updatedData) {
     );
   } finally {
     toast.dismiss(isEditingId);
+  }
+}
+
+//해당 사용자의 그룹채팅방 안의 읽지 않은 메시지들을 모두 읽음처리 후 채팅방으로 이동
+async function enterChatRoom() {
+  try {
+    const response = await axiosInstance.post(
+      `/chat/updateGroupUnreadMessages/${groupId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log("그룹 채팅메시지 읽음처리 완료", response.data);
+    const chatRoomId = response.data.data;
+
+    if (chatRoomId) {
+      router.push(`/chats/${chatRoomId}`); // Vue Router 인스턴스를 사용하여 페이지 이동
+    } else {
+      console.error("채팅방 아이디를 받아오지 못합니다.");
+    }
+  } catch (error) {
+    console.error("그룹 채팅메시지 읽음처리 중 에러 발생", error);
   }
 }
 // --------------------modal end----------------
