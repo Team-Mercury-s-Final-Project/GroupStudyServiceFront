@@ -94,6 +94,7 @@ export default {
     this.connectWebSocket();
   },
 
+
   computed: {
     dmList() {
       return this.chatList.filter((chat) => chat.chatRoomType === "DM");
