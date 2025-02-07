@@ -272,11 +272,12 @@ const groupIdObject = computed(() => route.params.groupId);
 watch(
   () => groupIdObject.value, // computed 값을 직접 감시
   async (newG, oldG) => {
-    // console.log("groupId 변경 감지:", newG); // 로그로 값 확인
+    console.log("groupId 변경 감지:", newG); // 로그로 값 확인
     groupId = newG;
     if (newG !== oldG) {
       closeSSE(); // 기존 SSE 연결 종료
-      eventSource = connectSSE(); // 새로운 SSE 연결
+      await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms 대기 후 새로운 SSE 연결
+      eventSource = await connectSSE(); // 새로운 SSE 연결
       await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
     }
   }
@@ -329,7 +330,7 @@ async function exitGroup() {
 let eventSource = null;
 const users = reactive({ list: [] });
 
-const connectSSE = () => {
+const connectSSE = async () => {
   eventSource = new EventSourcePolyfill(
     `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
     {
@@ -363,6 +364,7 @@ const connectSSE = () => {
 
   eventSource.addEventListener("statusUpdate", (event) => {
     const data = JSON.parse(event.data);
+    console.log("statusUpdate 수신:", data);
     store.commit("updateStatus", data);
   });
 
@@ -373,6 +375,7 @@ const closeSSE = () => {
   if (eventSource && typeof eventSource.close === "function") {
     console.log("SSE 연결 종료");
     eventSource.close();
+    eventSource = null;
     // Vuex 상태 초기화
     store.commit("clearUsers");
   }
