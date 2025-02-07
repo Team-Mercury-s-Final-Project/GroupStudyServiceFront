@@ -572,7 +572,7 @@ const groupData = ref(null);
 async function fetchGroup() {
   try {
     // console.log("fetch group 의 groupId" + groupId);
-    const response = await axiosInstance.get(`/groups/${groupId}`, {
+    const response = await axiosInstance.get(`/groups/${groupId}/enter`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     groupData.value = response.data.data;
