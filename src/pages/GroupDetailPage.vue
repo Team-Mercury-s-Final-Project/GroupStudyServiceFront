@@ -280,7 +280,7 @@ const groupIdObject = computed(() => route.params.groupId);
 watch(
   () => groupIdObject.value, // computed 값을 직접 감시
   async (newG, oldG) => {
-    console.log("groupId 변경 감지:", newG); // 로그로 값 확인
+    // console.log("groupId 변경 감지:", newG); // 로그로 값 확인
     groupId = newG;
     if (newG !== oldG) {
       closeSSE(); // 기존 SSE 연결 종료
@@ -368,7 +368,6 @@ const connectSSE = async () => {
 
   eventSource.addEventListener("statusUpdate", (event) => {
     const data = JSON.parse(event.data);
-    console.log("statusUpdate 수신:", data);
     store.commit("updateStatus", data);
   });
 
@@ -569,7 +568,7 @@ async function updateNotice(selectedNotice) {
 // 컴포넌트가 마운트되면 API 호출
 onMounted(async () => {
   await reloadGroupData();
-  eventSource = connectSSE();
+  eventSource = await connectSSE();
 });
 
 // 그룹 데이터 상태
