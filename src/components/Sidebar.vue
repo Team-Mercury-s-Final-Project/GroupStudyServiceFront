@@ -37,7 +37,6 @@ const globalState = inject("globalState"); // 전역 상태 가져오기
 // 그룹 상세 페이지로 이동
 async function goToGroupDetail(groupId) {
   // router.push(`/groups/${groupId}`);
-  alert("groupId: " + groupId);
   router.push(`/groups/${groupId}`).then(() => {
     console.log("라우터 이동 성공:", router.currentRoute.value);
   });
