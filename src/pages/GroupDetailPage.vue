@@ -1,11 +1,18 @@
 <template>
   <div>
     <div
-      v-if="isLoading"
+      v-if="isOutLoading"
       class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
     >
       <fwb-spinner size="12" />
       <div class="text-xl text-gray-800">탈퇴중...</div>
+    </div>
+    <div
+      v-if="isLoading"
+      class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
+    >
+      <fwb-spinner size="12" />
+      <div class="text-xl text-gray-800">로딩중...</div>
     </div>
     <div class="group-container" v-if="groupData">
       <fwb-avatar size="lg" :img="groupData.image" :key="groupData.image">
@@ -35,7 +42,7 @@
           </fwb-tooltip>
         </div>
         <!-----------------------modal start------------------------------------>
-        <div class="info-item">
+        <div class="info-item" v-if="isHost">
           <svg
             class="h-8 w-8 text-neutral-500 cursor-pointer transition-transform duration-200 ease-in-out hover:scale-110"
             viewBox="0 0 24 24"
@@ -118,12 +125,16 @@
             <!-- 중앙에 위치한 공지사항 -->
             <span class="absolute left-1/2 -translate-x-1/2">공지사항</span>
             <!-- 오른쪽 상단 버튼 -->
-            <button
-              @click="openCreateModal"
-              class="w-8 h-8 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center justify-center text-lg ml-auto"
-            >
-              +
-            </button>
+            <!-- 버튼을 감싸는 영역을 항상 유지 -->
+            <div class="ml-auto w-8 h-8 flex items-center justify-center">
+              <button
+                v-if="isHost"
+                @click="openCreateModal"
+                class="w-8 h-8 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 text-lg"
+              >
+                +
+              </button>
+            </div>
           </div>
           <!-- 공지사항 리스트에 스크롤 추가 -->
           <div class="card-content space-y-2 overflow-y-auto max-h-48 p-2">
@@ -150,22 +161,18 @@
                   <!-- 수정 및 삭제 버튼 -->
                   <div class="flex items-center space-x-2">
                     <button
+                      v-if="isHost"
                       @click="openEditModal(notice)"
                       class="text-blue-500 hover:underline text-sm"
                     >
                       수정
                     </button>
                     <button
+                      v-if="isHost"
                       @click="deleteNotice(notice.id)"
                       class="text-red-500 hover:underline text-sm"
                     >
                       삭제
-                    </button>
-                    <button
-                      @click="goToGroup"
-                      class="text-purple-500 hover:underline text-sm"
-                    >
-                      이동버튼
                     </button>
                   </div>
                 </div>
@@ -211,8 +218,8 @@
             <div class="enter-container">
               <p>5/10</p>
               <fwb-button @click="$router.push(`${groupId}/focusroom`)"
-              >입장하기</fwb-button
-            >
+                >입장하기</fwb-button
+              >
             </div>
           </div>
         </fwb-card>
@@ -222,7 +229,7 @@
           <div class="card-content">
             <div class="enter-container">
               <p>5/10</p>
-              <fwb-button>입장하기</fwb-button>
+              <fwb-button @click="enterChatRoom">입장하기</fwb-button>
             </div>
           </div>
         </fwb-card>
@@ -236,16 +243,19 @@ import {
   FwbAvatar,
   FwbButton,
   FwbCard,
-  FwbButtonGroup,
   FwbTooltip,
-  FwbModal,
-  FwbInput,
-  FwbFileInput,
-  FwbRadio,
   FwbSpinner,
 } from "flowbite-vue";
 import GroupFormModal from "./GroupFormModal.vue";
-import { ref, onMounted, onUnmounted, watch, computed } from "vue";
+import {
+  ref,
+  onMounted,
+  onUnmounted,
+  watch,
+  computed,
+  inject,
+  reactive,
+} from "vue";
 import { useRoute } from "vue-router";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
@@ -254,10 +264,16 @@ import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";
 import { useToast } from "vue-toastification";
+import store from "../store/store";
 
+const globalState = inject("globalState");
+if (!globalState) {
+  console.error("globalState가 주입되지 않았습니다.");
+}
 const toast = useToast();
 const router = useRouter();
 const isLoading = ref(false);
+const isOutLoading = ref(false);
 const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공지사항
 // Router에서 동적 파라미터(groupId)를 가져옴
 const route = useRoute();
@@ -270,11 +286,12 @@ const groupIdObject = computed(() => route.params.groupId);
 watch(
   () => groupIdObject.value, // computed 값을 직접 감시
   async (newG, oldG) => {
-    console.log("groupId 변경 감지:", newG); // 로그로 값 확인
+    // console.log("groupId 변경 감지:", newG); // 로그로 값 확인
     groupId = newG;
     if (newG !== oldG) {
       closeSSE(); // 기존 SSE 연결 종료
-      eventSource = connectSSE(); // 새로운 SSE 연결
+      await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms 대기 후 새로운 SSE 연결
+      eventSource = await connectSSE(); // 새로운 SSE 연결
       await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
     }
   }
@@ -284,10 +301,10 @@ let groupId = groupIdObject.value;
 async function reloadGroupData() {
   isLoading.value = true;
   try {
-    console.log("데이터 불러오기");
+    // console.log("데이터 불러오기");
     await Promise.all([fetchGroup(), fetchNotices()]); // 병렬로 데이터 요청
   } catch (error) {
-    console.error("데이터 로드 중 오류:", error);
+    // console.error("데이터 로드 중 오류:", error);
   } finally {
     isLoading.value = false;
   }
@@ -299,19 +316,15 @@ async function exitGroup() {
     return;
   }
 
-  isLoading.value = true;
+  isOutLoading.value = true;
   try {
     // API 요청 보내기
-    const response = await axiosInstance.delete(`/groups/${groupId}/exit`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axiosInstance.delete(`/groups/${groupId}/exit`);
     if (response.status === 200) {
       router.push("/");
       toast.success("그룹탈퇴가 완료되었습니다");
     } else {
-      console.log(response.data.message);
+      // console.log(response.data.message);
       toast.error("탈퇴 실패: " + response.data.message);
     }
   } catch (error) {
@@ -319,17 +332,15 @@ async function exitGroup() {
       "오류가 발생했습니다: " + (error.response?.data?.message || error.message)
     );
   } finally {
-    isLoading.value = false; // 로딩 종료
+    isOutLoading.value = false; // 로딩 종료
   }
 }
-function goToGroup() {
-  console.log("goto");
-  router.push("/groups/59");
-}
+
 /** 그룹 페이지 입장 SSE 연결 */
 let eventSource = null;
+const users = reactive({ list: [] });
 
-const connectSSE = () => {
+const connectSSE = async () => {
   eventSource = new EventSourcePolyfill(
     `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
     {
@@ -352,6 +363,20 @@ const connectSSE = () => {
     eventSource.close();
   };
 
+  eventSource.addEventListener("memberData", (event) => {
+    try {
+      users.list = JSON.parse(event.data);
+      store.commit("setUsers", users);
+    } catch (error) {
+      console.error("데이터 파싱 오류:", error);
+    }
+  });
+
+  eventSource.addEventListener("statusUpdate", (event) => {
+    const data = JSON.parse(event.data);
+    store.commit("updateStatus", data);
+  });
+
   return eventSource;
 };
 
@@ -359,12 +384,14 @@ const closeSSE = () => {
   if (eventSource && typeof eventSource.close === "function") {
     console.log("SSE 연결 종료");
     eventSource.close();
+    eventSource = null;
+    // Vuex 상태 초기화
+    store.commit("clearUsers");
   }
 };
 
 onUnmounted(() => {
   closeSSE();
-  window.removeEventListener("beforeunload", closeSSE);
 });
 
 // --------------------modal start----------------
@@ -426,7 +453,11 @@ async function fetchNotices() {
     });
     notices.value = response.data.data; // 응답 데이터 저장
   } catch (error) {
-    console.error("공지사항 가져오기 중 오류 발생:", error);
+    toast.error(
+      "오류가 발생했습니다: " +
+        (error.response?.data?.message || error.message),
+      { timeout: 2000 }
+    );
   } finally {
     isNoticeLoading.value = false;
   }
@@ -498,7 +529,7 @@ async function updateNotice(selectedNotice) {
   const loadingToastId = toast.warning("수정중입니다...", { timeout: false });
   try {
     const noticeId = selectedNotice.id;
-    console.log("공지사항 ID:", noticeId); // 로그 출력 확인
+    // console.log("공지사항 ID:", noticeId); // 로그 출력 확인
     const token = localStorage.getItem("access");
 
     // API 요청
@@ -516,7 +547,7 @@ async function updateNotice(selectedNotice) {
       toast.success("공지사항이 수정되었습니다!", { timeout: 2000 });
       // 서버 응답으로부터 업데이트된 공지사항 데이터 받아오기
       const updatedNotice = response.data.data;
-      console.log(updatedNotice);
+      // console.log(updatedNotice);
 
       // notices 배열에서 해당 공지사항을 찾아 교체하기 (순서는 유지됨)
       notices.value = notices.value.map((notice) =>
@@ -528,7 +559,7 @@ async function updateNotice(selectedNotice) {
       });
     }
   } catch (error) {
-    console.error("공지사항 수정 중 오류 발생:", error);
+    // console.error("공지사항 수정 중 오류 발생:", error);
     toast.error("공지사항 수정 실패: " + response.data.message, {
       timeout: 2000,
     });
@@ -541,34 +572,46 @@ async function updateNotice(selectedNotice) {
 }
 
 // 컴포넌트가 마운트되면 API 호출
-onMounted(() => {
-  eventSource = connectSSE();
-  reloadGroupData();
+onMounted(async () => {
+  await reloadGroupData();
+  eventSource = await connectSSE();
 });
-
 // 그룹 데이터 상태
 const groupData = ref(null);
+
+const isHost = ref(false);
 
 // 그룹 데이터만 먼저 불러오는 함수
 async function fetchGroup() {
   try {
-    console.log("fetch group 의 groupId" + groupId);
-    const response = await axiosInstance.get(`/groups/${groupId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    // console.log("fetch group 의 groupId" + groupId);
+    const response = await axiosInstance.get(`/groups/${groupId}/enter`);
     groupData.value = response.data.data;
   } catch (error) {
-    console.error("그룹 데이터를 불러오는 중 오류 발생:", error);
+    if(error.status === 409) {
+      toast.error("그룹에 가입하지 않았습니다. 그룹에 가입해주세요.", { timeout: 3000 });
+      router.push("/");
+    } else {
+      toast.error("그룹 데이터를 불러오는 중 오류가 발생했습니다." +
+      (error.response?.data?.message || error.message), { timeout: 3000 });
+    }
   }
 }
+// groupData가 변경될 때마다 isHost를 업데이트
+watch(groupData, (newData) => {
+  if (newData && typeof newData.isHost !== "undefined") {
+    isHost.value = newData.isHost;
+  }
+});
 
 // 그룹 수정 요청 함수
 async function updateGroup(updatedData) {
+  // console.log(updatedData);
   const isEditingId = toast.warning("그룹정보 수정중입니다...", {
     timeout: false,
   });
-  console.log(groupData.value);
-  console.log("here");
+  // console.log(groupData.value);
+  // console.log("here");
   try {
     const response = await axiosInstance.put(
       `/groups/${groupId}`,
@@ -581,6 +624,13 @@ async function updateGroup(updatedData) {
       // 업로드 성공 시 URL 저장
       toast.success("그룹정보가 성공적으로 수정되었습니다.", { timeout: 2000 });
       groupData.value = response.data.data;
+      const updatedGroup = response.data.data;
+
+      // 전역 상태(myGroups) 업데이트
+      updatedGroup.imageUrl = updatedGroup.image;
+      globalState.myGroups = globalState.myGroups.map((group) => {
+        return group.id === updatedGroup.id ? updatedGroup : group;
+      });
     } else {
       toast.error("그룹정보 수정 실패: " + response.data.message, {
         timeout: 2000,
@@ -594,6 +644,28 @@ async function updateGroup(updatedData) {
     );
   } finally {
     toast.dismiss(isEditingId);
+  }
+}
+
+//해당 사용자의 그룹채팅방 안의 읽지 않은 메시지들을 모두 읽음처리 후 채팅방으로 이동
+async function enterChatRoom() {
+  try {
+    const response = await axiosInstance.post(
+      `/chat/updateGroupUnreadMessages/${groupId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log("그룹 채팅메시지 읽음처리 완료", response.data);
+    const chatRoomId = response.data.data;
+
+    if (chatRoomId) {
+      router.push(`/chats/${chatRoomId}`); // Vue Router 인스턴스를 사용하여 페이지 이동
+    } else {
+      console.error("채팅방 아이디를 받아오지 못합니다.");
+    }
+  } catch (error) {
+    console.error("그룹 채팅메시지 읽음처리 중 에러 발생", error);
   }
 }
 // --------------------modal end----------------

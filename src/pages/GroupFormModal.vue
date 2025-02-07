@@ -151,11 +151,24 @@ const isEditMode = computed(() => props.mode === "edit");
 const emit = defineEmits(["submit", "close"]);
 
 // 파일 업로드 후 새 이미지 URL을 로컬 복사본에 반영해야 합니다.
-let newImageUrl = groupData.image;
+// let newImageUrl = groupData.image;
+// 반응형 변수로 newImageUrl 선언 (초기값: groupData.image)
+const newImageUrl = ref(groupData.image);
+// 부모의 데이터가 바뀔 때마다 로컬 데이터와 newImageUrl도 업데이트
+watch(
+  () => props.groupData,
+  (newData) => {
+    Object.assign(localGroupData, newData);
+    newImageUrl.value = newData.image;
+  }
+);
 
 function submitGroup() {
-  localGroupData.image = newImageUrl;
-  console.log("업데이트 할 데이터 : ", localGroupData);
+  // console.log("안바꿧는데도 바뀐다...?" + newImageUrl);
+  // 업로드된 이미지 URL이 없으면 원래 이미지 사용
+  localGroupData.image = newImageUrl.value;
+
+  // console.log("업데이트 할 데이터 : ", localGroupData);
   emit("submit", { ...localGroupData }); // 이벤트 전송
   emit("close");
 }
@@ -189,7 +202,7 @@ async function handleFileUpload(event) {
 
     if (response.status === 200) {
       // 업로드 성공 시 URL 저장
-      newImageUrl = response.data.data.url;
+      newImageUrl.value = response.data.data.url;
       toast.success("이미지가 성공적으로 업로드되었습니다.", { timeout: 2000 });
     } else {
       toast.error("이미지 업로드 실패: " + response.data.message, {

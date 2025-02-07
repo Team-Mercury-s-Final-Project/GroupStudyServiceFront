@@ -87,11 +87,16 @@ const publicPageList = [
 ];
 
 // 채팅 방 페이지
+
 const Chatregex = /^\/api\/users\/\d+\/chatRoomList$/;
+
+// const Chatregex = /^/api/users/\d+/chatRoomList$/;
+
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
   "/groups",
   "/users/",
+  "/chats",
 ];
 
 function isPublicPage(path) {
@@ -103,6 +108,9 @@ function isPublicPage(path) {
   if (Chatregex.test(path)) {
     return true;
   }
+  // if (Chatregex.test(path)) {
+  //   return true;
+  // }
   // 동적 경로 패턴 체크
   for (let prefix of publicPagePrefixList) {
     if (path.startsWith(prefix)) {
