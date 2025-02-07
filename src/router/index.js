@@ -25,13 +25,11 @@ const routes = [
     name: "GroupDetail",
     component: GroupDetailPage,
     meta: { showUserList: true, showToggleButton: true },
-
   },
   {
     path: "/groups/:groupId/focusroom",
     name: "FocusRoom",
     component: FocusRoomPage,
-
   },
   {
     path: "/oauth2Login",
@@ -89,9 +87,13 @@ const publicPageList = [
   "/groups/1/focusroom",
 ];
 
+// 채팅 방 페이지
+// const Chatregex = /^/api/users/\d+/chatRoomList$/;
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
   "/groups",
+  "/users/",
+  "/chats",
 ];
 
 function isPublicPage(path) {
@@ -99,6 +101,10 @@ function isPublicPage(path) {
   if (publicPageList.includes(path)) {
     return true;
   }
+  // 정규표현식 경로 체크
+  // if (Chatregex.test(path)) {
+  //   return true;
+  // }
   // 동적 경로 패턴 체크
   for (let prefix of publicPagePrefixList) {
     if (path.startsWith(prefix)) {

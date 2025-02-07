@@ -223,7 +223,7 @@
           <div class="card-content">
             <div class="enter-container">
               <p>5/10</p>
-              <fwb-button>입장하기</fwb-button>
+              <fwb-button @click="enterChatRoom">입장하기</fwb-button>
             </div>
           </div>
         </fwb-card>
@@ -629,6 +629,28 @@ async function updateGroup(updatedData) {
     );
   } finally {
     toast.dismiss(isEditingId);
+  }
+}
+
+//해당 사용자의 그룹채팅방 안의 읽지 않은 메시지들을 모두 읽음처리 후 채팅방으로 이동
+async function enterChatRoom() {
+  try {
+    const response = await axiosInstance.post(
+      `/chat/updateGroupUnreadMessages/${groupId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log("그룹 채팅메시지 읽음처리 완료", response.data);
+    const chatRoomId = response.data.data;
+
+    if (chatRoomId) {
+      router.push(`/chats/${chatRoomId}`); // Vue Router 인스턴스를 사용하여 페이지 이동
+    } else {
+      console.error("채팅방 아이디를 받아오지 못합니다.");
+    }
+  } catch (error) {
+    console.error("그룹 채팅메시지 읽음처리 중 에러 발생", error);
   }
 }
 // --------------------modal end----------------
