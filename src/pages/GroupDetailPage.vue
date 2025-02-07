@@ -341,12 +341,12 @@ const users = reactive({ list: [] });
 
 const connectSSE = () => {
   eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`
-    // {
-    //   headers: {
-    //     Authorization: `Bearer ${token}`,
-    //   },
-    // }
+    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
   );
 
   eventSource.addEventListener("connect", (event) => {
