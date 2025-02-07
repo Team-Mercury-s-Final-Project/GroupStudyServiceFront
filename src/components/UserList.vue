@@ -4,36 +4,41 @@
     <ul>
       <li class="user-item">
         <fwb-avatar
-          img="https://storage.googleapis.com/mercury-star-bucket/f4bf8c32-8dbc-4951-b67a-b9472b61ea0a"
+          :img="me.image"
           rounded status-position="top-right" status="online"
         />
-        <span class="user-name">신준섭</span>
-        <fwb-badge size="xs" type="yellow">👑</fwb-badge>
-        <!-- <fwb-badge v-if="user.isHost" size="xs" type="green">접속중</fwb-badge> -->
+        <span class="user-name">{{ me.nickname }}</span>
+        <fwb-badge v-if="me.isHost" size="xs" type="yellow">👑</fwb-badge>
+        <fwb-badge size="xs" :type="me.status === 'ONLINE' ? 'green' : 'red'">
+          {{ me.status === "ONLINE" ? "접속중" : "부재중" }}
+        </fwb-badge>
+      </li>
+    </ul>
+
+    <h3 class="section-title">⚡ 온라인 ({{ onlineUsers.length }})</h3>
+    <ul>
+      <li v-for="user in onlineUsers" :key="user.id" class="user-item">
+        <fwb-avatar
+          :img="user.image"
+          rounded status-position="top-right"
+          status="online"
+        />
+        <span class="user-name">{{ user.nickname }}</span>
+        <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
         <fwb-badge size="xs" type="green">접속중</fwb-badge>
       </li>
     </ul>
 
-    <h3 class="section-title">⚡ 온라인</h3>
+    <h3 class="section-title">🌙 오프라인 ({{ offlineUsers.length }})</h3>
     <ul>
-      <li v-for="user in users" :key="user.id" class="user-item">
+      <li v-for="user in offlineUsers" :key="user.id" class="user-item">
         <fwb-avatar
-          img="https://storage.googleapis.com/mercury-star-bucket/f4bf8c32-8dbc-4951-b67a-b9472b61ea0a"
-          rounded status-position="top-right" status="online"
+          :img="user.image"
+          rounded status-position="top-right"
+          status="offline"
         />
-        <span class="user-name">{{ user.name }}</span>
-        <fwb-badge size="xs" type="green">접속중</fwb-badge>
-      </li>
-    </ul>
-
-    <h3 class="section-title">🌙 오프라인</h3>
-    <ul>
-      <li v-for="user in awayUsers" :key="user.id" class="user-item">
-        <fwb-avatar
-          img="https://storage.googleapis.com/mercury-star-bucket/f4bf8c32-8dbc-4951-b67a-b9472b61ea0a"
-          rounded status-position="top-right" status="offline"
-        />
-        <span class="user-name away">{{ user.name }}</span>
+        <span class="user-name away">{{ user.nickname }}</span>
+        <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
         <fwb-badge size="xs" type="red">부재중</fwb-badge>
       </li>
     </ul>
@@ -41,26 +46,25 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { FwbBadge, FwbAvatar } from 'flowbite-vue';
-</script>
+import store from "../store/store";
 
-<script>
-export default {
-  name: "UserList",
-  data() {
-    return {
-      users: [
-        { id: 1, name: "김진우", status: "online" },
-        { id: 2, name: "박지은", status: "online" },
-        { id: 3, name: "최현우", status: "online" },
-      ],
-      awayUsers: [
-        { id: 4, name: "이영희", status: "offline" },
-        { id: 5, name: "정철수", status: "offline" },
-      ],
-    };
-  }
-};
+const userId = localStorage.getItem("userId"); // 현재 로그인한 사용자 ID
+const users = store.state.users;
+
+// 현재 로그인한 유저
+const me = computed(() => store.state.users.list.find(user => user.id == userId) || {});
+
+// 온라인 유저 리스트 (현재 유저 제외)
+const onlineUsers = computed(() => 
+  store.state.users.list.filter(user => user.status === "ONLINE" && user.id != userId)
+);
+
+// 오프라인 유저 리스트
+const offlineUsers = computed(() => 
+  store.state.users.list.filter(user => user.status === "OFFLINE" && user.id != userId)
+);
 </script>
 
 <style scoped>

@@ -64,6 +64,10 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error.response?.status === 401) {
+      await axiosInstance.post("/api/auth/reissue");
+      console.error("토큰 갱신 실패:", refreshError);
+    }
     const originalRequest = error.config;
 
     // 응답이 401일 때, 서버에서 보낸 메시지를 확인하고 출력

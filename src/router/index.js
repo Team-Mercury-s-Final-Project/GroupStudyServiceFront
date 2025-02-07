@@ -3,9 +3,10 @@ import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 import ChatRoomList from "../pages/ChatRoomList.vue";
+import FocusRoomPage from "../pages/FocusRoomPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
-import axiosInstance from "../api/axiosInstance_test";
+import axiosInstance from "../api/axiosInstance";
 // import axiosInstance from "../api/axiosInstance";
 import { handleOAuthCallback } from "../api/authentication";
 // import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
@@ -26,6 +27,11 @@ const routes = [
     meta: { showUserList: true, showToggleButton: true },
   },
   {
+    path: "/groups/:groupId/focusroom",
+    name: "FocusRoom",
+    component: FocusRoomPage,
+  },
+  {
     path: "/oauth2Login",
     name: "oauth2Login",
     component: LoginPage, // 소셜 로그인 페이지
@@ -36,6 +42,18 @@ const routes = [
     component: null, // 콜백은 페이지 컴포넌트가 필요 없음
     beforeEnter: async (to, from, next) => {
       await handleOAuthCallback();
+    },
+  },
+  {
+    path: "/oauth2/LoginFailcallback",
+    name: "oauth2LoginFailcallback",
+    component: null,
+    beforeEnter: async (to, from, next) => {
+      const errorMessage = to.query.error; // URL에서 error 파라미터를 추출
+      if (errorMessage) {
+        alert(`로그인 실패: ${decodeURIComponent(errorMessage)}`);
+        router.push("/oauth2Login");
+      }
     },
   },
   {
@@ -63,15 +81,19 @@ const publicPageList = [
   "/",
   "/oauth2Login",
   "/oauth2/callback",
+  "/oauth2/LoginFailcallback",
   "/userinfoPage",
   "/fileupload", // 정적인 경로
-  "/groups/1",
-  "/chats/1",
   "/groups/1/focusroom",
 ];
 
+// 채팅 방 페이지
+// const Chatregex = /^/api/users/\d+/chatRoomList$/;
 const publicPagePrefixList = [
   "/fileupload", // 동적인 경로 패턴
+  "/groups",
+  "/users/",
+  "/chats",
 ];
 
 function isPublicPage(path) {
@@ -79,6 +101,10 @@ function isPublicPage(path) {
   if (publicPageList.includes(path)) {
     return true;
   }
+  // 정규표현식 경로 체크
+  // if (Chatregex.test(path)) {
+  //   return true;
+  // }
   // 동적 경로 패턴 체크
   for (let prefix of publicPagePrefixList) {
     if (path.startsWith(prefix)) {
@@ -89,25 +115,13 @@ function isPublicPage(path) {
 }
 
 // 라우팅 변화 시마다 API 요청을 보낼 수 있도록 설정
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   // 인증 필요 없는 경로는 API 요청 제외
   if (isPublicPage(to.path)) {
     next();
     return;
   }
-  try {
-    // 인증이 필요한 경로에 대해 API 요청
-    await axiosInstance.get(to.path); // 인증 상태 확인용 API
-    next(); // 인증 성공 시 라우팅 계속 진행
-  } catch (error) {
-    console.error("Authentication check failed:", error);
-    // 인증 실패 시 로그인 페이지로 리다이렉트
-    if (to.path !== "/oauth2Login") {
-      next("/oauth2Login");
-    } else {
-      next();
-    }
-  }
+  axiosInstance.get(to.path);
 });
 
 export default router;
