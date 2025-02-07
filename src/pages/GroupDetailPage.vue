@@ -588,11 +588,13 @@ async function fetchGroup() {
     const response = await axiosInstance.get(`/groups/${groupId}/enter`);
     groupData.value = response.data.data;
   } catch (error) {
-    toast.error(
-      "그룹 데이터를러오는중 오류가 발생했습니다: " +
-        (error.response?.data?.message || error.message),
-      { timeout: 3000 }
-    );
+    if(error.status === 409) {
+      toast.error("그룹에 가입하지 않았습니다. 그룹에 가입해주세요.", { timeout: 3000 });
+      router.push("/");
+    } else {
+      toast.error("그룹 데이터를 불러오는 중 오류가 발생했습니다." +
+      (error.response?.data?.message || error.message), { timeout: 3000 });
+    }
   }
 }
 // groupData가 변경될 때마다 isHost를 업데이트
