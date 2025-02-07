@@ -42,7 +42,7 @@
           </fwb-tooltip>
         </div>
         <!-----------------------modal start------------------------------------>
-        <div class="info-item">
+        <div class="info-item" v-if="isHost">
           <svg
             class="h-8 w-8 text-neutral-500 cursor-pointer transition-transform duration-200 ease-in-out hover:scale-110"
             viewBox="0 0 24 24"
@@ -125,12 +125,16 @@
             <!-- 중앙에 위치한 공지사항 -->
             <span class="absolute left-1/2 -translate-x-1/2">공지사항</span>
             <!-- 오른쪽 상단 버튼 -->
-            <button
-              @click="openCreateModal"
-              class="w-8 h-8 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 flex items-center justify-center text-lg ml-auto"
-            >
-              +
-            </button>
+            <!-- 버튼을 감싸는 영역을 항상 유지 -->
+            <div class="ml-auto w-8 h-8 flex items-center justify-center">
+              <button
+                v-if="isHost"
+                @click="openCreateModal"
+                class="w-8 h-8 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-blue-300 text-lg"
+              >
+                +
+              </button>
+            </div>
           </div>
           <!-- 공지사항 리스트에 스크롤 추가 -->
           <div class="card-content space-y-2 overflow-y-auto max-h-48 p-2">
@@ -157,12 +161,14 @@
                   <!-- 수정 및 삭제 버튼 -->
                   <div class="flex items-center space-x-2">
                     <button
+                      v-if="isHost"
                       @click="openEditModal(notice)"
                       class="text-blue-500 hover:underline text-sm"
                     >
                       수정
                     </button>
                     <button
+                      v-if="isHost"
                       @click="deleteNotice(notice.id)"
                       class="text-red-500 hover:underline text-sm"
                     >
@@ -570,26 +576,31 @@ onMounted(async () => {
   await reloadGroupData();
   eventSource = await connectSSE();
 });
-
 // 그룹 데이터 상태
 const groupData = ref(null);
+
+const isHost = ref(false);
 
 // 그룹 데이터만 먼저 불러오는 함수
 async function fetchGroup() {
   try {
     // console.log("fetch group 의 groupId" + groupId);
-    const response = await axiosInstance.get(`/groups/${groupId}/enter`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axiosInstance.get(`/groups/${groupId}/enter`);
     groupData.value = response.data.data;
   } catch (error) {
     toast.error(
       "그룹 데이터를러오는중 오류가 발생했습니다: " +
         (error.response?.data?.message || error.message),
-      { timeout: 4000 }
+      { timeout: 3000 }
     );
   }
 }
+// groupData가 변경될 때마다 isHost를 업데이트
+watch(groupData, (newData) => {
+  if (newData && typeof newData.isHost !== "undefined") {
+    isHost.value = newData.isHost;
+  }
+});
 
 // 그룹 수정 요청 함수
 async function updateGroup(updatedData) {
