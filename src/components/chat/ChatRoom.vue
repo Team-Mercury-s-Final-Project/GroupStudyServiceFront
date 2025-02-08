@@ -104,6 +104,7 @@ export default {
       fileType: "",
       filePreview: "",
       isImage: false,
+      totalUsers: [],
     };
   },
 
@@ -116,8 +117,8 @@ export default {
       this.currentUserId = decodedToken.id;
     }
 
-    this.connectWebSocket();
     this.loadChatHistory();
+    this.connectWebSocket();
   },
 
   methods: {
@@ -142,13 +143,17 @@ export default {
     connectWebSocket() {
       const socket = new WebSocket(`ws://localhost:8080/chat`);
       this.stompClient = Stomp.over(socket);
-
+      this.allReadCheckProcessed = false; // 모든 읽음 처리가 완료되었음을 나타내는 플래그
       this.stompClient.connect(
         {},
         (frame) => {
+          // 서버로부터 현재 접속 중인 사용자 정보를 요청
+          this.updateConnectedUsersInterval();
           console.log("Connected: " + frame);
+          let readCheckProcessedUsers = 0;
 
           // 읽음 정보 응답 구독. 메시지를 받을 때 있었다면 '읽음'처리.
+          //현재 접속중인 사용자 수만큼 읽음 메시지를 전송.
           this.stompClient.subscribe(
             `/topic/readCheck.response.${this.chatRoomId}`,
             (readInfo) => {
@@ -162,6 +167,25 @@ export default {
                   // unreadCount를 직접 설정
                   this.messages[messageIndex].unreadCount =
                     readData.unreadCount;
+
+                  readCheckProcessedUsers++;
+
+                  if (
+                    readCheckProcessedUsers ===
+                    this.totalUsers.connectedUsers.length
+                  ) {
+                    this.allReadCheckProcessed = true;
+                  }
+
+                  if (this.allReadCheckProcessed) {
+                    //읽음 정보가 update된 최신 메시지를 채팅목록으로 전달
+                    console.log("채팅목록으로 최신 메시지 전달");
+                    this.sendRecentMessageToChatList(
+                      this.messages[messageIndex]
+                    );
+                    this.allReadCheckProcessed = false; // 플래그 초기화
+                    readCheckProcessedUsers = 0; // 사용자 명수 초기화
+                  }
                 }
               } catch (error) {
                 console.error("읽음 정보 파싱 오류 ::", error);
@@ -176,7 +200,7 @@ export default {
               try {
                 const message = JSON.parse(messageOutput.body);
                 console.log("Received message:", message);
-
+                console.log("사용자 아이디 : ", this.currentUserId);
                 this.messages.push({
                   id: message.data.id,
                   senderId: message.data.senderId,
@@ -189,8 +213,8 @@ export default {
                 });
 
                 // 메시지가 화면에 표시되면 읽음 상태 업데이트
-                this.updateReadUsers(message.data.id);
                 console.log("메시지 읽음 정보 업데이트 요청");
+                this.updateReadUsers(message.data.id);
               } catch (error) {
                 console.error("메시지 파싱 오류:", error);
               }
@@ -377,9 +401,31 @@ export default {
         this.sendMessage(); // 파일이 없고 메시지가 있을 경우 sendMessage 함수 호출
       }
     },
+    //채팅목록으로 최신메시지 전달
+    sendRecentMessageToChatList(recentMessage) {
+      console.log("채팅목록으로 보낼 최신 메시지 확인: ", recentMessage);
+      const payload = {
+        id: recentMessage.id,
+        senderId: recentMessage.senderId,
+        chatRoomId: this.chatRoomId,
+        nickName: recentMessage.nickName,
+        profileImgUrl: recentMessage.profileImgUrl,
+        content: recentMessage.content,
+        createdAt: new Date(recentMessage.createdAt).toLocaleDateString,
+      };
 
-    // 이미지 확인 부분 제거됨
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/chat/sendRecentMessageToChatList/${this.chatRoomId}`,
+          {},
+          JSON.stringify(payload)
+        );
+      } else {
+        console.error("WebSocket is not connected.");
+      }
+    },
 
+    //메시지 읽음처리
     updateReadUsers(messageId) {
       const readPayload = {
         chatMessageId: messageId,
@@ -395,6 +441,36 @@ export default {
       } else {
         console.error("WebSocket is not connected.");
       }
+    },
+    //현재 웹소켓에 접속해있는 사람들 받아오기
+    async fetchConnectedUsers() {
+      try {
+        const response = await axiosInstance.get(
+          `chats/${this.chatRoomId}/chatRoomConnectedUsers`,
+          {
+            timeout: 10000,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        this.totalUsers = response.data.data;
+        console.log("현재 접속 중인 사용자:", this.totalUsers);
+      } catch (error) {
+        console.error(
+          "현재 접속 중인 사용자 정보를 가져오는 데 실패했습니다:",
+          error
+        );
+      }
+    },
+    // 주기적으로 접속자 정보를 업데이트하는 함수
+    updateConnectedUsersInterval() {
+      this.fetchConnectedUsers();
+      setInterval(() => {
+        this.fetchConnectedUsers();
+      }, 1000000); // 5초마다 업데이트
     },
   },
 };

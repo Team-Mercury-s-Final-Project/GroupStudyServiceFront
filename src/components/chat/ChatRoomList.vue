@@ -81,6 +81,8 @@ export default {
       currentUserId: null,
       activeTab: "DM",
       chatList: [],
+      newMessages: [],
+      processedMessages: new Set(), // 메시지 ID를 추적하기 위한 Set
     };
   },
   mounted() {
@@ -91,9 +93,9 @@ export default {
     }
 
     this.fetchChatList();
-    this.connectWebSocket();
-  },
 
+    console.log(this.chatList);
+  },
 
   computed: {
     dmList() {
@@ -104,6 +106,47 @@ export default {
     },
   },
   methods: {
+    //새로운 메시지를 받아 기존 채팅목록 업데이트
+    async updateChatRoomList(newMessage) {
+      console.log("새로 받은 메시지입니다.", newMessage);
+      const chatRoomId = newMessage.data.chatRoomId;
+      const newChatList = [...this.chatList];
+      const chatIndex = newChatList.findIndex((chat) => chat.id === chatRoomId);
+
+      if (chatIndex !== -1) {
+        let updatedChat = { ...newChatList[chatIndex] };
+        updatedChat.recentMessage.id = newMessage.data.id;
+        updatedChat.recentMessage.nickName = newMessage.data.nickName;
+        updatedChat.recentMessage.profileImgUrl = newMessage.data.profileImgUrl;
+        updatedChat.recentMessage.content = newMessage.data.content;
+        updatedChat.recentMessage.createdAt = newMessage.data.createdAt;
+
+        if (!this.processedMessages.has(newMessage.data.id)) {
+          this.processedMessages.add(newMessage.data.id); // 메시지 ID 추적
+          const isRead = await this.isReadCheck(newMessage.data.id);
+          if (!isRead) {
+            updatedChat.unreadMessages.push(newMessage.data.id);
+            console.log(
+              chatRoomId,
+              "번 채팅방 읽지 않은 메시지: ",
+              updatedChat.unreadMessages
+            );
+          }
+          this.processedMessages.delete(newMessage.data.id); // 작업이 완료된 후 ID 삭제 (필요 시)
+        }
+
+        newChatList.splice(chatIndex, 1, updatedChat);
+      }
+
+      //this.chatList = newChatList;
+      // 메시지를 정렬
+      this.chatList = newChatList.sort(
+        (a, b) =>
+          new Date(b.recentMessage.createdAt) -
+          new Date(a.recentMessage.createdAt)
+      );
+    },
+
     // WebSocket 연결 종료 메서드
     disconnectWebSocket() {
       if (this.stompClient) {
@@ -116,7 +159,7 @@ export default {
     async goToChatRoom(chatRoomId, unreadMessages) {
       //채팅방의 읽지 않은 메시지들 모두 읽음처리
       try {
-        const response = await axiosInstance.post(
+        const response = axiosInstance.post(
           `/chats/${chatRoomId}/insertAllUnreadChatMessages`,
           {
             unreadMessages: unreadMessages,
@@ -143,12 +186,22 @@ export default {
         {},
         (frame) => {
           console.log("Connected: " + frame);
-          this.stompClient.subscribe("/topic/messages", (message) => {
-            const newMessage = JSON.parse(message.body);
-            this.chatList = this.chatList.map((room) =>
-              room.id === newMessage.chatRoomId
-                ? { ...room, recentMessage: newMessage }
-                : room
+
+          // chatList에 있는 각 채팅방에 대해 구독 설정
+          this.chatList.forEach((chat) => {
+            console.log(chat.id, "채팅방 구독");
+            this.stompClient.subscribe(
+              `/topic/chat.recentMessage.${chat.id}`,
+              (messageOutput) => {
+                try {
+                  const newMessage = JSON.parse(messageOutput.body);
+                  console.log("새로운 메시지 도착:", newMessage);
+                  // newMessages 배열에 newMessage.data input
+                  this.updateChatRoomList(newMessage);
+                } catch (error) {
+                  console.error("메시지 파싱 오류:", error);
+                }
+              }
             );
           });
         },
@@ -159,16 +212,47 @@ export default {
           }, 10000);
         }
       );
+      socket.onclose = () => {
+        console.warn("WebSocket이 닫혔습니다. 재연결 시도 중...");
+        setTimeout(() => {
+          this.connectWebSocket();
+        }, 10000);
+      };
     },
+
     async fetchChatList() {
       try {
         const response = await axiosInstance.get(
           `/users/${this.currentUserId}/chats`
         );
         this.chatList = response.data.data.chatRooms; // 채팅 목록 설정
+
+        // 채팅 목록 정렬
+        this.chatList.sort(
+          (a, b) =>
+            new Date(b.recentMessage.createdAt) -
+            new Date(a.recentMessage.createdAt)
+        );
         console.log(response.data);
+        this.connectWebSocket();
       } catch (error) {
         console.error(error);
+      }
+    },
+    // 이 메시지를 읽었는지 확인 및 상태 업데이트
+    async isReadCheck(newMessageId) {
+      try {
+        const response = await axiosInstance.post(`/chats/isReadCheck`, {
+          chatMessageId: newMessageId,
+          chatUserId: this.currentUserId,
+        });
+        console.log("읽었는지 체크 결과 : ", response.data.data); // 응답 데이터를 로그로 출력
+
+        // 서버 응답이 성공적인지 여부를 반환
+        return response.data.data;
+      } catch (error) {
+        console.error("새로 온 메시지 읽었었는지 체크 중 에러 발생:", error);
+        return false;
       }
     },
     formatTimestamp(timestamp) {
