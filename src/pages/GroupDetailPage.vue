@@ -342,7 +342,7 @@ const users = reactive({ list: [] });
 
 const connectSSE = async () => {
   eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
+    `${import.meta.env.VITE_SERVER_HOST}/groups/${groupId}/subscribe`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
