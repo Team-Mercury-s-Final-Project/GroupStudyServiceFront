@@ -5,6 +5,7 @@ import router from "../router";
 const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
+
   baseURL: "http://34.22.98.26:8080/api",
   withCredentials: true,
 
@@ -40,7 +41,6 @@ const getCookie = (key) => {
 
 // 로그인 후 리다이렉트 처리 함수
 const redirectAfterLogin = (alertMessage, redirectUrl) => {
-  alert(alertMessage);
   setTimeout(() => {
     router.push({ path: "/oauth2Login", query: { redirect: redirectUrl } });
   }, 0);

@@ -5,6 +5,7 @@
       v-if="isLoading"
       class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
     >
+      <fwb-spinner size="12" />
       <div class="text-xl text-gray-800">내 정보 로딩 중...</div>
     </div>
 
@@ -117,7 +118,7 @@
         <div class="flex justify-end space-x-4">
           <button
             v-if="!isEditing"
-            @click="showModal('탈퇴')"
+            @click="openModal"
             class="w-1/3 bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition duration-200"
           >
             탈퇴
@@ -126,49 +127,14 @@
       </div>
     </div>
 
-    <!-- 공통 모달 -->
-    <div
-      v-if="modalData.visible"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-    >
-      <div class="bg-white w-96 rounded-lg shadow-lg p-6 space-y-4">
-        <h2 class="text-xl font-semibold text-gray-800">
-          {{ modalData.title }}
-        </h2>
-        <p class="text-gray-600">{{ modalData.message }}</p>
-        <div v-if="modalData.type === '탈퇴'" class="space-y-4">
-          <input
-            v-model="confirmationInput"
-            type="text"
-            class="w-full p-2 border border-gray-300 rounded-md"
-            placeholder="탈퇴하겠습니다를 입력하세요"
-          />
-          <div class="flex justify-end space-x-4">
-            <button
-              @click="closeModal"
-              class="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
-            >
-              취소
-            </button>
-            <button
-              @click="deleteAccount"
-              :disabled="confirmationInput !== '탈퇴하겠습니다'"
-              class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-300"
-            >
-              탈퇴
-            </button>
-          </div>
-        </div>
-        <div v-else class="flex justify-end">
-          <button
-            @click="closeModal"
-            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-          >
-            확인
-          </button>
-        </div>
-      </div>
-    </div>
+    <!-- 모달 컴포넌트 연결 -->
+    <UserJoinedGroupModal
+      v-if="isModalVisible"
+      :visible="isModalVisible"
+      :modalData="modalData"
+      :groupList="groupList"
+      @closeModal="closeModal"
+    />
   </div>
 </template>
 
@@ -179,6 +145,8 @@ import { computed } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
+import UserJoinedGroupModal from "../components/modal/UserJoinedGroupModal.vue";
+import { FwbSpinner } from "flowbite-vue";
 
 const store = useStore();
 const router = useRouter();
@@ -198,13 +166,6 @@ const selectedFile = ref(null);
 const confirmationInput = ref("");
 const editField = ref(""); // 수정할 필드를 추적하는 변수
 const FileValidError = ref(false);
-
-const modalData = ref({
-  visible: false,
-  title: "",
-  message: "",
-  type: "",
-});
 
 const toggleEditing = (field) => {
   if (isEditing.value) {
@@ -300,9 +261,9 @@ const showModal = (type) => {
   };
 };
 
-const closeModal = () => {
-  modalData.value.visible = false;
-};
+// const closeModal = () => {
+//   modalData.value.visible = false;
+// };
 
 const deleteAccount = async () => {
   try {
@@ -316,17 +277,8 @@ const deleteAccount = async () => {
         message: "회원 탈퇴가 완료되었습니다.",
       };
 
-      // 1. 쿠키에서 리프레시 토큰 제거
-      document.cookie =
-        "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-
-      // 2. 로컬 스토리지에서 액세스 토큰 제거
-      localStorage.removeItem("accessToken");
-
-      // 로그아웃 처리 (예: store에 액션을 디스패치하여 상태 변경)
+      localStorage.removeItem("access");
       store.dispatch("logout");
-
-      // 2초 대기 후 리디렉션션
       setTimeout(() => {
         router.push("/oauth2Login");
       }, 2000);
@@ -334,6 +286,38 @@ const deleteAccount = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+
+// 모달 visibility 상태
+const isModalVisible = ref(false);
+
+// 모달에 전달할 데이터
+const modalData = ref({
+  title: "회원 탈퇴",
+  message:
+    "※ 현재 가입된 모든 그룹에서 탈퇴 처리되며, 그룹의 위임장인 경우 반드시 다른 구성원에게 권한을 위임해야 합니다. 권한 위임 대상자는 지정이 가능합니다.",
+  type: "탈퇴",
+});
+
+const groupList = ref([]);
+
+// 모달 열기
+const openModal = async () => {
+  try {
+    const response = await axiosInstance.get("/user/joinGroup-info");
+    if (response.status === 200) {
+      groupList.value = response.data.data;
+      // console.log("groupList.value: " + JSON.stringify(groupList.value));
+      isModalVisible.value = true;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+// 모달 닫기
+const closeModal = () => {
+  isModalVisible.value = false;
 };
 
 onMounted(fetchUserInfo);
