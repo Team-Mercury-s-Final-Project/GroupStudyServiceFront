@@ -3,7 +3,7 @@ import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
 import ChatRoomList from "../pages/ChatRoomList.vue";
-import FocusRoomPage from "../pages/FocusRoomPage.vue";
+import FocusRoomPage from "../pages/FocusRoomPage2.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
