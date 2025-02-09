@@ -42,7 +42,7 @@
         <!-- 그룹 생성 버튼 -->
         <button
           @click="openModal('groupForm', 'create')"
-          class="ml-auto text-2xl bg-gray-400 px-3 py-1 rounded-md hover:bg-gray-400"
+          class="ml-auto text-2xl bg-gray-400 px-3 py-1 rounded-md hover:bg-gray-500"
         >
           +
         </button>
