@@ -42,7 +42,7 @@
         <!-- 그룹 생성 버튼 -->
         <button
           @click="openModal('groupForm', 'create')"
-          class="ml-auto text-2xl bg-gray-300 px-3 py-1 rounded-md hover:bg-gray-400"
+          class="ml-auto text-2xl bg-gray-400 px-3 py-1 rounded-md hover:bg-gray-400"
         >
           +
         </button>
@@ -110,7 +110,6 @@ import { FwbAvatar, FwbSpinner } from "flowbite-vue";
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router"; // useRouter 임포트
 import GroupDetailModal from "./GroupDetailModal.vue";
-// import axiosInstance from "../api/axiosInstance.js";
 import axiosInstance from "../api/axiosInstance";
 import GroupFormModal from "./GroupFormModal.vue";
 import { useToast } from "vue-toastification";
@@ -197,7 +196,6 @@ const truncateDescription = (desc) => {
   return desc.length > maxLength ? desc.substring(0, maxLength) + "..." : desc;
 };
 
-// ✅ 모달 오픈
 const fetchGroupDetail = async (id) => {
   try {
     const response = await axiosInstance.get(`/groups/${id}`);
@@ -227,6 +225,12 @@ const newGroupData = ref({
 });
 
 function openModal(modalName, mode) {
+  const token = localStorage.getItem("access");
+  if (!token) {
+    toast.error("로그인이 필요합니다.", { timeout: 2000 });
+    return;
+  }
+
   activeModal.value = modalName;
   modalMode.value = mode;
 }
@@ -237,7 +241,6 @@ function closeCreateModal() {
 }
 
 async function createGroup(groupData) {
-  const token = localStorage.getItem("access");
   closeCreateModal();
   isCreating.value = true;
   // const loadingToastId = toast.warning("그룹을 생성중입니다.", {
@@ -258,13 +261,7 @@ async function createGroup(groupData) {
 
   try {
     // 백엔드로 그룹 생성 요청
-    // Axios 요청에 Authorization 헤더 추가
-    const response = await axiosInstance.post("/groups", payload, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // 토큰 추가
-      },
-    });
+    const response = await axiosInstance.post("/groups", payload);
     if (response.status === 200) {
       // API 응답에서 새로 생성된 그룹의 id 추출
       const newGroupId = response.data.data.id;
@@ -273,20 +270,16 @@ async function createGroup(groupData) {
       toast.success("그룹 생성 완료! 그룹페이지로 이동합니다.", {
         timeout: 2000,
       });
-    } else {
-      toast.error("그룹 생성 실패: " + response.data.message, {
-        timeout: 2000,
-      });
     }
   } catch (error) {
     toast.error(
-      "오류가 발생했습니다: " +
+      "그룹 생성 실패: " +
         (error.response?.data?.message || error.message),
       { timeout: 2000 }
     );
   } finally {
     // toast.dismiss(loadingToastId);
-    isLoading.value = false;
+    isCreating.value = false;
   }
 }
 
