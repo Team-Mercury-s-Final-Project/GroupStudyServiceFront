@@ -5,7 +5,10 @@ import router from "../router";
 const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_SERVER_HOST,
+
+  baseURL: "http://34.22.98.26:8080/api",
+  withCredentials: true,
+
   headers: {
     "Content-Type": "application/json",
   },
