@@ -290,9 +290,9 @@ watch(
     groupId = newG;
     if (newG !== oldG) {
       closeSSE(); // 기존 SSE 연결 종료
+      await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
       await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms 대기 후 새로운 SSE 연결
       eventSource = await connectSSE(); // 새로운 SSE 연결
-      await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
     }
   }
 );
@@ -361,6 +361,8 @@ const connectSSE = async () => {
   eventSource.onerror = (error) => {
     console.error("SSE 연결 오류:", error);
     eventSource.close();
+    eventSource = null;
+    store.commit("clearUsers");
   };
 
   eventSource.addEventListener("memberData", (event) => {
