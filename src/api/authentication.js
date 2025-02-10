@@ -41,8 +41,8 @@ export const oauthLogin = async (provider) => {
 // OAuth 로그인 콜백 핸들러
 export const handleOAuthCallback = async () => {
   try {
-    console.log(axiosInstance);
-    const response = await axiosInstance.get("/api/check-auth");
+    console.log("api sent")
+    const response = await axiosInstance.get("/api/check-auth", { baseURL: 'https://mercurystarback.duckdns.org' });
     if (response.status === 200) {
       const accessToken = getCookie("access");
       if (accessToken) {
