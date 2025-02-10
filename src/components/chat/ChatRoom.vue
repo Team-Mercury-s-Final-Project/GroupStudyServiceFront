@@ -139,8 +139,9 @@ export default {
         "https://storage.googleapis.com/mercury-star-bucket/"
       );
     },
+
     connectWebSocket() {
-      const socket = new WebSocket(`ws://localhost:8080/chat`);
+      const socket = new WebSocket(`ws://34.22.98.26:8080/chat`);
       this.stompClient = Stomp.over(socket);
 
       this.stompClient.connect(
