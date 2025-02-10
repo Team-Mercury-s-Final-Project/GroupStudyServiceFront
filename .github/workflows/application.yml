@@ -21,7 +21,7 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t mafatofu/star-fe:latest .
+        run: docker build --no-cache -t mafatofu/star-fe:latest .
 
       - name: Push Docker image to Docker Hub
         run: docker push mafatofu/star-fe:latest
