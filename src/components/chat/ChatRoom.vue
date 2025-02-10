@@ -3,6 +3,7 @@
     <div class="main-content">
       <div class="content">
         <div class="chat-container">
+          <!-- 채팅 메시지 리스트 -->
           <div v-if="isDataLoaded" class="messages">
             <div
               class="message"
@@ -70,11 +71,9 @@
             <p v-else>{{ fileName }}</p>
           </div>
         </div>
-        <!-- 여기서 시작 -->
         <button @click="goToChatRoomList" class="chat-room-list-button">
           채팅 목록으로 이동
         </button>
-        <!-- 여기서 끝 -->
       </div>
     </div>
   </div>
@@ -104,11 +103,12 @@ export default {
       fileType: "",
       filePreview: "",
       isImage: false,
-      totalUsers: [],
+      connectedUsers: [],
+      chatMembers: [],
     };
   },
 
-  mounted() {
+  async mounted() {
     const token = localStorage.getItem("access");
     this.chatRoomId = this.$route.params.chatRoomId;
 
@@ -116,41 +116,89 @@ export default {
       const decodedToken = jwtDecode.jwtDecode(token);
       this.currentUserId = decodedToken.id;
     }
-
-    this.loadChatHistory();
-    this.connectWebSocket();
+    // 이전 메시지 데이터 가져오기
+    await this.loadChatHistory();
+    // WebSocket 연결
+    await this.connectWebSocket();
+    // beforeunload 이벤트 리스너 추가
+    window.addEventListener("beforeunload", this.handleBeforeUnload);
   },
 
+  beforeDestroy() {
+    // 컴포넌트가 파괴되기 전에 beforeunload 이벤트 리스너 제거
+    window.removeEventListener("beforeunload", this.handleBeforeUnload);
+  },
   methods: {
-    // WebSocket 연결 종료 메서드
-    disconnectWebSocket() {
-      if (this.stompClient) {
-        this.stompClient.disconnect(() => {
-          console.log("WebSocket 연결이 종료되었습니다.");
-        });
-      }
+    //페이지를 떠날 때 실행되는 메서드
+    handleBeforeUnload(event) {
+      // 페이지를 떠날 때 접속자 update
+      this.sendDisconnectedUser();
     },
-    //채팅목록으로 이동
+
     async goToChatRoomList() {
-      this.disconnectWebSocket();
-      this.$router.push(`/users/${this.currentUserId}/chatRoomList`);
+      this.$router.push({
+        path: `/users/${this.currentUserId}/chatRoomList`,
+        beforeEnter: (to, from, next) => {
+          this.sendDisconnectedUser();
+          next();
+        },
+      });
     },
     isImageUrl(url) {
       return url.startsWith(
         "https://storage.googleapis.com/mercury-star-bucket/"
       );
     },
-    connectWebSocket() {
+    async connectWebSocket() {
       const socket = new WebSocket(`ws://localhost:8080/chat`);
       this.stompClient = Stomp.over(socket);
-      this.allReadCheckProcessed = false; // 모든 읽음 처리가 완료되었음을 나타내는 플래그
+      this.stompClient.heartbeat.outgoing = 0;
+      this.stompClient.heartbeat.incoming = 0;
       this.stompClient.connect(
         {},
         (frame) => {
-          // 서버로부터 현재 접속 중인 사용자 정보를 요청
-          this.updateConnectedUsersInterval();
           console.log("Connected: " + frame);
-          let readCheckProcessedUsers = 0;
+
+          // 채팅방 접속 인원 구독
+          this.stompClient.subscribe(
+            `/topic/chat.connect.${this.chatRoomId}`,
+            (messageOutput) => {
+              try {
+                const message = JSON.parse(messageOutput.body);
+                console.log("채팅방에 참여한사람~:", message);
+
+                // 현재 접속한 사용자 목록 업데이트
+                this.connectedUsers = message.data.connectedMemberIds;
+
+                console.log(
+                  "현재 살아있는 채팅 접속 인원 : ",
+                  this.connectedUsers
+                );
+              } catch (error) {
+                console.error("메시지 파싱 오류:", error);
+              }
+            }
+          );
+          // 채팅방 접속 해제 인원 구독
+          this.stompClient.subscribe(
+            `/topic/chat.disconnect.${this.chatRoomId}`,
+            (messageOutput) => {
+              try {
+                const message = JSON.parse(messageOutput.body);
+                console.log("채팅방에 나간사람~:", message);
+
+                // 현재 접속한 사용자 목록 업데이트.
+                this.connectedUsers = message.data.connectedMemberIds;
+
+                console.log(
+                  "현재 살아있는 채팅 접속 인원 : ",
+                  this.connectedUsers
+                );
+              } catch (error) {
+                console.error("메시지 파싱 오류:", error);
+              }
+            }
+          );
 
           // 읽음 정보 응답 구독. 메시지를 받을 때 있었다면 '읽음'처리.
           //현재 접속중인 사용자 수만큼 읽음 메시지를 전송.
@@ -167,25 +215,6 @@ export default {
                   // unreadCount를 직접 설정
                   this.messages[messageIndex].unreadCount =
                     readData.unreadCount;
-
-                  readCheckProcessedUsers++;
-
-                  if (
-                    readCheckProcessedUsers ===
-                    this.totalUsers.connectedUsers.length
-                  ) {
-                    this.allReadCheckProcessed = true;
-                  }
-
-                  if (this.allReadCheckProcessed) {
-                    //읽음 정보가 update된 최신 메시지를 채팅목록으로 전달
-                    console.log("채팅목록으로 최신 메시지 전달");
-                    this.sendRecentMessageToChatList(
-                      this.messages[messageIndex]
-                    );
-                    this.allReadCheckProcessed = false; // 플래그 초기화
-                    readCheckProcessedUsers = 0; // 사용자 명수 초기화
-                  }
                 }
               } catch (error) {
                 console.error("읽음 정보 파싱 오류 ::", error);
@@ -209,12 +238,13 @@ export default {
                   createdAt: new Date(message.data.createdAt).toLocaleString(),
                   profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
-                  // 이미지 확인 부분 제거됨
                 });
 
                 // 메시지가 화면에 표시되면 읽음 상태 업데이트
                 console.log("메시지 읽음 정보 업데이트 요청");
                 this.updateReadUsers(message.data.id);
+                //메시지를 잘 전달받았으면 채팅목록으로 새로운 메시지 왔다고 보냄
+                this.sendRecentMessageToChatList(message);
               } catch (error) {
                 console.error("메시지 파싱 오류:", error);
               }
@@ -248,6 +278,8 @@ export default {
               }
             }
           );
+          // 채팅방 접속 시 접속자 update
+          this.sendConnectedUser();
         },
         (error) => {
           console.error("WebSocket 연결 오류:", error);
@@ -258,7 +290,8 @@ export default {
       );
     },
 
-    loadChatHistory() {
+    async loadChatHistory() {
+      console.log("이전 메시지 기록 받아오기");
       axiosInstance
         .get(`/chats/${this.chatRoomId}`, {
           timeout: 10000,
@@ -274,6 +307,8 @@ export default {
             if (chatData.chatRoomType === "GROUP") {
               this.chatRoomType = "GROUP";
             }
+            this.chatMembers = chatData.chatMembers;
+            console.log("채팅방 참여자: ", this.chatMembers);
             if (Array.isArray(chatData.messages)) {
               this.messages = chatData.messages.map((msg) => ({
                 id: msg.id,
@@ -283,7 +318,6 @@ export default {
                 content: msg.content,
                 createdAt: new Date(msg.createdAt).toLocaleString(),
                 unreadCount: msg.unreadCount, // unreadCount 추가
-                // 이미지 확인 부분 제거됨
               }));
 
               // JWT ID와 같지 않은 데이터의 ID를 receiverId로 설정
@@ -296,6 +330,7 @@ export default {
                 (msg) => msg.senderId === this.currentUserId
               );
               this.nickName = sender.nickName;
+              this.profileImgUrl = sender.profileImgUrl;
             }
 
             this.isDataLoaded = true;
@@ -350,8 +385,6 @@ export default {
         } else {
           console.error("WebSocket is not connected.");
         }
-
-        this.newMessage = "";
       }
     },
 
@@ -405,13 +438,13 @@ export default {
     sendRecentMessageToChatList(recentMessage) {
       console.log("채팅목록으로 보낼 최신 메시지 확인: ", recentMessage);
       const payload = {
-        id: recentMessage.id,
-        senderId: recentMessage.senderId,
+        id: recentMessage.data.id,
+        senderId: recentMessage.data.senderId,
         chatRoomId: this.chatRoomId,
-        nickName: recentMessage.nickName,
-        profileImgUrl: recentMessage.profileImgUrl,
-        content: recentMessage.content,
-        createdAt: new Date(recentMessage.createdAt).toLocaleDateString,
+        nickName: recentMessage.data.nickName,
+        profileImgUrl: recentMessage.data.profileImgUrl,
+        content: recentMessage.data.messageContent,
+        createdAt: recentMessage.data.createdAt,
       };
 
       if (this.stompClient && this.stompClient.connected) {
@@ -442,36 +475,69 @@ export default {
         console.error("WebSocket is not connected.");
       }
     },
-    //현재 웹소켓에 접속해있는 사람들 받아오기
-    async fetchConnectedUsers() {
-      try {
-        const response = await axiosInstance.get(
-          `chats/${this.chatRoomId}/chatRoomConnectedUsers`,
-          {
-            timeout: 10000,
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
+    // 접속한 사용자 정보 전송
+    async sendConnectedUser() {
+      const userPayload = {
+        connectedMemberId: this.currentUserId,
+      };
+      console.log("접속한 사용자 정보 전송", userPayload);
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/chat/connect/${this.chatRoomId}`,
+          {},
+          JSON.stringify(userPayload)
         );
-
-        this.totalUsers = response.data.data;
-        console.log("현재 접속 중인 사용자:", this.totalUsers);
-      } catch (error) {
-        console.error(
-          "현재 접속 중인 사용자 정보를 가져오는 데 실패했습니다:",
-          error
-        );
+      } else {
+        console.error("WebSocket is not connected.");
       }
     },
-    // 주기적으로 접속자 정보를 업데이트하는 함수
-    updateConnectedUsersInterval() {
-      this.fetchConnectedUsers();
-      setInterval(() => {
-        this.fetchConnectedUsers();
-      }, 1000000); // 5초마다 업데이트
+    // 접속해제한 사용자 정보 전송
+    async sendDisconnectedUser() {
+      const userPayload = {
+        connectedMemberId: this.currentUserId,
+      };
+      console.log("접속해제한 사용자 정보 전송", userPayload);
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/chat/disconnect/${this.chatRoomId}`,
+          {},
+          JSON.stringify(userPayload)
+        );
+      } else {
+        console.error("WebSocket is not connected.");
+      }
     },
+
+    //현재 웹소켓에 접속해있는 사람들 받아오기
+    //   async fetchConnectedUsers() {
+    //     try {
+    //       const response = await axiosInstance.get(
+    //         `chats/${this.chatRoomId}/chatRoomConnectedUsers`,
+    //         {
+    //           timeout: 10000,
+    //           headers: {
+    //             "Content-Type": "application/json",
+    //             Authorization: `Bearer ${token}`,
+    //           },
+    //         }
+    //       );
+
+    //       this.totalUsers = response.data.data;
+    //       console.log("현재 접속 중인 사용자:", this.totalUsers);
+    //     } catch (error) {
+    //       console.error(
+    //         "현재 접속 중인 사용자 정보를 가져오는 데 실패했습니다:",
+    //         error
+    //       );
+    //     }
+    //   },
+    //   // 주기적으로 접속자 정보를 업데이트하는 함수
+    //   updateConnectedUsersInterval() {
+    //     this.fetchConnectedUsers();
+    //     setInterval(() => {
+    //       this.fetchConnectedUsers();
+    //     }, 1000000); // 5초마다 업데이트
+    //   },
   },
 };
 </script>
@@ -655,5 +721,40 @@ button {
   max-width: 100%;
   max-height: 200px;
   border-radius: 5px;
+}
+.user-list {
+  width: 250px;
+  padding: 20px;
+  border-left: 1px solid #ddd;
+  overflow-y: auto;
+}
+
+.section-title {
+  margin-bottom: 10px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.online-user {
+  opacity: 1;
+}
+
+.offline-user {
+  opacity: 0.5;
+}
+
+.profile-picture {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.user-name {
+  margin-left: 10px;
 }
 </style>
