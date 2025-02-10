@@ -30,6 +30,7 @@ const routes = [
     path: "/groups/:groupId/focusroom",
     name: "FocusRoom",
     component: FocusRoomPage,
+    meta: { showUserList: true, showToggleButton: true },
   },
   {
     path: "/oauth2Login",
