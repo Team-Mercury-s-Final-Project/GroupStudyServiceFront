@@ -1,9 +1,11 @@
 <!-- 집중방 -->
 <template>
-  <div class="p-4 gradient-background h-[700px] flex justify-center space-x-40">
+  <div
+    class="p-4 gradient-background h-[1500px] lg:h-[700px] flex flex-col lg:flex-row justify-center space-x-0 lg:space-x-32 lg:space-y-0 overflow-auto"
+  >
     <!-- 타이머 진행사항 박스랑 내 타이머를 묶어준다 -->
     <div
-      class="flex flex-col space-y-4 w-[300px] md:w-[400px] lg:w-[600px] xl:w-[1000px]"
+      class="flex flex-col space-y-4 w-[450px] md:w-[550px] lg:w-[700px] xl:w-[1000px] flex-1 h-full"
     >
       <!-- 타이머 진행 사항 박스 -->
       <div class="bg-green-300 p-4 rounded-lg overflow-y-auto h-[530px]">
@@ -18,14 +20,41 @@
       </div>
       <!-- 자신의 타이머 박스 -->
       <!-- 높이, 너비 여기서 조절 -->
-       <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient"/>
+      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" />
     </div>
     <!-- 오른쪽 추가 박스 -->
     <div
-      class="bg-gray-400 p-4 rounded-lg shadow-lg w-[300px] h-[668px] max-w-[350px]"
+      class="p-4 bg-gray-800 text-white rounded-lg shadow-lg xs:w-[400px] sm:w-[450px] md:w-[550px] lg:w-[300px] h-[668px]np overflow-y-auto"
     >
-      <p class="font-bold text-center">추가 기능 박스</p>
-      <p class="text-center">여기에 원하는 내용을 넣어주세요</p>
+      <h2 class="text-xl font-bold text-center mb-4">전체 순위</h2>
+      <div class="space-y-4">
+        <!-- 순위 항목 반복 -->
+        <div
+          v-for="user in rankData"
+          :key="user.id + '-' + Math.random()"
+          class="flex items-center justify-between bg-gray-700 rounded-lg p-3 shadow-md"
+        >
+          <!-- 등수 -->
+          <div class="text-xl font-extrabold text-yellow-400">
+            {{ user.rank }}등
+          </div>
+          <!-- 프로필 정보 -->
+          <div class="flex items-center space-x-3">
+            <img
+              :src="user.avatar"
+              alt="avatar"
+              class="w-10 h-10 rounded-full border-2 border-gray-500"
+            />
+            <div>
+              <p class="font-bold text-sm">{{ user.name }}</p>
+            </div>
+          </div>
+          <!-- 시간 정보 -->
+          <div class="text-sm font-semibold text-gray-200">
+            {{ user.time }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -38,7 +67,73 @@ import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
 import Stomp from "webstomp-client";
 import axiosInstance from "../api/axiosInstance";
 
+const rankData = ref([
+  {
+    id: 1,
+    rank: 1,
+    name: "정주영",
+    time: "12:08:10",
+    avatar: "https://picsum.photos/50",
+  },
+  {
+    id: 2,
+    rank: 2,
+    name: "김철수",
+    time: "09:15:43",
+    avatar: "https://picsum.photos/51",
+  },
+  {
+    id: 3,
+    rank: 3,
+    name: "이영희",
+    time: "10:05:12",
+    avatar: "https://picsum.photos/52",
+  },
+  {
+    id: 4,
+    rank: 4,
+    name: "박준형",
+    time: "08:22:34",
+    avatar: "https://picsum.photos/53",
+  },
+  {
+    id: 5,
+    rank: 5,
+    name: "최수연",
+    time: "11:45:19",
+    avatar: "https://picsum.photos/54",
+  },
+  {
+    id: 6,
+    rank: 6,
+    name: "최수연",
+    time: "11:45:19",
+    avatar: "https://picsum.photos/54",
+  },
+  {
+    id: 7,
+    rank: 7,
+    name: "최수연",
+    time: "11:45:19",
+    avatar: "https://picsum.photos/54",
+  },
+  {
+    id: 8,
+    rank: 8,
+    name: "최수연",
+    time: "11:45:19",
+    avatar: "https://picsum.photos/54",
+  },
+  {
+    id: 9,
+    rank: 9,
+    name: "최수연",
+    time: "11:45:19",
+    avatar: "https://picsum.photos/54",
+  },
+]);
 //  ==== 상태값 시작 ====
+
 const userId = ref(localStorage.getItem("userId"));
 // 집중방에 있는 유저들의 타이머 데이터 데이터 초기 값
 const memberTimers = reactive([]);
@@ -72,7 +167,7 @@ function connect() {
     nickname: myTimerData.nickname,
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
-  
+
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
   stompClient.value.heartbeat.outgoing = 0;
@@ -94,9 +189,8 @@ function connect() {
       }
     );
     // sub 완료
-
   });
-};
+}
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
   if (eventHandler) {
@@ -122,8 +216,6 @@ const timerEventHandlers = {
       myTimerData.timeSoFar = eventData.timeSoFar;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
-    
-    
   },
   STOP: (eventData) => {
     console.log("=====TIMER_STOP 이벤트 발생=====");
@@ -143,7 +235,7 @@ const timerEventHandlers = {
   },
   END: (eventData) => {
     console.log("=====TIMER_END 이벤트 발생=====");
-    
+
     const { userId } = eventData;
     const memberTimer = memberTimers.find((timer) => timer.userId === userId);
     if (memberTimer) {
@@ -152,7 +244,7 @@ const timerEventHandlers = {
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.ranking = eventData.ranking;
     }
-  
+
     if (myTimerData.userId === userId) {
       myTimerData.timeSoFar = 0;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
@@ -166,7 +258,7 @@ const timerEventHandlers = {
     if (userId === myTimerData.userId) {
       return;
     }
-    memberTimers.push({
+    memberTimers.unshift({
       userId,
       nickname,
       timeSoFar,
@@ -194,16 +286,16 @@ const disconnectFromServer = () => {
 };
 const checkLoginAndConnect = async () => {
   const userId = localStorage.getItem("userId");
-  if (!localStorage.getItem("access")&&userId === null) {
+  if (!localStorage.getItem("access") && userId === null) {
     alert("로그인이 필요합니다.");
     const router = useRouter();
     router.push("/login");
-  }else{
+  } else {
     try {
       groupMembersTimerDataInit();
       await enterAndGetMyTimerData();
       connect();
-    }catch (error) {
+    } catch (error) {
       console.error("API 호출 중 오류 발생:", error);
     }
   }
@@ -211,7 +303,9 @@ const checkLoginAndConnect = async () => {
 // 내 타이머 데이터 받아오기
 const enterAndGetMyTimerData = async () => {
   try {
-    const response = await axiosInstance.get(`/timers/groups/${groupId.value}/entry`);
+    const response = await axiosInstance.get(
+      `/timers/groups/${groupId.value}/entry`
+    );
     const timerData = response.data;
     Object.assign(myTimerData, timerData);
   } catch (error) {
@@ -226,12 +320,12 @@ const groupMembersTimerDataInit = async () => {
     const response = await axiosInstance.get(`/timers/groups/${groupId.value}`);
     const timerDatas = response.data;
     console.log("그룹 타이머 데이터 받아오기", timerDatas);
-    
+
     timerDatas.forEach((timer) => {
       if (timer.userId == userId.value) {
         Object.assign(myTimerData, timer);
       } else {
-        memberTimers.push(timer);
+        memberTimers.unshift(timer);
       }
     });
   } catch (error) {
