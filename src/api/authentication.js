@@ -68,7 +68,8 @@ export const handleOAuthCallback = async () => {
 
         store.dispatch("login"); // Vuex를 통해 로그인 상태 변경
       } else {
-        setTimeout(() => alert("토큰이 쿠키에 없습니다."), 100);
+        alert("토큰토큰");
+        setTimeout(() => alert("토큰이 쿠키에 없음."), 100);
         router.push(ROUTE_LOGIN);
       }
     }
