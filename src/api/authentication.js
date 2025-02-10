@@ -8,9 +8,11 @@ import * as jwtDecode from "jwt-decode";
 const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
+  baseURL: 'https://mercurystarback.duckdns.org',
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // 쿠키에서 특정 키의 값을 가져오는 유틸 함수
