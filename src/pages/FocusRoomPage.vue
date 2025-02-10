@@ -1,21 +1,31 @@
 <!-- 집중방 -->
 <template>
-  <div class="timer-container">
-    <div class="group-timer-container">
-      <div
-        class="group-member-timer"
-        v-for="timeData in memberTimers"
-        :key="timeData.userId"
-      >
-        <GroupMemberTimer :timeData="timeData" />
+  <div class="p-4 gradient-background h-[700px] flex justify-center space-x-40">
+    <!-- 타이머 진행사항 박스랑 내 타이머를 묶어준다 -->
+    <div
+      class="flex flex-col space-y-4 w-[300px] md:w-[400px] lg:w-[600px] xl:w-[1000px]"
+    >
+      <!-- 타이머 진행 사항 박스 -->
+      <div class="bg-green-300 p-4 rounded-lg overflow-y-auto h-[530px]">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- 각 사람의 타이머 진행 상황 카드 -->
+          <GroupMemberTimer
+            v-for="timeData in memberTimers"
+            :key="timeData.id"
+            :timeData="timeData"
+          />
+        </div>
       </div>
+      <!-- 자신의 타이머 박스 -->
+      <!-- 높이, 너비 여기서 조절 -->
+       <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient"/>
     </div>
-    <div class="my-timer-container">
-      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" :isConnect="isConnect"/>
-       <!-- <MyTestTimer v-bind="toRefs(myTimerData)" /> -->
-      <div>
-        <p>Connection Status: {{ isConnect }}</p>
-      </div>
+    <!-- 오른쪽 추가 박스 -->
+    <div
+      class="bg-gray-400 p-4 rounded-lg shadow-lg w-[300px] h-[668px] max-w-[350px]"
+    >
+      <p class="font-bold text-center">추가 기능 박스</p>
+      <p class="text-center">여기에 원하는 내용을 넣어주세요</p>
     </div>
   </div>
 </template>
@@ -27,11 +37,9 @@ import MyTimer from "../components/timer/MyTimer.vue";
 import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
 import Stomp from "webstomp-client";
 import axiosInstance from "../api/axiosInstance";
-import MyTestTimer from "../components/timer/MyTestTimer.vue";
 
 //  ==== 상태값 시작 ====
 const userId = ref(localStorage.getItem("userId"));
-
 // 집중방에 있는 유저들의 타이머 데이터 데이터 초기 값
 const memberTimers = reactive([]);
 const myTimerData = reactive({
@@ -89,8 +97,6 @@ function connect() {
 
   });
 };
-
-
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
   if (eventHandler) {
@@ -99,7 +105,6 @@ const handleEvent = (eventData) => {
     console.error("이벤트를 찾을 수 없습니다 이벤트:", eventData.event);
   }
 };
-
 const timerEventHandlers = {
   START: (eventData) => {
     console.log("=====TIMER_START 이벤트 발생=====");
@@ -179,7 +184,6 @@ const timerEventHandlers = {
     }
   },
 };
-
 // 집중방 나가기
 const disconnectFromServer = () => {
   console.log("Disconnecting from the server");
@@ -234,14 +238,9 @@ const groupMembersTimerDataInit = async () => {
     console.error("API 호출 중 오류 발생:groupMembersTimerDataInit", error);
   }
 };
-
 onMounted(() => {
   // getMyTimerData();
   checkLoginAndConnect();
-  // 5초 뒤에 데이터 받아오기 - 비동기화 문제 해결 필요 backend listener가 오래 동작하는 문제
-  setTimeout(() => {
-    // groupMembersTimerDataInit();
-  }, 5000);
 });
 
 onUnmounted(() => {
@@ -250,32 +249,23 @@ onUnmounted(() => {
   }
 });
 </script>
+
 <style scoped>
-.timer-container {
-  /* background: linear-gradient(135deg, #1e3c72, #2a5298); */
-  background: linear-gradient(180deg, #F0F4F8, #5c1616ab);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
-  justify-content: space-between;
+.gradient-background {
+  background: linear-gradient(45deg, #f4ffde, #ffffff);
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
 }
 
-.group-timer-container {
-  display: flex;
-  justify-content: space-evenly;
-  /* background-color: red; */
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-  height: 80%;
-}
-
-.group-member-timer {
-  width: calc(33.33% - 10px); /* 3열 레이아웃 */
-  background-color: #f0f0f0;
-  padding: 10px;
-  border: 1px solid #ccc;
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>
