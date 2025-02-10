@@ -28,7 +28,7 @@ export const oauthLogin = async (provider) => {
     const currentUrl = window.location.href;
     localStorage.setItem("redirectUrl", currentUrl); // 로컬 스토리지에 저장
 
-    const baseUrl = "http://34.22.98.26:8080/oauth2/authorization";
+    const baseUrl = "https://mercurystarback/oauth2/authorization";
 
     const redirectUrl = `${baseUrl}/${provider}`;
     window.location.href = redirectUrl; // OAuth 로그인 페이지로 리다이렉트
