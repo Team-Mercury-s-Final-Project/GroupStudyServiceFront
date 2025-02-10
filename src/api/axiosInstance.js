@@ -6,7 +6,7 @@ const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
 
-  baseURL: "https://mercurystarback.duckdns.org//api",
+  baseURL: "https://mercurystarback.duckdns.org/api",
   withCredentials: true,
 
   headers: {
