@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    <p class="study-time">오늘 공부시간<br>{{ user.studyTime }}</p>
+    <p class="study-time">오늘 공부시간<br>{{ formattedTime(user.studyTime) }}</p>
 
     <fwb-button 
       v-if="user.id != userId" 
@@ -106,6 +106,16 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener("click", closeModalHandler);
 });
+
+const formattedTime = (second) => {
+  const hours = Math.floor(second / 3600);
+  const minutes = Math.floor((second % 3600) / 60);
+  const seconds = Math.floor((second % 60) / 1);
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
+};
 </script>
 
 <style scoped>
