@@ -89,7 +89,6 @@ export default {
       const decodedToken = jwtDecode.jwtDecode(token);
       this.currentUserId = decodedToken.id;
     }
-
     this.fetchChatList();
     this.connectWebSocket();
   },
