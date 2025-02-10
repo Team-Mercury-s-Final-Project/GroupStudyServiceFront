@@ -111,12 +111,83 @@
           </div>
           <!-- 탭 내용 -->
           <div class="card-content">
-            <p>{{ tabs[selectedTab].content }}</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
+            <div class="flex items-end justify-center space-x-16 h-[200px]">
+              <!-- 2등 카드 -->
+              <div
+                class="relative flex flex-col items-center justify-between w-24 h-full bg-white rounded-lg shadow-lg p-4"
+              >
+                <div class="flex flex-col items-center">
+                  <img
+                    class="w-10 h-10 rounded-full"
+                    src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                    alt="Medium avatar"
+                  />
+                  <p class="font-bold mt-2 text-gray-700">김철수</p>
+                  <p class="text-lg font-extrabold text-yellow-500">1,982</p>
+                </div>
+                <div class="bg-yellow-400 text-white rounded-t-lg px-4 py-1">
+                  2
+                </div>
+              </div>
+
+              <!-- 1등 카드 -->
+              <div
+                class="relative flex flex-col items-center justify-between w-32 h-full bg-white rounded-lg shadow-lg p-6"
+              >
+                <div class="flex flex-col items-center">
+                  <div class="relative">
+                    <img
+                      class="w-14 h-14 rounded-full"
+                      src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                      alt="Large avatar"
+                    />
+
+                    <svg
+                      class="absolute top-0 left-10 transform -translate-y-1/2 w-6 h-6 text-yellow-300"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M12 17.75l-6.172 3.245 1.179-6.873-4.993-4.867 6.9-1.002L12 2l3.086 6.253 6.9 1.002-4.993 4.867 1.179 6.873z"
+                      />
+                    </svg>
+                  </div>
+                  <p class="font-bold mt-2 text-gray-700">정주영</p>
+
+                  <p class="text-2xl font-extrabold text-yellow-500">2,240</p>
+                  <br />
+                </div>
+
+                <div class="bg-yellow-500 text-white rounded-t-lg px-4 py-1">
+                  1
+                </div>
+              </div>
+
+              <!-- 3등 카드 -->
+              <div
+                class="relative flex flex-col items-center justify-between w-24 h-full bg-white rounded-lg shadow-lg p-4"
+              >
+                <div class="flex flex-col items-center">
+                  <img
+                    class="w-10 h-10 rounded-full"
+                    src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                    alt="Medium avatar"
+                  />
+
+                  <p class="font-bold mt-2 text-gray-700">이영희</p>
+                  <p class="text-lg font-extrabold text-yellow-500">1,834</p>
+                </div>
+                <div class="bg-yellow-400 text-white rounded-t-lg px-4 py-1">
+                  3
+                </div>
+              </div>
+            </div>
           </div>
         </fwb-card>
         <!-- 공지사항 시작 -->
@@ -137,7 +208,7 @@
             </div>
           </div>
           <!-- 공지사항 리스트에 스크롤 추가 -->
-          <div class="card-content space-y-2 overflow-y-auto max-h-48 p-2">
+          <div class="card-content space-y-2 overflow-y-auto max-h-60 p-2">
             <!-- 로딩 상태일 때 표시 -->
             <div
               v-if="isNoticeLoading"
@@ -330,7 +401,6 @@ async function exitGroup() {
     isOutLoading.value = false; // 로딩 종료
   }
 }
-
 
 // --------------------modal start----------------
 // content 자르기
@@ -526,12 +596,17 @@ async function fetchGroup() {
     const response = await axiosInstance.get(`/groups/${groupId}/enter`);
     groupData.value = response.data.data;
   } catch (error) {
-    if(error.status === 409) {
-      toast.error("그룹에 가입하지 않았습니다. 그룹에 가입해주세요.", { timeout: 3000 });
+    if (error.status === 409) {
+      toast.error("그룹에 가입하지 않았습니다. 그룹에 가입해주세요.", {
+        timeout: 3000,
+      });
       router.push("/");
     } else {
-      toast.error("그룹 데이터를 불러오는 중 오류가 발생했습니다." +
-      (error.response?.data?.message || error.message), { timeout: 3000 });
+      toast.error(
+        "그룹 데이터를 불러오는 중 오류가 발생했습니다." +
+          (error.response?.data?.message || error.message),
+        { timeout: 3000 }
+      );
     }
   }
 }
@@ -680,7 +755,7 @@ function selectTab(index) {
   padding: 0.5rem; /* 보더와 텍스트 간 여백 */
 }
 .card {
-  height: 250px;
+  height: 320px;
   flex: 1; /* 남은 공간을 균등하게 채움 */
   max-width: 600px; /* 카드의 최대 크기를 600px로 제한 */
   background-color: white; /* 배경색 설정 */

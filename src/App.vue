@@ -100,7 +100,6 @@ const state = reactive({
 // 상태 제공
 provide("state", state);
 
-
 /* SSE 연결 관리 */
 let eventSource = null; // SSE 전역 변수
 let reconnectAttempts = 0;
@@ -138,7 +137,11 @@ const connectSSE = async () => {
 
     if (reconnectAttempts < maxReconnectAttempts) {
       const retryTime = Math.pow(2, reconnectAttempts) * 1000; // 지수 백오프 (1s, 2s, 4s, 8s, 16s)
-      console.log(`SSE 재연결 시도 ${reconnectAttempts + 1}회 후 ${retryTime / 1000}초 대기...`);
+      console.log(
+        `SSE 재연결 시도 ${reconnectAttempts + 1}회 후 ${
+          retryTime / 1000
+        }초 대기...`
+      );
 
       setTimeout(() => {
         reconnectAttempts++;
@@ -198,7 +201,6 @@ watch(
   },
   { immediate: true }
 );
-
 </script>
 <script>
 import Header from "./components/Header.vue";
@@ -249,7 +251,7 @@ export default {
 .content-container {
   display: flex;
   flex: 1;
-  min-height: 100vh;
+  min-height: 90vh;
 }
 
 /* 메인 콘텐츠 스타일 */
