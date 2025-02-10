@@ -1,6 +1,6 @@
 import router from "../router/index";
 import axios from "axios";
-// import axiosInstance from "../api/axiosInstance";
+//import axiosInstance from "../api/axiosInstance";
 import store from "../store/store";
 import * as jwtDecode from "jwt-decode";
 
@@ -14,6 +14,7 @@ const axiosInstance = axios.create({
   },
   withCredentials: true,
 });
+console.log('axiosInstance.defaults.baseURL:', axiosInstance.defaults.baseURL);
 
 // 쿠키에서 특정 키의 값을 가져오는 유틸 함수
 const getCookie = (key) => {
