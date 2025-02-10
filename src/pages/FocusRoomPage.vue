@@ -67,6 +67,8 @@ function connect() {
   
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
+  stompClient.value.heartbeat.outgoing = 0;
+  stompClient.value.heartbeat.incoming = 0;
 
   stompClient.value.connect(headers, () => {
     console.log("스톰프 서버 연결 성공");
@@ -193,26 +195,34 @@ const checkLoginAndConnect = async () => {
     const router = useRouter();
     router.push("/login");
   }else{
-    await enterAndGetMyTimerData();
-    await connect();
-    groupMembersTimerDataInit();
+    try {
+      groupMembersTimerDataInit();
+      await enterAndGetMyTimerData();
+      connect();
+    }catch (error) {
+      console.error("API 호출 중 오류 발생:", error);
+    }
   }
 };
 // 내 타이머 데이터 받아오기
 const enterAndGetMyTimerData = async () => {
   try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
+    const response = await axiosInstance.get(`/timers/groups/${groupId.value}/entry`);
     const timerData = response.data;
     Object.assign(myTimerData, timerData);
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
+    myTimerData.nickname = "서버 접속 실패";
+    throw error;
   }
 };
 // 그룹원 타이머 데이터 받아오기
 const groupMembersTimerDataInit = async () => {
   try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers`);
+    const response = await axiosInstance.get(`/timers/groups/${groupId.value}`);
     const timerDatas = response.data;
+    console.log("그룹 타이머 데이터 받아오기", timerDatas);
+    
     timerDatas.forEach((timer) => {
       if (timer.userId == userId.value) {
         Object.assign(myTimerData, timer);
@@ -228,10 +238,10 @@ const groupMembersTimerDataInit = async () => {
 onMounted(() => {
   // getMyTimerData();
   checkLoginAndConnect();
-  // 1초 뒤에 데이터 받아오기 - 비동기화 문제 해결 필요 backend listener가 오래 동작하는 문제
+  // 5초 뒤에 데이터 받아오기 - 비동기화 문제 해결 필요 backend listener가 오래 동작하는 문제
   setTimeout(() => {
     // groupMembersTimerDataInit();
-  }, 1000);
+  }, 5000);
 });
 
 onUnmounted(() => {

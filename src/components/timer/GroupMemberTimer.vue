@@ -11,12 +11,16 @@
 </template>
 
 <script setup>
-import { defineProps, ref, watch } from "vue";
+import {  onMounted, ref, watch } from "vue";
 import TimerDisplay from "./TimerDisplay.vue";
 const { timeData } = defineProps(["timeData"]);
 const localTime = ref(timeData.timeSoFar);
 const localStatus = ref(timeData.status);
 const interval = ref(null);
+
+onMounted(() => {
+  eventHandle();
+});
 
 watch(
   () => timeData,

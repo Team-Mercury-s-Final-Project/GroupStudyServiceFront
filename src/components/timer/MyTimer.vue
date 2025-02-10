@@ -4,7 +4,6 @@
     <span>
       <h3>이름:{{ nickname }}</h3>
       <h3>오늘의 총 공부시간: {{ todayTotalTime }}분</h3>
-      <h3>isConnect : {{ isConnect }}</h3>
     </span>
     <TimerDisplay :time="localTime" />
     <div class="buttons">
