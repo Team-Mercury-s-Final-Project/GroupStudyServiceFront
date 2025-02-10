@@ -363,6 +363,11 @@ const connectSSE = async () => {
     eventSource.close();
     eventSource = null;
     store.commit("clearUsers");
+
+    setTimeout(() => {
+      console.log("SSE 재연결 시도...");
+      connectSSE();
+    }, 1000);
   };
 
   eventSource.addEventListener("memberData", (event) => {
