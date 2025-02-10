@@ -44,6 +44,7 @@ import axiosInstance from "./api/axiosInstance";
 // 전역 상태 정의
 const globalState = reactive({
   myGroups: [],
+  focusRoomMemberCount: 0,
 });
 provide("globalState", globalState);
 
@@ -106,11 +107,11 @@ let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 const groupId = ref(null);
 const users = reactive({ list: [] });
-const token = localStorage.getItem("access");
+
 
 const connectSSE = async () => {
   if (eventSource) return; // 기존 SSE가 있으면 중복 연결 방지
-
+  const token = localStorage.getItem("access");
   eventSource = new EventSourcePolyfill(
     `${import.meta.env.VITE_SERVER_HOST}/groups/${groupId.value}/subscribe`,
     {
@@ -164,6 +165,12 @@ const connectSSE = async () => {
   eventSource.addEventListener("statusUpdate", (event) => {
     const data = JSON.parse(event.data);
     store.commit("updateStatus", data);
+    console.log("statusUpdate:", data);
+  });
+
+  eventSource.addEventListener("focusRoomMemberCount", (event) => {
+    const data = JSON.parse(event.data);
+    globalState.focusRoomMemberCount = data;
   });
 
   return eventSource;
