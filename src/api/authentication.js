@@ -12,9 +12,7 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true,
 });
-console.log('axiosInstance.defaults.baseURL:', axiosInstance.defaults.baseURL);
 
 // 쿠키에서 특정 키의 값을 가져오는 유틸 함수
 const getCookie = (key) => {
@@ -32,7 +30,7 @@ export const oauthLogin = async (provider) => {
     localStorage.setItem("redirectUrl", currentUrl); // 로컬 스토리지에 저장
 
     const baseUrl = "https://mercurystarback.duckdns.org/oauth2/authorization";
-
+    
     const redirectUrl = `${baseUrl}/${provider}`;
     window.location.href = redirectUrl; // OAuth 로그인 페이지로 리다이렉트
   } catch (error) {
@@ -43,6 +41,7 @@ export const oauthLogin = async (provider) => {
 // OAuth 로그인 콜백 핸들러
 export const handleOAuthCallback = async () => {
   try {
+    console.log(axiosInstance);
     const response = await axiosInstance.get("/api/check-auth");
     if (response.status === 200) {
       const accessToken = getCookie("access");
