@@ -338,6 +338,8 @@ async function exitGroup() {
 
 /** 그룹 페이지 입장 SSE 연결 */
 let eventSource = null;
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
 const users = reactive({ list: [] });
 
 const connectSSE = async () => {
@@ -351,6 +353,7 @@ const connectSSE = async () => {
   );
 
   eventSource.addEventListener("connect", (event) => {
+    reconnectAttempts = 0;
     console.log("SSE connect:", event.data);
   });
 
@@ -364,10 +367,17 @@ const connectSSE = async () => {
     eventSource = null;
     store.commit("clearUsers");
 
-    setTimeout(() => {
-      console.log("SSE 재연결 시도...");
-      connectSSE();
-    }, 1000);
+    if (reconnectAttempts < maxReconnectAttempts) {
+      const retryTime = Math.pow(2, reconnectAttempts) * 1000; // 지수 백오프 (1s, 2s, 4s, 8s, 16s)
+      console.log(`SSE 재연결 시도 ${reconnectAttempts + 1}회 후 ${retryTime / 1000}초 대기...`);
+
+      setTimeout(() => {
+        reconnectAttempts++;
+        connectSSE();
+      }, retryTime);
+    } else {
+      console.warn("SSE 최대 재연결 횟수를 초과했습니다.");
+    }
   };
 
   eventSource.addEventListener("memberData", (event) => {
