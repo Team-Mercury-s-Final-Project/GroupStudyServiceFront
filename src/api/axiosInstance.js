@@ -6,7 +6,7 @@ const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
 
-  baseURL: "http://34.22.98.26:8080/api",
+  baseURL: "https://mercurystarback/api",
   withCredentials: true,
 
   headers: {
