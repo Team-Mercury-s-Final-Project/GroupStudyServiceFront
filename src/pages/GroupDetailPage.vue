@@ -257,14 +257,12 @@ import {
   reactive,
 } from "vue";
 import { useRoute } from "vue-router";
-import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
 import axiosInstance from "../api/axiosInstance";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";
 import { useToast } from "vue-toastification";
-import store from "../store/store";
 
 const globalState = inject("globalState");
 if (!globalState) {
@@ -289,9 +287,6 @@ watch(
     // console.log("groupId 변경 감지:", newG); // 로그로 값 확인
     groupId = newG;
     if (newG !== oldG) {
-      closeSSE(); // 기존 SSE 연결 종료
-      await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms 대기 후 새로운 SSE 연결
-      eventSource = await connectSSE(); // 새로운 SSE 연결
       await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
     }
   }
@@ -304,7 +299,7 @@ async function reloadGroupData() {
     // console.log("데이터 불러오기");
     await Promise.all([fetchGroup(), fetchNotices()]); // 병렬로 데이터 요청
   } catch (error) {
-    // console.error("데이터 로드 중 오류:", error);
+    console.error("데이터 로드 중 오류:", error);
   } finally {
     isLoading.value = false;
   }
@@ -336,63 +331,6 @@ async function exitGroup() {
   }
 }
 
-/** 그룹 페이지 입장 SSE 연결 */
-let eventSource = null;
-const users = reactive({ list: [] });
-
-const connectSSE = async () => {
-  eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_SERVER_HOST}/api/groups/${groupId}/subscribe`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  eventSource.addEventListener("connect", (event) => {
-    console.log("SSE connect:", event.data);
-  });
-
-  eventSource.addEventListener("heartbeat", (event) => {
-    console.log("heartbeat 수신:", event.data);
-  });
-
-  eventSource.onerror = (error) => {
-    console.error("SSE 연결 오류:", error);
-    eventSource.close();
-  };
-
-  eventSource.addEventListener("memberData", (event) => {
-    try {
-      users.list = JSON.parse(event.data);
-      store.commit("setUsers", users);
-    } catch (error) {
-      console.error("데이터 파싱 오류:", error);
-    }
-  });
-
-  eventSource.addEventListener("statusUpdate", (event) => {
-    const data = JSON.parse(event.data);
-    store.commit("updateStatus", data);
-  });
-
-  return eventSource;
-};
-
-const closeSSE = () => {
-  if (eventSource && typeof eventSource.close === "function") {
-    console.log("SSE 연결 종료");
-    eventSource.close();
-    eventSource = null;
-    // Vuex 상태 초기화
-    store.commit("clearUsers");
-  }
-};
-
-onUnmounted(() => {
-  closeSSE();
-});
 
 // --------------------modal start----------------
 // content 자르기
@@ -574,8 +512,8 @@ async function updateNotice(selectedNotice) {
 // 컴포넌트가 마운트되면 API 호출
 onMounted(async () => {
   await reloadGroupData();
-  eventSource = await connectSSE();
 });
+
 // 그룹 데이터 상태
 const groupData = ref(null);
 
