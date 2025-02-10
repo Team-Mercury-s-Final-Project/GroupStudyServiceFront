@@ -16,6 +16,14 @@ const axiosInstance = axios.create({
 
 // 쿠키에서 특정 키의 값을 가져오는 유틸 함수
 const getCookie = (key) => {
+  alert("alert coockie");
+  alert(
+    "access token: " +
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith(key))
+        ?.split("=")[1]
+  );
   return document.cookie
     .split("; ")
     .find((row) => row.startsWith(key))
