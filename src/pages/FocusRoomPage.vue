@@ -11,14 +11,10 @@
       </div>
     </div>
     <div class="my-timer-container">
-      <span>{{ userId }}</span>
       <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" :isConnect="isConnect"/>
+       <!-- <MyTestTimer v-bind="toRefs(myTimerData)" /> -->
       <div>
         <p>Connection Status: {{ isConnect }}</p>
-        <button @click="connect()">Connect</button>
-        <button @click="sendMSG">메시지 테스트</button>
-        <button @click="disconnectFromServer">Disconnect</button>
-        <button @click="groupMembersTimerDataInit">datainit</button>
       </div>
     </div>
   </div>
@@ -31,6 +27,7 @@ import MyTimer from "../components/timer/MyTimer.vue";
 import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
 import Stomp from "webstomp-client";
 import axiosInstance from "../api/axiosInstance";
+import MyTestTimer from "../components/timer/MyTestTimer.vue";
 
 //  ==== 상태값 시작 ====
 const userId = ref(localStorage.getItem("userId"));
@@ -245,7 +242,8 @@ onUnmounted(() => {
 </script>
 <style scoped>
 .timer-container {
-  background-color: gold;
+  /* background: linear-gradient(135deg, #1e3c72, #2a5298); */
+  background: linear-gradient(180deg, #F0F4F8, #5c1616ab);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -257,7 +255,7 @@ onUnmounted(() => {
 .group-timer-container {
   display: flex;
   justify-content: space-evenly;
-  background-color: red;
+  /* background-color: red; */
   flex-wrap: wrap;
   gap: 10px;
   width: 100%;
