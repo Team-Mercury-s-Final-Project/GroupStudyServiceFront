@@ -1,0 +1,43 @@
+name: Frontend CD
+
+on:
+  push:
+    branches: [ "release" ]
+  pull_request:
+    branches: [ "release" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t mafatofu/star-fe:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push mafatofu/star-fe:latest
+
+      - name: Deploy to GCP
+        uses: appleboy/ssh-action@v0.1.9
+        with:
+          host: ${{ secrets.GCP_HOST }}
+          username: ${{ secrets.GCP_USERNAME }}
+          key: ${{ secrets.GCP_KEY }}
+          port: ${{ secrets.GCP_SSH_PORT }}
+          script: |
+            sudo docker stop $(sudo docker ps -q --filter "name=star-fe") || true
+            sudo docker rm $(sudo docker ps -a -q --filter "name=star-fe") || true
+            sudo docker pull mafatofu/star-fe:latest
+            sudo docker run -d -p 3001:5173 --name star-fe mafatofu/star-fe:latest
+      - name: Clean up old Docker images
+        run: |
+          sudo docker system prune -a -f --volumes

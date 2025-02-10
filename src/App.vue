@@ -1,17 +1,104 @@
 <template>
-  <div class="layout">
-    <Header />
-    <div class="main">
-      <Sidebar />
-      <main class="content">
-        <h2>Welcome to My Website!</h2>
-        <p>This is the main content area.</p>
-      </main>
-      <UserList />
+  <div class="app">
+    <Sidebar />
+    <div class="header-layout">
+      <Header />
+
+      <div class="content-container">
+        <main class="content">
+          <LoginModal v-if="modal.isVisible" />
+          <router-view />
+          <!-- 라우팅된 페이지가 여기 렌더링 -->
+        </main>
+        <!-- UserList (조건부 렌더링) -->
+        <transition name="slide">
+          <UserList v-if="isUserListVisible" />
+        </transition>
+      </div>
+      <!-- 플로팅 버튼 -->
+      <button
+        class="floating-btn"
+        v-if="isToggleButtonVisible"
+        @click="toggleUserList"
+      >
+        {{ isUserListVisible ? "✖️" : "👥" }}
+      </button>
     </div>
   </div>
-</template>
 
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    rel="stylesheet"
+  />
+</template>
+<script setup>
+import { computed, ref, watch } from "vue";
+import { reactive, provide } from "vue";
+import { useRoute } from "vue-router";
+import { useStore } from "vuex";
+import store from "./store/store";
+import LoginModal from "./components/modal/LoginPermissionRequired.vue";
+import Sidebar from "./components/Sidebar.vue";
+import axiosInstance from "./api/axiosInstance";
+
+// 전역 상태 정의
+const globalState = reactive({
+  myGroups: [],
+});
+provide("globalState", globalState);
+
+const route = useRoute();
+
+// 라우팅 변화를 감지하여 필요하면 데이터 재요청
+watch(route, async () => {
+  await fetchGroups(); // 라우트 변경 시 그룹 데이터를 다시 가져옴
+});
+
+// 그룹 데이터 가져오는 함수
+async function fetchGroups() {
+  if (isLoggedIn.value) {
+    try {
+      const response = await axiosInstance.get("/groups/myGroups");
+      if (response.status == 200) {
+        globalState.myGroups = response.data.data;
+      }
+    } catch (error) {
+      console.error("그룹 데이터 불러오기 실패:", error);
+    }
+  } else {
+    globalState.myGroups = [];
+  }
+}
+// 로그인 상태 확인
+const isLoggedIn = computed(() => store.state.isLoggedIn);
+const isUserListVisible = ref(false);
+const isToggleButtonVisible = ref(false);
+const modal = computed(() => store.state.modal);
+
+const isUserListComputed = computed(() => {
+  return route.meta?.showUserList === true;
+});
+const isToggleButtonComputed = computed(() => {
+  return route.meta?.showToggleButton === true;
+});
+
+// route가 변경될 때 값 초기화
+watch(route, () => {
+  isUserListVisible.value = isUserListComputed.value;
+  isToggleButtonVisible.value = isToggleButtonComputed.value;
+});
+
+// 토글 클릭 시 값 변경
+const toggleUserList = () => {
+  isUserListVisible.value = !isUserListVisible.value;
+};
+
+const state = reactive({
+  isLoggedIn: false,
+});
+// 상태 제공
+provide("state", state);
+</script>
 <script>
 import Header from "./components/Header.vue";
 import Sidebar from "./components/Sidebar.vue";
@@ -20,65 +107,100 @@ import UserList from "./components/UserList.vue";
 export default {
   name: "App",
   components: {
-    Header,
     Sidebar,
+    Header,
     UserList,
+    LoginModal,
+    // FocusRoomTimers,
   },
 };
 </script>
 
 <style scoped>
 /* 전체 레이아웃 */
-.layout {
+.app {
   display: flex;
-  flex-direction: column;
-  width: 100vw; /* 전체 화면 너비 */
-  height: 100vh; /* 전체 화면 높이 */
-  overflow: hidden;
+  height: 100vh;
 }
 
-/* Header */
-header {
-  height: 80px;
-  background-color: #333;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.5rem;
-}
-
-/* 메인 영역 */
-.main {
-  display: flex;
-  flex: 1;
-  overflow: hidden; /* 스크롤 문제 방지 */
-}
-
-/* Sidebar */
 .sidebar {
-  width: 120px; /* 고정된 너비 */
+  position: fixed; /* 화면의 고정 위치 */
+  top: 0;
+  left: 0;
+  width: 70px;
+  height: 100vh; /* 전체 화면 높이 */
   background-color: #d9d9d9;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem; /* 그룹 버튼 간격 */
+  gap: 1rem;
 }
 
-/* Content */
+/* 헤더 Layout */
+.header-layout {
+  margin-left: 70px; /* 사이드바 너비만큼 오른쪽으로 밀림 */
+  width: calc(100% - 70px); /* 사이드바를 제외한 너비 */
+  display: flex;
+  flex-direction: column;
+}
+
+.content-container {
+  display: flex;
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* 메인 콘텐츠 스타일 */
 .content {
-  flex: 1; /* 중앙 영역을 유연하게 사용 */
-  padding: 1.5rem;
-  background-color: #f4f4f4;
-  overflow-y: auto;
+  flex: 1;
+  background-color: #f9f9f9;
+  padding: 32px;
+  transition: flex 0.3s ease; /* 애니메이션 추가 */
+  overflow-y: auto; /* 스크롤 활성화 */
 }
 
-/* User List */
+/* UserList 스타일 */
 .user-list {
-  width: 200px; /* 고정된 너비 */
-  background-color: #e0e0e0;
-  padding: 1rem;
-  overflow-y: auto; /* 유저 리스트 스크롤 가능 */
+  width: 270px;
+  background-color: #eaeaea;
+  border-left: 1px solid #ccc;
+  transition: all 0.3s ease; /* 애니메이션 추가 */
+}
+
+/* 플로팅 버튼 스타일 */
+.floating-btn {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.floating-btn:hover {
+  transform: scale(1.1);
+}
+
+/* UserList 애니메이션 */
+.slide-enter-active,
+.slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
 }
 </style>

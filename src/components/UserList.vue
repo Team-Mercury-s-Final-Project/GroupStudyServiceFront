@@ -1,69 +1,113 @@
 <template>
-    <aside class="user-list">
-      <h3>접속중인 유저</h3>
-      <ul>
-        <li v-for="(user, index) in onlineUsers" :key="index">
-          <span class="user-icon">P</span> {{ user.name }}
-          <span class="status" :class="user.status"></span>
-        </li>
-      </ul>
-    </aside>
-  </template>
-  
-  <script>
-  export default {
-    name: "UserList",
-    data() {
-      return {
-        onlineUsers: [
-          { name: "김진우", status: "online" },
-          { name: "박지은", status: "away" },
-          { name: "최현우", status: "busy" },
-        ],
-      };
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .user-list ul {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .user-list li {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  
-  .user-icon {
-    width: 24px;
-    height: 24px;
-    background-color: #ccc;
-    border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 1rem;
-  }
-  
-  .status {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-left: auto;
-  }
-  
-  .status.online {
-    background-color: green;
-  }
-  
-  .status.away {
-    background-color: yellow;
-  }
-  
-  .status.busy {
-    background-color: red;
-  }
-  </style>
+  <div class="user-list">
+    <h3 class="section-title">🔥 나</h3>
+    <ul>
+      <li class="user-item">
+        <fwb-avatar
+          :img="me.image"
+          rounded status-position="top-right" status="online"
+        />
+        <span class="user-name">{{ me.nickname }}</span>
+        <fwb-badge v-if="me.isHost" size="xs" type="yellow">👑</fwb-badge>
+        <fwb-badge size="xs" :type="me.status === 'ONLINE' ? 'green' : 'red'">
+          {{ me.status === "ONLINE" ? "접속중" : "부재중" }}
+        </fwb-badge>
+      </li>
+    </ul>
+
+    <h3 class="section-title">⚡ 온라인 ({{ onlineUsers.length }})</h3>
+    <ul>
+      <li v-for="user in onlineUsers" :key="user.id" class="user-item">
+        <fwb-avatar
+          :img="user.image"
+          rounded status-position="top-right"
+          status="online"
+        />
+        <span class="user-name">{{ user.nickname }}</span>
+        <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
+        <fwb-badge size="xs" type="green">접속중</fwb-badge>
+      </li>
+    </ul>
+
+    <h3 class="section-title">🌙 오프라인 ({{ offlineUsers.length }})</h3>
+    <ul>
+      <li v-for="user in offlineUsers" :key="user.id" class="user-item">
+        <fwb-avatar
+          :img="user.image"
+          rounded status-position="top-right"
+          status="offline"
+        />
+        <span class="user-name away">{{ user.nickname }}</span>
+        <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
+        <fwb-badge size="xs" type="red">부재중</fwb-badge>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script setup>
+import { computed } from "vue";
+import { FwbBadge, FwbAvatar } from 'flowbite-vue';
+import store from "../store/store";
+
+const userId = localStorage.getItem("userId"); // 현재 로그인한 사용자 ID
+const users = store.state.users;
+
+// 현재 로그인한 유저
+const me = computed(() => store.state.users.list.find(user => user.id == userId) || {});
+
+// 온라인 유저 리스트 (현재 유저 제외)
+const onlineUsers = computed(() => 
+  store.state.users.list.filter(user => user.status === "ONLINE" && user.id != userId)
+);
+
+// 오프라인 유저 리스트
+const offlineUsers = computed(() => 
+  store.state.users.list.filter(user => user.status === "OFFLINE" && user.id != userId)
+);
+</script>
+
+<style scoped>
+.user-list {
+  padding-top: 1rem;
+}
+
+.section-title {
+  margin-bottom: 0.5rem;
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #000000;
+  position: relative;
+}
+
+.user-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.user-item:hover {
+  background: #dadada;
+  transform: translateY(-2px);
+}
+
+.user-name {
+  margin-left: 0.5rem;
+  flex: 1;
+  font-weight: 600;
+  color: #333;
+}
+
+.user-name.away {
+  color: #888;
+}
+</style>
