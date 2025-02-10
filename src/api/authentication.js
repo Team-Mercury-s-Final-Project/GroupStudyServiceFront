@@ -42,7 +42,7 @@ export const oauthLogin = async (provider) => {
 export const handleOAuthCallback = async () => {
   try {
     console.log("api sent");
-    const response = await axiosInstance.get("/api/check-auth", { baseURL: 'https://mercurystarback.duckdns.org' });
+    const response = await axiosInstance.get("/api/check-auth");
     if (response.status === 200) {
       const accessToken = getCookie("access");
       if (accessToken) {
