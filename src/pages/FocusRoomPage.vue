@@ -1,25 +1,31 @@
 <!-- 집중방 -->
 <template>
-  <div class="timer-container">
-    <div class="group-timer-container">
-      <div
-        class="group-member-timer"
-        v-for="timeData in memberTimers"
-        :key="timeData.userId"
-      >
-        <GroupMemberTimer :timeData="timeData" />
+  <div class="p-4 gradient-background h-[700px] flex justify-center space-x-40">
+    <!-- 타이머 진행사항 박스랑 내 타이머를 묶어준다 -->
+    <div
+      class="flex flex-col space-y-4 w-[300px] md:w-[400px] lg:w-[600px] xl:w-[1000px]"
+    >
+      <!-- 타이머 진행 사항 박스 -->
+      <div class="bg-green-300 p-4 rounded-lg overflow-y-auto h-[530px]">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- 각 사람의 타이머 진행 상황 카드 -->
+          <GroupMemberTimer
+            v-for="timeData in memberTimers"
+            :key="timeData.id"
+            :timeData="timeData"
+          />
+        </div>
       </div>
+      <!-- 자신의 타이머 박스 -->
+      <!-- 높이, 너비 여기서 조절 -->
+       <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient"/>
     </div>
-    <div class="my-timer-container">
-      <span>{{ userId }}</span>
-      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" :isConnect="isConnect"/>
-      <div>
-        <p>Connection Status: {{ isConnect }}</p>
-        <button @click="connect()">Connect</button>
-        <button @click="sendMSG">메시지 테스트</button>
-        <button @click="disconnectFromServer">Disconnect</button>
-        <button @click="groupMembersTimerDataInit">datainit</button>
-      </div>
+    <!-- 오른쪽 추가 박스 -->
+    <div
+      class="bg-gray-400 p-4 rounded-lg shadow-lg w-[300px] h-[668px] max-w-[350px]"
+    >
+      <p class="font-bold text-center">추가 기능 박스</p>
+      <p class="text-center">여기에 원하는 내용을 넣어주세요</p>
     </div>
   </div>
 </template>
@@ -34,7 +40,6 @@ import axiosInstance from "../api/axiosInstance";
 
 //  ==== 상태값 시작 ====
 const userId = ref(localStorage.getItem("userId"));
-
 // 집중방에 있는 유저들의 타이머 데이터 데이터 초기 값
 const memberTimers = reactive([]);
 const myTimerData = reactive({
@@ -70,6 +75,8 @@ function connect() {
   
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
+  stompClient.value.heartbeat.outgoing = 0;
+  stompClient.value.heartbeat.incoming = 0;
 
   stompClient.value.connect(headers, () => {
     console.log("스톰프 서버 연결 성공");
@@ -90,8 +97,6 @@ function connect() {
 
   });
 };
-
-
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
   if (eventHandler) {
@@ -100,7 +105,6 @@ const handleEvent = (eventData) => {
     console.error("이벤트를 찾을 수 없습니다 이벤트:", eventData.event);
   }
 };
-
 const timerEventHandlers = {
   START: (eventData) => {
     console.log("=====TIMER_START 이벤트 발생=====");
@@ -180,7 +184,6 @@ const timerEventHandlers = {
     }
   },
 };
-
 // 집중방 나가기
 const disconnectFromServer = () => {
   console.log("Disconnecting from the server");
@@ -196,26 +199,34 @@ const checkLoginAndConnect = async () => {
     const router = useRouter();
     router.push("/login");
   }else{
-    await enterAndGetMyTimerData();
-    await connect();
-    groupMembersTimerDataInit();
+    try {
+      groupMembersTimerDataInit();
+      await enterAndGetMyTimerData();
+      connect();
+    }catch (error) {
+      console.error("API 호출 중 오류 발생:", error);
+    }
   }
 };
 // 내 타이머 데이터 받아오기
 const enterAndGetMyTimerData = async () => {
   try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
+    const response = await axiosInstance.get(`/timers/groups/${groupId.value}/entry`);
     const timerData = response.data;
     Object.assign(myTimerData, timerData);
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
+    myTimerData.nickname = "서버 접속 실패";
+    throw error;
   }
 };
 // 그룹원 타이머 데이터 받아오기
 const groupMembersTimerDataInit = async () => {
   try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers`);
+    const response = await axiosInstance.get(`/timers/groups/${groupId.value}`);
     const timerDatas = response.data;
+    console.log("그룹 타이머 데이터 받아오기", timerDatas);
+    
     timerDatas.forEach((timer) => {
       if (timer.userId == userId.value) {
         Object.assign(myTimerData, timer);
@@ -227,14 +238,9 @@ const groupMembersTimerDataInit = async () => {
     console.error("API 호출 중 오류 발생:groupMembersTimerDataInit", error);
   }
 };
-
 onMounted(() => {
   // getMyTimerData();
   checkLoginAndConnect();
-  // 1초 뒤에 데이터 받아오기 - 비동기화 문제 해결 필요 backend listener가 오래 동작하는 문제
-  setTimeout(() => {
-    // groupMembersTimerDataInit();
-  }, 1000);
 });
 
 onUnmounted(() => {
@@ -243,31 +249,23 @@ onUnmounted(() => {
   }
 });
 </script>
+
 <style scoped>
-.timer-container {
-  background-color: gold;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  align-items: center;
-  justify-content: space-between;
+.gradient-background {
+  background: linear-gradient(45deg, #f4ffde, #ffffff);
+  background-size: 200% 200%;
+  animation: gradientAnimation 15s ease infinite;
 }
 
-.group-timer-container {
-  display: flex;
-  justify-content: space-evenly;
-  background-color: red;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-  height: 80%;
-}
-
-.group-member-timer {
-  width: calc(33.33% - 10px); /* 3열 레이아웃 */
-  background-color: #f0f0f0;
-  padding: 10px;
-  border: 1px solid #ccc;
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 </style>
