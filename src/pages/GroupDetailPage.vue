@@ -675,7 +675,8 @@ async function enterChatRoom() {
     const chatRoomId = response.data.data;
 
     if (chatRoomId) {
-      router.push(`/chats/${chatRoomId}`); // Vue Router 인스턴스를 사용하여 페이지 이동
+      // Vue Router 인스턴스를 사용하여 페이지 이동
+      router.push(`/groups/${groupId}/chats/${chatRoomId}`);
     } else {
       console.error("채팅방 아이디를 받아오지 못합니다.");
     }
