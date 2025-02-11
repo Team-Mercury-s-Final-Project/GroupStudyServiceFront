@@ -1,80 +1,153 @@
 <template>
-  <div class="layout">
-    <div class="main-content">
-      <div class="content">
-        <div class="chat-container">
-          <div v-if="isDataLoaded" class="messages">
+  <!-- layout: flex -->
+  <div class="flex">
+    <!-- main-content: margin-left 200px, width: calc(100% - 200px) (임의 값 사용) -->
+    <div class="w-[calc(100%)]">
+      <!-- content: 흰색 배경, 텍스트 색상, 2rem 패딩, rounded, margin-top 3.5rem, flex, center 정렬, 높이 계산 -->
+      <div
+        class="bg-green-500 text-gray-800 p-8 rounded-lg mt-14 flex justify-center items-center h-[calc(75vh)]"
+      >
+        <!-- chat-container: 연한 회색 배경, 1rem 패딩, rounded, full width, 최대 600px, 높이 80vh, flex-col, border -->
+        <div
+          class="bg-[#f9f9f9] p-4 rounded-lg w-full max-w-[600px] h-[80vh] flex flex-col border border-gray-300"
+        >
+          <!-- 채팅 메시지 리스트 -->
+          <div
+            v-if="isDataLoaded"
+            ref="messagesContainer"
+            class="overflow-y-auto flex-grow p-4 rounded-lg"
+          >
             <div
-              class="message"
               v-for="(message, index) in messages"
               :key="index"
-              :class="{
-                'my-message': message.senderId === currentUserId,
-                'other-message': message.senderId !== currentUserId,
-              }"
+              :class="[
+                'flex items-end mb-[15px] p-[10px] rounded-lg max-w-[75%]',
+                message.senderId === currentUserId
+                  ? 'ml-auto bg-blue-500'
+                  : 'mr-auto  bg-red-500',
+              ]"
             >
-              <img
-                :src="message.profileImgUrl"
-                class="profile-picture"
-                alt="Profile"
-              />
-              <div class="message-details">
-                <div class="message-header">
-                  <strong>{{ message.nickName }}</strong>
-                  <span class="message-timestamp">{{ message.createdAt }}</span>
-                </div>
-                <div class="message-content">
-                  <div v-if="isImageUrl(message.content)">
-                    <a
-                      :href="message.content"
-                      target="_blank"
-                      class="link-preview"
-                    >
-                      <img
-                        :src="message.content"
-                        alt="미리보기 이미지"
-                        class="preview-image"
-                      />
-                    </a>
+              <!-- 내 메시지 -->
+              <template v-if="message.senderId === currentUserId">
+                <!-- 메시지 내용과 읽음 숫자 컨테이너 (세로 정렬, 오른쪽 정렬) -->
+                <div class="flex flex-col items-end">
+                  <!-- 메시지 내용 박스 -->
+                  <div class="bg-white p-2 rounded-lg inline-block text-right">
+                    <div class="flex justify-between mb-1">
+                      <strong>{{ message.nickName }}</strong>
+                      <span class="text-[0.8rem] text-[#888]">{{
+                        message.createdAt
+                      }}</span>
+                    </div>
+                    <div class="whitespace-normal break-all">
+                      {{ message.content }}
+                    </div>
                   </div>
-                  <div v-else>
-                    {{ message.content }}
-                  </div>
-                  <span class="unread-count" v-if="message.unreadCount > 0">
+                  <!-- 읽음 표시 (메시지 내용 박스 바로 아래) -->
+                  <span
+                    v-if="message.unreadCount > 0"
+                    class="text-[0.8rem] text-red-500 mt-1"
+                  >
                     {{ message.unreadCount }}
                   </span>
                 </div>
-              </div>
+                <!-- 프로필 이미지 (오른쪽에 배치) -->
+                <img
+                  :src="message.profileImgUrl"
+                  alt="Profile"
+                  class="w-10 h-10 rounded-full ml-[10px]"
+                />
+              </template>
+
+              <!-- 상대방 메시지 -->
+              <template v-else>
+                <!-- 프로필 이미지 (왼쪽에 배치) -->
+                <img
+                  :src="message.profileImgUrl"
+                  alt="Profile"
+                  class="w-10 h-10 rounded-full mr-[10px]"
+                />
+                <!-- 메시지 내용과 읽음 숫자 컨테이너 (세로 정렬, 왼쪽 정렬) -->
+                <div class="flex flex-col items-start">
+                  <!-- 메시지 내용 박스 -->
+                  <div class="bg-white p-2 rounded-lg inline-block text-left">
+                    <div class="flex justify-between mb-1">
+                      <strong>{{ message.nickName }}</strong>
+                      <span class="text-[0.8rem] text-[#888]">{{
+                        message.createdAt
+                      }}</span>
+                    </div>
+                    <div class="whitespace-normal break-all">
+                      {{ message.content }}
+                    </div>
+                  </div>
+                  <!-- 읽음 표시 (메시지 내용 박스 바로 아래) -->
+                  <span
+                    v-if="message.unreadCount > 0"
+                    class="text-[0.8rem] text-red-500 mt-1"
+                  >
+                    {{ message.unreadCount }}
+                  </span>
+                </div>
+              </template>
             </div>
           </div>
-          <div v-else class="loading">데이터를 불러오는 중입니다...</div>
-          <div class="input-container">
-            <label for="file-upload" class="upload-button">+</label>
+          <!-- 데이터 로딩 중 -->
+          <div v-else class="text-center py-4">
+            데이터를 불러오는 중입니다...
+          </div>
+          <!-- 입력창 영역 -->
+          <div class="flex items-center p-2 bg-white rounded-lg mt-4">
+            <!-- 파일 업로드 버튼 (라벨) -->
+            <label
+              for="file-upload"
+              class="bg-[#007bff] text-white p-2 rounded-md cursor-pointer mr-2"
+              >+</label
+            >
             <input
               type="file"
               id="file-upload"
               ref="fileInput"
               @change="handleFileUpload"
-              style="display: none"
+              class="hidden"
             />
+            <!-- 텍스트 입력창 -->
             <input
               type="text"
               v-model="newMessage"
               @keyup.enter="uploadFile"
               placeholder="메시지를 입력해주세요"
+              class="flex-1 p-2 border border-gray-300 rounded-md mx-2"
             />
-            <button @click="uploadFile">보내기</button>
+            <!-- 보내기 버튼 -->
+            <button
+              @click="uploadFile"
+              class="py-2 px-4 rounded-md bg-blue-500 text-white cursor-pointer"
+            >
+              보내기
+            </button>
           </div>
-          <div v-if="filePreview" class="file-preview">
-            <img :src="filePreview" alt="파일 미리보기" v-if="isImage" />
-            <p v-else>{{ fileName }}</p>
+          <!-- 파일 미리보기 -->
+          <div
+            v-if="filePreview"
+            class="fixed bottom-[80px] left-1/2 -translate-x-1/2 bg-white/80 p-[10px] rounded-lg shadow-lg text-center z-[1000]"
+          >
+            <img
+              v-if="isImage"
+              :src="filePreview"
+              alt="파일 미리보기"
+              class="max-w-[100px] max-h-[100px] mx-auto"
+            />
+            <p v-else class="m-0 py-[5px]">{{ fileName }}</p>
           </div>
         </div>
-        <!-- 여기서 시작 -->
-        <button @click="goToChatRoomList" class="chat-room-list-button">
+        <!-- 채팅 목록으로 이동 버튼 -->
+        <button
+          @click="goToChatRoomList"
+          class="py-2 px-4 rounded-md bg-blue-500 text-white cursor-pointer mt-4"
+        >
           채팅 목록으로 이동
         </button>
-        <!-- 여기서 끝 -->
       </div>
     </div>
   </div>
@@ -95,6 +168,7 @@ export default {
       stompClient: null,
       currentUserId: null,
       receiverId: null,
+      receiverNickName: "",
       isDataLoaded: false,
       nickName: "",
       chatRoomType: "DM",
@@ -104,10 +178,12 @@ export default {
       fileType: "",
       filePreview: "",
       isImage: false,
+      connectedUsers: [],
+      chatMembers: [],
     };
   },
 
-  mounted() {
+  async mounted() {
     const token = localStorage.getItem("access");
     this.chatRoomId = this.$route.params.chatRoomId;
 
@@ -115,24 +191,42 @@ export default {
       const decodedToken = jwtDecode.jwtDecode(token);
       this.currentUserId = decodedToken.id;
     }
+    // 이전 메시지 데이터 가져오기
+    await this.loadChatHistory();
+    // WebSocket 연결
+    await this.connectWebSocket();
+    //읽지 않은 모든 메시지 읽음처리
+    //await this.insertUnreadMessagesToChatRead();
 
-    this.connectWebSocket();
-    this.loadChatHistory();
+    // beforeunload 이벤트 리스너 추가
+    window.addEventListener("beforeunload", this.handleBeforeUnload);
+  },
+
+  beforeUnmount() {
+    // 컴포넌트가 파괴되기 전에 beforeunload 이벤트 리스너 제거
+    window.removeEventListener("beforeunload", this.handleBeforeUnload);
+  },
+  watch: {
+    messages() {
+      this.scrollToBottom();
+    },
   },
 
   methods: {
-    // WebSocket 연결 종료 메서드
-    disconnectWebSocket() {
-      if (this.stompClient) {
-        this.stompClient.disconnect(() => {
-          console.log("WebSocket 연결이 종료되었습니다.");
-        });
-      }
+    //페이지를 떠날 때 실행되는 메서드
+    handleBeforeUnload(event) {
+      // 페이지를 떠날 때 접속자 update
+      this.sendDisconnectedUser();
     },
-    //채팅목록으로 이동
+
     async goToChatRoomList() {
-      this.disconnectWebSocket();
-      this.$router.push(`/users/${this.currentUserId}/chatRoomList`);
+      this.$router.push({
+        path: `/users/${this.currentUserId}/chatRoomList`,
+        beforeEnter: (to, from, next) => {
+          this.sendDisconnectedUser();
+          next();
+        },
+      });
     },
     isImageUrl(url) {
       return url.startsWith(
@@ -140,16 +234,60 @@ export default {
       );
     },
 
-    connectWebSocket() {
+    async connectWebSocket() {
       const socket = new WebSocket(`ws://34.22.98.26:8080/chat`);
-      this.stompClient = Stomp.over(socket);
 
+      this.stompClient = Stomp.over(socket);
+      this.stompClient.heartbeat.outgoing = 0;
+      this.stompClient.heartbeat.incoming = 0;
       this.stompClient.connect(
         {},
         (frame) => {
           console.log("Connected: " + frame);
 
+          // 채팅방 접속 인원 구독
+          this.stompClient.subscribe(
+            `/topic/chat.connect.${this.chatRoomId}`,
+            (messageOutput) => {
+              try {
+                const message = JSON.parse(messageOutput.body);
+                console.log("채팅방에 참여한사람~:", message);
+
+                // 현재 접속한 사용자 목록 업데이트
+                this.connectedUsers = message.data.connectedMemberIds;
+
+                console.log(
+                  "현재 살아있는 채팅 접속 인원 : ",
+                  this.connectedUsers
+                );
+              } catch (error) {
+                console.error("메시지 파싱 오류:", error);
+              }
+            }
+          );
+          // 채팅방 접속 해제 인원 구독
+          this.stompClient.subscribe(
+            `/topic/chat.disconnect.${this.chatRoomId}`,
+            (messageOutput) => {
+              try {
+                const message = JSON.parse(messageOutput.body);
+                console.log("채팅방에 나간사람~:", message);
+
+                // 현재 접속한 사용자 목록 업데이트.
+                this.connectedUsers = message.data.connectedMemberIds;
+
+                console.log(
+                  "현재 살아있는 채팅 접속 인원 : ",
+                  this.connectedUsers
+                );
+              } catch (error) {
+                console.error("메시지 파싱 오류:", error);
+              }
+            }
+          );
+
           // 읽음 정보 응답 구독. 메시지를 받을 때 있었다면 '읽음'처리.
+          //현재 접속중인 사용자 수만큼 읽음 메시지를 전송.
           this.stompClient.subscribe(
             `/topic/readCheck.response.${this.chatRoomId}`,
             (readInfo) => {
@@ -177,23 +315,26 @@ export default {
               try {
                 const message = JSON.parse(messageOutput.body);
                 console.log("Received message:", message);
-
+                console.log("사용자 아이디 : ", this.currentUserId);
                 this.messages.push({
                   id: message.data.id,
                   senderId: message.data.senderId,
-                  nickName: message.data.nickName || "알 수 없음",
+                  nickName: message.data.nickName || this.receiverNickName,
                   content: message.data.messageContent,
                   createdAt: new Date(message.data.createdAt).toLocaleString(),
                   profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
-                  // 이미지 확인 부분 제거됨
                 });
 
                 // 메시지가 화면에 표시되면 읽음 상태 업데이트
-                this.updateReadUsers(message.data.id);
                 console.log("메시지 읽음 정보 업데이트 요청");
+                this.updateReadUsers(message.data.id);
+                //메시지를 잘 전달받았으면 채팅목록으로 새로운 메시지 왔다고 보냄
+                this.sendRecentMessageToChatList(message);
               } catch (error) {
                 console.error("메시지 파싱 오류:", error);
+              } finally {
+                this.scrollToBottom();
               }
             }
           );
@@ -225,6 +366,8 @@ export default {
               }
             }
           );
+          // 채팅방 접속 시 접속자 update
+          this.sendConnectedUser();
         },
         (error) => {
           console.error("WebSocket 연결 오류:", error);
@@ -235,7 +378,8 @@ export default {
       );
     },
 
-    loadChatHistory() {
+    async loadChatHistory() {
+      console.log("이전 메시지 기록 받아오기");
       axiosInstance
         .get(`/chats/${this.chatRoomId}`, {
           timeout: 10000,
@@ -247,35 +391,46 @@ export default {
         .then((response) => {
           if (response.data && response.data.success && response.data.data) {
             const chatData = response.data.data;
+            this.chatMembers = chatData.chatMembers;
+
+            console.log("채팅방 참여자: ", this.chatMembers);
+            //nickName셋팅
+            this.nickName = this.chatMembers.find(
+              (member) => member.id === this.currentUserId
+            ).nickName;
             //채팅방 타입 체크
             if (chatData.chatRoomType === "GROUP") {
               this.chatRoomType = "GROUP";
+              //그룹멤버정보로 셋팅
+            } else {
+              //DM일 경우
+              //현재 채팅방 멤버에서 내 아이디가 아닌 사람이 상대방이 됨
+
+              this.receiverId = this.chatMembers.find(
+                (member) => member.id !== this.currentUserId
+              ).id;
+              this.receiverNickName = this.chatMembers.find(
+                (member) => member.id !== this.currentUserId
+              ).nickName;
             }
-            if (Array.isArray(chatData.messages)) {
-              this.messages = chatData.messages.map((msg) => ({
-                id: msg.id,
-                senderId: msg.senderId,
-                nickName: msg.nickName || "알 수 없음",
-                profileImgUrl: msg.profileImgUrl,
-                content: msg.content,
-                createdAt: new Date(msg.createdAt).toLocaleString(),
-                unreadCount: msg.unreadCount, // unreadCount 추가
-                // 이미지 확인 부분 제거됨
-              }));
 
-              // JWT ID와 같지 않은 데이터의 ID를 receiverId로 설정
-              const receiver = chatData.messages.find(
-                (msg) => msg.senderId !== this.currentUserId
-              );
-              this.receiverId = receiver ? receiver.senderId : null;
-
-              const sender = chatData.messages.find(
-                (msg) => msg.senderId === this.currentUserId
-              );
-              this.nickName = sender.nickName;
+            if (chatData.messages.length !== 0) {
+              if (Array.isArray(chatData.messages)) {
+                this.messages = chatData.messages.map((msg) => ({
+                  id: msg.id,
+                  senderId: msg.senderId,
+                  nickName: msg.nickName || "알 수 없음",
+                  profileImgUrl: msg.profileImgUrl,
+                  content: msg.content,
+                  createdAt: new Date(msg.createdAt).toLocaleString(),
+                  unreadCount: msg.unreadCount, // unreadCount 추가
+                }));
+              }
+            } else {
             }
 
             this.isDataLoaded = true;
+            //this.insertUnreadMessagesToChatRead();
           } else {
             console.error("알 수 없는 데이터 구조:", response.data);
             this.messages = [];
@@ -288,7 +443,14 @@ export default {
           this.isDataLoaded = true;
         });
     },
-
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const container = this.$refs.messagesContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    },
     sendMessage() {
       if (this.newMessage.trim() !== "" || this.fileUrl) {
         const messageFileDto = {
@@ -324,11 +486,13 @@ export default {
               JSON.stringify(payload)
             );
           }
+          // 메세지 전송 후 입력창 초기화
+          this.newMessage = "";
+
+          // this.scrollToBottom();
         } else {
           console.error("WebSocket is not connected.");
         }
-
-        this.newMessage = "";
       }
     },
 
@@ -378,9 +542,41 @@ export default {
         this.sendMessage(); // 파일이 없고 메시지가 있을 경우 sendMessage 함수 호출
       }
     },
+    async insertUnreadMessagesToChatRead() {
+      try {
+        console.log("읽지 않은 메시지 읽음 처리");
+        axiosInstance.post(
+          `/chats/${this.chatRoomId}/insertUnreadMessagesToChatRead`
+        );
+      } catch (error) {
+        console.error("읽지 않은 메시지 읽음 처리 중 에러 발생:", error);
+      }
+    },
+    //채팅목록으로 최신메시지 전달
+    sendRecentMessageToChatList(recentMessage) {
+      console.log("채팅목록으로 보낼 최신 메시지 확인: ", recentMessage);
+      const payload = {
+        id: recentMessage.data.id,
+        senderId: recentMessage.data.senderId,
+        chatRoomId: this.chatRoomId,
+        nickName: recentMessage.data.nickName,
+        profileImgUrl: recentMessage.data.profileImgUrl,
+        content: recentMessage.data.messageContent,
+        createdAt: recentMessage.data.createdAt,
+      };
 
-    // 이미지 확인 부분 제거됨
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/chat/sendRecentMessageToChatList/${this.chatRoomId}`,
+          {},
+          JSON.stringify(payload)
+        );
+      } else {
+        console.error("WebSocket is not connected.");
+      }
+    },
 
+    //메시지 읽음처리
     updateReadUsers(messageId) {
       const readPayload = {
         chatMessageId: messageId,
@@ -397,188 +593,38 @@ export default {
         console.error("WebSocket is not connected.");
       }
     },
+    // 접속한 사용자 정보 전송
+    async sendConnectedUser() {
+      const userPayload = {
+        connectedMemberId: this.currentUserId,
+      };
+      console.log("접속한 사용자 정보 전송", userPayload);
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/chat/connect/${this.chatRoomId}`,
+          {},
+          JSON.stringify(userPayload)
+        );
+      } else {
+        console.error("WebSocket is not connected.");
+      }
+    },
+    // 접속해제한 사용자 정보 전송
+    async sendDisconnectedUser() {
+      const userPayload = {
+        connectedMemberId: this.currentUserId,
+      };
+      console.log("접속해제한 사용자 정보 전송", userPayload);
+      if (this.stompClient && this.stompClient.connected) {
+        this.stompClient.send(
+          `/pub/chat/disconnect/${this.chatRoomId}`,
+          {},
+          JSON.stringify(userPayload)
+        );
+      } else {
+        console.error("WebSocket is not connected.");
+      }
+    },
   },
 };
 </script>
-
-<style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-body {
-  font-family: Arial, sans-serif;
-}
-.layout {
-  display: flex;
-}
-.main-content {
-  margin-left: 200px;
-  width: calc(100% - 200px);
-}
-.content {
-  background-color: #fff;
-  color: #333;
-  padding: 2rem;
-  border-radius: 10px;
-  margin-top: 3.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: calc(100vh - 3.5rem);
-}
-.chat-container {
-  background-color: #f9f9f9;
-  padding: 1rem;
-  border-radius: 10px;
-  width: 100%;
-  max-width: 600px;
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #ddd;
-}
-.messages {
-  overflow-y: auto;
-  flex-grow: 1;
-  padding: 1rem;
-  border-radius: 10px;
-}
-.message {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 15px;
-  padding: 10px;
-  border-radius: 10px;
-  background-color: #e3e3e3;
-  max-width: 75%;
-}
-.my-message {
-  justify-content: flex-end;
-  background-color: #daf5ff;
-}
-.other-message {
-  justify-content: flex-start;
-}
-.profile-picture {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-.message-details {
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 10px;
-  position: relative;
-  max-width: 75%;
-}
-.my-message .message-details {
-  background-color: #fff;
-}
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-.message-timestamp {
-  font-size: 0.8rem;
-  color: #888;
-}
-.message-content {
-  display: flex;
-  align-items: center;
-}
-.unread-count {
-  font-size: 0.8rem;
-  color: red;
-  margin-left: 5px;
-}
-.input-container {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem;
-  background-color: #fff;
-  border-radius: 10px;
-  margin-top: 1rem;
-}
-input[type="text"] {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-}
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 5px;
-  background-color: #007bff;
-  color: #fff;
-  cursor: pointer;
-}
-.upload-button {
-  background-color: #007bff;
-  color: #fff;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.file-preview {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  z-index: 1000;
-}
-.file-preview img {
-  max-width: 100px;
-  max-height: 100px;
-}
-.file-preview p {
-  margin: 0;
-  padding: 5px 0;
-}
-.message-image {
-  max-width: 200px;
-  max-height: 200px;
-  margin-top: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-.file-preview {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  z-index: 1000;
-}
-.file-preview img {
-  max-width: 100px;
-  max-height: 100px;
-}
-.file-preview p {
-  margin: 0;
-  padding: 5px 0;
-}
-.preview-image {
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 5px;
-}
-</style>

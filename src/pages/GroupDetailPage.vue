@@ -114,16 +114,17 @@
             <div class="flex items-end justify-center space-x-16 h-[200px]">
               <!-- 2등 카드 -->
               <div
+              v-if="rankingData.length > 1"
                 class="relative flex flex-col items-center justify-between w-24 h-full bg-white rounded-lg shadow-lg p-4"
               >
                 <div class="flex flex-col items-center">
                   <img
                     class="w-10 h-10 rounded-full"
-                    src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                    :src="rankingData[1].image"
                     alt="Medium avatar"
                   />
-                  <p class="font-bold mt-2 text-gray-700">김철수</p>
-                  <p class="text-lg font-extrabold text-yellow-500">1,982</p>
+                  <p class="font-bold mt-2 text-gray-700">{{formattedRankingData[1].nickname || "없음"}}</p>
+                  <p class="text-lg font-extrabold text-yellow-500">{{formattedRankingData[1].totalTime || "없음"}}</p>
                 </div>
                 <div class="bg-yellow-400 text-white rounded-t-lg px-4 py-1">
                   2
@@ -132,13 +133,14 @@
 
               <!-- 1등 카드 -->
               <div
+              v-if="rankingData.length > 0"
                 class="relative flex flex-col items-center justify-between w-32 h-full bg-white rounded-lg shadow-lg p-6"
               >
                 <div class="flex flex-col items-center">
                   <div class="relative">
                     <img
                       class="w-14 h-14 rounded-full"
-                      src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                      :src="rankingData[0].image"
                       alt="Large avatar"
                     />
 
@@ -158,9 +160,9 @@
                       />
                     </svg>
                   </div>
-                  <p class="font-bold mt-2 text-gray-700">정주영</p>
+                    <p class="font-bold mt-2 text-gray-700">{{formattedRankingData[0].nickname || "없음"}}</p>
 
-                  <p class="text-2xl font-extrabold text-yellow-500">2,240</p>
+                    <p class="text-lg font-extrabold text-yellow-500">{{formattedRankingData[0].totalTime || "없음"}}</p>
                   <br />
                 </div>
 
@@ -171,17 +173,17 @@
 
               <!-- 3등 카드 -->
               <div
+              v-if="rankingData.length > 2"
                 class="relative flex flex-col items-center justify-between w-24 h-full bg-white rounded-lg shadow-lg p-4"
               >
                 <div class="flex flex-col items-center">
                   <img
                     class="w-10 h-10 rounded-full"
-                    src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                    :src="rankingData[2].image"
                     alt="Medium avatar"
                   />
-
-                  <p class="font-bold mt-2 text-gray-700">이영희</p>
-                  <p class="text-lg font-extrabold text-yellow-500">1,834</p>
+                    <p class="font-bold mt-2 text-gray-700">{{formattedRankingData[2].nickname || "없음"}}</p>
+                    <p class="text-lg font-extrabold text-yellow-500">{{formattedRankingData[2].totalTime || "없음"}}</p>
                 </div>
                 <div class="bg-yellow-400 text-white rounded-t-lg px-4 py-1">
                   3
@@ -281,13 +283,13 @@
         />
       </div>
 
-      <div class="side-by-side-container">
+      <div class="side-by-side-container" v-if="groupData">
         <fwb-card class="card">
           <!-- 버튼 그룹 -->
           <div class="title">집중방</div>
           <div class="card-content">
             <div class="enter-container">
-              <p>5/10</p>
+              <p>{{ focusRoomMemberCount }}/{{ groupData.maxCapacity }}</p>
               <fwb-button @click="$router.push(`${groupId}/focusroom`)"
                 >입장하기</fwb-button
               >
@@ -299,7 +301,7 @@
           <div class="title">채팅방</div>
           <div class="card-content">
             <div class="enter-container">
-              <p>5/10</p>
+              <p>5/{{ groupData.maxCapacity }}</p>
               <fwb-button @click="enterChatRoom">입장하기</fwb-button>
             </div>
           </div>
@@ -348,6 +350,8 @@ const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공�
 const route = useRoute();
 // const groupId = route.params.groupId; // pathVariable에서 groupId 추출
 const token = localStorage.getItem("access");
+// 집중방 인원 수 SSE 실시간 조회
+const focusRoomMemberCount = computed(() => globalState.focusRoomMemberCount);
 
 const notices = ref([]); // 공지사항 리스트
 const isNoticeLoading = ref(false);
@@ -368,7 +372,7 @@ async function reloadGroupData() {
   isLoading.value = true;
   try {
     // console.log("데이터 불러오기");
-    await Promise.all([fetchGroup(), fetchNotices()]); // 병렬로 데이터 요청
+    await Promise.all([fetchGroup(), fetchNotices(),fetchRanking()]); // 병렬로 데이터 요청
   } catch (error) {
     console.error("데이터 로드 중 오류:", error);
   } finally {
@@ -581,7 +585,11 @@ async function updateNotice(selectedNotice) {
 
 // 컴포넌트가 마운트되면 API 호출
 onMounted(async () => {
-  await reloadGroupData();
+  if (localStorage.getItem("access")) {
+    await reloadGroupData();
+  } else {
+    router.push("/user-info");
+  }
 });
 
 // 그룹 데이터 상태
@@ -663,17 +671,27 @@ async function updateGroup(updatedData) {
 //해당 사용자의 그룹채팅방 안의 읽지 않은 메시지들을 모두 읽음처리 후 채팅방으로 이동
 async function enterChatRoom() {
   try {
-    const response = await axiosInstance.post(
-      `/chat/updateGroupUnreadMessages/${groupId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+    let chatRoomId = -1;
+    //이전 채팅메시지가 있나 체크 
+    const chattingMessageCountResponse = await axiosInstance.get(
+      `/chat/${groupId}/chatMessageCountCk`
     );
-    console.log("그룹 채팅메시지 읽음처리 완료", response.data);
-    const chatRoomId = response.data.data;
+    console.log("이전 채팅 기록 : ", chattingMessageCountResponse.data.count);
+    //이전 채팅 기록이 있을 때 읽지 않은 메시지들을 모두 읽음처리
+    if (chattingMessageCountResponse.data.count != 0) {
+      const response = await axiosInstance.post(
+        `/chat/updateGroupUnreadMessages/${groupId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("그룹 채팅메시지 읽음처리 완료", response.data);
+      chatRoomId = response.data.data;
+    }
 
-    if (chatRoomId) {
-      router.push(`/chats/${chatRoomId}`); // Vue Router 인스턴스를 사용하여 페이지 이동
+    if (chatRoomId != -1) {
+      // Vue Router 인스턴스를 사용하여 페이지 이동
+      router.push(`/groups/${groupId}/chats/${chatRoomId}`);
     } else {
       console.error("채팅방 아이디를 받아오지 못합니다.");
     }
@@ -684,15 +702,63 @@ async function enterChatRoom() {
 // --------------------modal end----------------
 // 탭 데이터 및 선택된 탭 상태
 const tabs = ref([
-  { name: "일간", content: "일간 랭킹을 보여줍니다." },
-  { name: "주간", content: "주간 랭킹을 보여줍니다." },
-  { name: "월간", content: "월간 랭킹을 보여줍니다." },
+  { name: "일간", period: "DAILY", content: "일간 랭킹을 보여줍니다." },
+  { name: "주간", period: "WEEKLY", content: "주간 랭킹을 보여줍니다." },
+  { name: "월간", period: "MONTHLY", content: "월간 랭킹을 보여줍니다." },
 ]);
 
 const selectedTab = ref(0);
 function selectTab(index) {
   selectedTab.value = index;
+  fetchRanking();
 }
+
+// 랭킹
+// 랭킹 데이터 상태
+const rankingData = ref([]);
+
+// 랭킹 데이터 불러오기
+async function fetchRanking() {
+  const period = tabs.value[selectedTab.value].period;
+  console.log("랭킹 데이터 불러오기",period );
+  
+  try {
+    const response = await axiosInstance.get(`/timers/ranking/groups/${groupId}`, {
+      params: {
+        period: period
+      },
+    });
+    if(response.data.data !== null){
+      rankingData.value = response.data.data;
+    };
+  } catch (error) {
+    console.log("랭킹 데이터 불러오기 오류", rankingData.value);
+    toast.error(
+      "랭킹 데이터를 불러오는 중 오류가 발생했습니다." +
+        (error.response?.data?.message || error.message),
+      { timeout: 3000 }
+    );
+  }
+}
+function secondToTime(second) {
+    const hour = String(Math.floor(second / 3600)).padStart(2, '0');
+    const min = String(Math.floor((second % 3600) / 60)).padStart(2, '0');
+    const sec = String(second % 60).padStart(2, '0');
+    return `${hour}:${min}:${sec}`;
+  }
+// computed property로 0~2번 인덱스의 totalTime만 변환해서 새로운 배열 반환
+const formattedRankingData = computed(() => {
+  return rankingData.value.map((item, index) => {
+    // 0~2번 인덱스면 totalTime 변환 적용
+    if (index < 3 && item.totalTime != null) {
+      return {
+        ...item,
+        totalTime: secondToTime(item.totalTime)
+      }
+    }
+    return item;
+  });
+});
 </script>
 
 <style scoped>

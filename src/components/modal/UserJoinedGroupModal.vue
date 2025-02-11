@@ -26,7 +26,7 @@
           <br />
 
           <!-- 그룹장이면 선택할 수 있는 멤버 목록 -->
-          <select
+          <!-- <select
             v-if="
               group.isHost === '1' &&
               Array.isArray(group.members) &&
@@ -34,6 +34,7 @@
             "
             v-model="group.selectedMembers.nickname"
             class="w-full p-2 border border-gray-300 rounded-md"
+            disable:true
           >
             <option
               v-for="member in group.members"
@@ -42,7 +43,7 @@
             >
               {{ member.nickname }}
             </option>
-          </select>
+          </select> -->
         </div>
       </div>
 
