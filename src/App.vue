@@ -44,6 +44,7 @@ import axiosInstance from "./api/axiosInstance";
 // 전역 상태 정의
 const globalState = reactive({
   myGroups: [],
+  focusRoomMemberCount: 0,
 });
 provide("globalState", globalState);
 
@@ -100,18 +101,17 @@ const state = reactive({
 // 상태 제공
 provide("state", state);
 
-
 /* SSE 연결 관리 */
 let eventSource = null; // SSE 전역 변수
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
 const groupId = ref(null);
 const users = reactive({ list: [] });
-const token = localStorage.getItem("access");
+
 
 const connectSSE = async () => {
   if (eventSource) return; // 기존 SSE가 있으면 중복 연결 방지
-
+  const token = localStorage.getItem("access");
   eventSource = new EventSourcePolyfill(
     `${import.meta.env.VITE_SERVER_HOST}/groups/${groupId.value}/subscribe`,
     {
@@ -138,7 +138,11 @@ const connectSSE = async () => {
 
     if (reconnectAttempts < maxReconnectAttempts) {
       const retryTime = Math.pow(2, reconnectAttempts) * 1000; // 지수 백오프 (1s, 2s, 4s, 8s, 16s)
-      console.log(`SSE 재연결 시도 ${reconnectAttempts + 1}회 후 ${retryTime / 1000}초 대기...`);
+      console.log(
+        `SSE 재연결 시도 ${reconnectAttempts + 1}회 후 ${
+          retryTime / 1000
+        }초 대기...`
+      );
 
       setTimeout(() => {
         reconnectAttempts++;
@@ -161,6 +165,12 @@ const connectSSE = async () => {
   eventSource.addEventListener("statusUpdate", (event) => {
     const data = JSON.parse(event.data);
     store.commit("updateStatus", data);
+    console.log("statusUpdate:", data);
+  });
+
+  eventSource.addEventListener("focusRoomMemberCount", (event) => {
+    const data = JSON.parse(event.data);
+    globalState.focusRoomMemberCount = data;
   });
 
   return eventSource;
@@ -198,7 +208,6 @@ watch(
   },
   { immediate: true }
 );
-
 </script>
 <script>
 import Header from "./components/Header.vue";
@@ -249,7 +258,7 @@ export default {
 .content-container {
   display: flex;
   flex: 1;
-  min-height: 100vh;
+  min-height: 90vh;
 }
 
 /* 메인 콘텐츠 스타일 */
