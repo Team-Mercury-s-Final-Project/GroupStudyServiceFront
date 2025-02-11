@@ -8,7 +8,7 @@ import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
 // import axiosInstance from "../api/axiosInstance";
-import { handleOAuthCallback } from "../api/authentication";
+import { handleOAuthCallback } from "../api/authentication_test";
 // import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
 // axios
 // import axiosInstance from "../api/axiosInstance";
