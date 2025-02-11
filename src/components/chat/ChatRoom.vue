@@ -1,77 +1,151 @@
 <template>
-  <div class="layout">
-    <div class="main-content">
-      <div class="content">
-        <div class="chat-container">
+  <!-- layout: flex -->
+  <div class="flex">
+    <!-- main-content: margin-left 200px, width: calc(100% - 200px) (임의 값 사용) -->
+    <div class="w-[calc(100%)]">
+      <!-- content: 흰색 배경, 텍스트 색상, 2rem 패딩, rounded, margin-top 3.5rem, flex, center 정렬, 높이 계산 -->
+      <div
+        class="bg-green-500 text-gray-800 p-8 rounded-lg mt-14 flex justify-center items-center h-[calc(75vh)]"
+      >
+        <!-- chat-container: 연한 회색 배경, 1rem 패딩, rounded, full width, 최대 600px, 높이 80vh, flex-col, border -->
+        <div
+          class="bg-[#f9f9f9] p-4 rounded-lg w-full max-w-[600px] h-[80vh] flex flex-col border border-gray-300"
+        >
           <!-- 채팅 메시지 리스트 -->
-          <div v-if="isDataLoaded" class="messages">
+          <div
+            v-if="isDataLoaded"
+            ref="messagesContainer"
+            class="overflow-y-auto flex-grow p-4 rounded-lg"
+          >
             <div
-              class="message"
               v-for="(message, index) in messages"
               :key="index"
-              :class="{
-                'my-message': message.senderId === currentUserId,
-                'other-message': message.senderId !== currentUserId,
-              }"
+              :class="[
+                'flex items-end mb-[15px] p-[10px] rounded-lg max-w-[75%]',
+                message.senderId === currentUserId
+                  ? 'ml-auto bg-blue-500'
+                  : 'mr-auto  bg-red-500',
+              ]"
             >
-              <img
-                :src="message.profileImgUrl"
-                class="profile-picture"
-                alt="Profile"
-              />
-              <div class="message-details">
-                <div class="message-header">
-                  <strong>{{ message.nickName }}</strong>
-                  <span class="message-timestamp">{{ message.createdAt }}</span>
-                </div>
-                <div class="message-content">
-                  <div v-if="isImageUrl(message.content)">
-                    <a
-                      :href="message.content"
-                      target="_blank"
-                      class="link-preview"
-                    >
-                      <img
-                        :src="message.content"
-                        alt="미리보기 이미지"
-                        class="preview-image"
-                      />
-                    </a>
+              <!-- 내 메시지 -->
+              <template v-if="message.senderId === currentUserId">
+                <!-- 메시지 내용과 읽음 숫자 컨테이너 (세로 정렬, 오른쪽 정렬) -->
+                <div class="flex flex-col items-end">
+                  <!-- 메시지 내용 박스 -->
+                  <div class="bg-white p-2 rounded-lg inline-block text-right">
+                    <div class="flex justify-between mb-1">
+                      <strong>{{ message.nickName }}</strong>
+                      <span class="text-[0.8rem] text-[#888]">{{
+                        message.createdAt
+                      }}</span>
+                    </div>
+                    <div class="whitespace-normal break-all">
+                      {{ message.content }}
+                    </div>
                   </div>
-                  <div v-else>
-                    {{ message.content }}
-                  </div>
-                  <span class="unread-count" v-if="message.unreadCount > 0">
+                  <!-- 읽음 표시 (메시지 내용 박스 바로 아래) -->
+                  <span
+                    v-if="message.unreadCount > 0"
+                    class="text-[0.8rem] text-red-500 mt-1"
+                  >
                     {{ message.unreadCount }}
                   </span>
                 </div>
-              </div>
+                <!-- 프로필 이미지 (오른쪽에 배치) -->
+                <img
+                  :src="message.profileImgUrl"
+                  alt="Profile"
+                  class="w-10 h-10 rounded-full ml-[10px]"
+                />
+              </template>
+
+              <!-- 상대방 메시지 -->
+              <template v-else>
+                <!-- 프로필 이미지 (왼쪽에 배치) -->
+                <img
+                  :src="message.profileImgUrl"
+                  alt="Profile"
+                  class="w-10 h-10 rounded-full mr-[10px]"
+                />
+                <!-- 메시지 내용과 읽음 숫자 컨테이너 (세로 정렬, 왼쪽 정렬) -->
+                <div class="flex flex-col items-start">
+                  <!-- 메시지 내용 박스 -->
+                  <div class="bg-white p-2 rounded-lg inline-block text-left">
+                    <div class="flex justify-between mb-1">
+                      <strong>{{ message.nickName }}</strong>
+                      <span class="text-[0.8rem] text-[#888]">{{
+                        message.createdAt
+                      }}</span>
+                    </div>
+                    <div class="whitespace-normal break-all">
+                      {{ message.content }}
+                    </div>
+                  </div>
+                  <!-- 읽음 표시 (메시지 내용 박스 바로 아래) -->
+                  <span
+                    v-if="message.unreadCount > 0"
+                    class="text-[0.8rem] text-red-500 mt-1"
+                  >
+                    {{ message.unreadCount }}
+                  </span>
+                </div>
+              </template>
             </div>
           </div>
-          <div v-else class="loading">데이터를 불러오는 중입니다...</div>
-          <div class="input-container">
-            <label for="file-upload" class="upload-button">+</label>
+          <!-- 데이터 로딩 중 -->
+          <div v-else class="text-center py-4">
+            데이터를 불러오는 중입니다...
+          </div>
+          <!-- 입력창 영역 -->
+          <div class="flex items-center p-2 bg-white rounded-lg mt-4">
+            <!-- 파일 업로드 버튼 (라벨) -->
+            <label
+              for="file-upload"
+              class="bg-[#007bff] text-white p-2 rounded-md cursor-pointer mr-2"
+              >+</label
+            >
             <input
               type="file"
               id="file-upload"
               ref="fileInput"
               @change="handleFileUpload"
-              style="display: none"
+              class="hidden"
             />
+            <!-- 텍스트 입력창 -->
             <input
               type="text"
               v-model="newMessage"
               @keyup.enter="uploadFile"
               placeholder="메시지를 입력해주세요"
+              class="flex-1 p-2 border border-gray-300 rounded-md mx-2"
             />
-            <button @click="uploadFile">보내기</button>
+            <!-- 보내기 버튼 -->
+            <button
+              @click="uploadFile"
+              class="py-2 px-4 rounded-md bg-blue-500 text-white cursor-pointer"
+            >
+              보내기
+            </button>
           </div>
-          <div v-if="filePreview" class="file-preview">
-            <img :src="filePreview" alt="파일 미리보기" v-if="isImage" />
-            <p v-else>{{ fileName }}</p>
+          <!-- 파일 미리보기 -->
+          <div
+            v-if="filePreview"
+            class="fixed bottom-[80px] left-1/2 -translate-x-1/2 bg-white/80 p-[10px] rounded-lg shadow-lg text-center z-[1000]"
+          >
+            <img
+              v-if="isImage"
+              :src="filePreview"
+              alt="파일 미리보기"
+              class="max-w-[100px] max-h-[100px] mx-auto"
+            />
+            <p v-else class="m-0 py-[5px]">{{ fileName }}</p>
           </div>
         </div>
-        <button @click="goToChatRoomList" class="chat-room-list-button">
+        <!-- 채팅 목록으로 이동 버튼 -->
+        <button
+          @click="goToChatRoomList"
+          class="py-2 px-4 rounded-md bg-blue-500 text-white cursor-pointer mt-4"
+        >
           채팅 목록으로 이동
         </button>
       </div>
@@ -128,10 +202,16 @@ export default {
     window.addEventListener("beforeunload", this.handleBeforeUnload);
   },
 
-  beforeDestroy() {
+  beforeUnmount() {
     // 컴포넌트가 파괴되기 전에 beforeunload 이벤트 리스너 제거
     window.removeEventListener("beforeunload", this.handleBeforeUnload);
   },
+  watch: {
+    messages() {
+      this.scrollToBottom();
+    },
+  },
+
   methods: {
     //페이지를 떠날 때 실행되는 메서드
     handleBeforeUnload(event) {
@@ -251,6 +331,8 @@ export default {
                 this.sendRecentMessageToChatList(message);
               } catch (error) {
                 console.error("메시지 파싱 오류:", error);
+              } finally {
+                this.scrollToBottom();
               }
             }
           );
@@ -359,7 +441,14 @@ export default {
           this.isDataLoaded = true;
         });
     },
-
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const container = this.$refs.messagesContainer;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
+    },
     sendMessage() {
       if (this.newMessage.trim() !== "" || this.fileUrl) {
         const messageFileDto = {
@@ -395,6 +484,10 @@ export default {
               JSON.stringify(payload)
             );
           }
+          // 메세지 전송 후 입력창 초기화
+          this.newMessage = "";
+
+          // this.scrollToBottom();
         } else {
           console.error("WebSocket is not connected.");
         }
@@ -533,220 +626,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-body {
-  font-family: Arial, sans-serif;
-}
-.layout {
-  display: flex;
-}
-.main-content {
-  margin-left: 200px;
-  width: calc(100% - 200px);
-}
-.content {
-  background-color: #fff;
-  color: #333;
-  padding: 2rem;
-  border-radius: 10px;
-  margin-top: 3.5rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: calc(100vh - 3.5rem);
-}
-.chat-container {
-  background-color: #f9f9f9;
-  padding: 1rem;
-  border-radius: 10px;
-  width: 100%;
-  max-width: 600px;
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #ddd;
-}
-.messages {
-  overflow-y: auto;
-  flex-grow: 1;
-  padding: 1rem;
-  border-radius: 10px;
-}
-.message {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 15px;
-  padding: 10px;
-  border-radius: 10px;
-  background-color: #e3e3e3;
-  max-width: 75%;
-}
-.my-message {
-  justify-content: flex-end;
-  background-color: #daf5ff;
-}
-.other-message {
-  justify-content: flex-start;
-}
-.profile-picture {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-.message-details {
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 10px;
-  position: relative;
-  max-width: 75%;
-}
-.my-message .message-details {
-  background-color: #fff;
-}
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-}
-.message-timestamp {
-  font-size: 0.8rem;
-  color: #888;
-}
-.message-content {
-  display: flex;
-  align-items: center;
-}
-.unread-count {
-  font-size: 0.8rem;
-  color: red;
-  margin-left: 5px;
-}
-.input-container {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem;
-  background-color: #fff;
-  border-radius: 10px;
-  margin-top: 1rem;
-}
-input[type="text"] {
-  flex: 1;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-left: 0.5rem;
-  margin-right: 0.5rem;
-}
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 5px;
-  background-color: #007bff;
-  color: #fff;
-  cursor: pointer;
-}
-.upload-button {
-  background-color: #007bff;
-  color: #fff;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 0.5rem;
-}
-
-.file-preview {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  z-index: 1000;
-}
-.file-preview img {
-  max-width: 100px;
-  max-height: 100px;
-}
-.file-preview p {
-  margin: 0;
-  padding: 5px 0;
-}
-.message-image {
-  max-width: 200px;
-  max-height: 200px;
-  margin-top: 10px;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-.file-preview {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: 10px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  z-index: 1000;
-}
-.file-preview img {
-  max-width: 100px;
-  max-height: 100px;
-}
-.file-preview p {
-  margin: 0;
-  padding: 5px 0;
-}
-.preview-image {
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 5px;
-}
-.user-list {
-  width: 250px;
-  padding: 20px;
-  border-left: 1px solid #ddd;
-  overflow-y: auto;
-}
-
-.section-title {
-  margin-bottom: 10px;
-}
-
-.user-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.online-user {
-  opacity: 1;
-}
-
-.offline-user {
-  opacity: 0.5;
-}
-
-.profile-picture {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.user-name {
-  margin-left: 10px;
-}
-</style>
