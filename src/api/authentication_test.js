@@ -37,8 +37,8 @@ export const oauthLogin = async (provider) => {
     const currentUrl = window.location.href;
     localStorage.setItem("redirectUrl", currentUrl); // 로컬 스토리지에 저장
 
-    // const baseUrl = "https://back.mercurystudy.store/oauth2/authorization";
-    const baseUrl = import.meta.env.SERVER_HOST + "/oauth2/authorization";
+    const baseUrl = "https://back.mercurystudy.store/oauth2/authorization";
+    // const baseUrl = import.meta.env.SERVER_HOST + "/oauth2/authorization";
     
     const redirectUrl = `${baseUrl}/${provider}`;
     window.location.href = redirectUrl; // OAuth 로그인 페이지로 리다이렉트
