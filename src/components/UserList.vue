@@ -9,8 +9,8 @@
         />
         <span class="user-name">{{ me.nickname }}</span>
         <fwb-badge v-if="me.isHost" size="xs" type="yellow">👑</fwb-badge>
-        <fwb-badge size="xs" :type="statusColorMap[me.status].color">
-          {{ statusColorMap[me.status].label }}
+        <fwb-badge size="xs" :type="statusColorMap[me.status]?.color">
+          {{ statusColorMap[me.status]?.label }}
         </fwb-badge>
       </li>
     </ul>
@@ -25,8 +25,8 @@
         />
         <span class="user-name">{{ user.nickname }}</span>
         <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
-        <fwb-badge size="xs" :type="statusColorMap[user.status].color">
-          {{ statusColorMap[user.status].label }}
+        <fwb-badge size="xs" :type="statusColorMap[user.status]?.color">
+          {{ statusColorMap[user.status]?.label }}
         </fwb-badge>
       </li>
     </ul>
@@ -41,8 +41,8 @@
         />
         <span class="user-name away">{{ user.nickname }}</span>
         <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
-        <fwb-badge size="xs" :type="statusColorMap[user.status].color">
-          {{ statusColorMap[user.status].label }}
+        <fwb-badge size="xs" :type="statusColorMap[user.status]?.color">
+          {{ statusColorMap[user.status]?.label }}
         </fwb-badge>
       </li>
     </ul>
