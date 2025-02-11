@@ -94,6 +94,7 @@ export default {
       stompClient: null,
       currentUserId: null,
       receiverId: null,
+      receiverNickName: "",
       isDataLoaded: false,
       nickName: "",
       chatRoomType: "DM",
@@ -120,6 +121,9 @@ export default {
     await this.loadChatHistory();
     // WebSocket 연결
     await this.connectWebSocket();
+    //읽지 않은 모든 메시지 읽음처리
+    //await this.insertUnreadMessagesToChatRead();
+
     // beforeunload 이벤트 리스너 추가
     window.addEventListener("beforeunload", this.handleBeforeUnload);
   },
@@ -233,7 +237,7 @@ export default {
                 this.messages.push({
                   id: message.data.id,
                   senderId: message.data.senderId,
-                  nickName: message.data.nickName || "알 수 없음",
+                  nickName: message.data.nickName || this.receiverNickName,
                   content: message.data.messageContent,
                   createdAt: new Date(message.data.createdAt).toLocaleString(),
                   profileImgUrl: message.data.profileImgUrl,
@@ -303,37 +307,46 @@ export default {
         .then((response) => {
           if (response.data && response.data.success && response.data.data) {
             const chatData = response.data.data;
+            this.chatMembers = chatData.chatMembers;
+
+            console.log("채팅방 참여자: ", this.chatMembers);
+            //nickName셋팅
+            this.nickName = this.chatMembers.find(
+              (member) => member.id === this.currentUserId
+            ).nickName;
             //채팅방 타입 체크
             if (chatData.chatRoomType === "GROUP") {
               this.chatRoomType = "GROUP";
+              //그룹멤버정보로 셋팅
+            } else {
+              //DM일 경우
+              //현재 채팅방 멤버에서 내 아이디가 아닌 사람이 상대방이 됨
+
+              this.receiverId = this.chatMembers.find(
+                (member) => member.id !== this.currentUserId
+              ).id;
+              this.receiverNickName = this.chatMembers.find(
+                (member) => member.id !== this.currentUserId
+              ).nickName;
             }
-            this.chatMembers = chatData.chatMembers;
-            console.log("채팅방 참여자: ", this.chatMembers);
-            if (Array.isArray(chatData.messages)) {
-              this.messages = chatData.messages.map((msg) => ({
-                id: msg.id,
-                senderId: msg.senderId,
-                nickName: msg.nickName || "알 수 없음",
-                profileImgUrl: msg.profileImgUrl,
-                content: msg.content,
-                createdAt: new Date(msg.createdAt).toLocaleString(),
-                unreadCount: msg.unreadCount, // unreadCount 추가
-              }));
 
-              // JWT ID와 같지 않은 데이터의 ID를 receiverId로 설정
-              const receiver = chatData.messages.find(
-                (msg) => msg.senderId !== this.currentUserId
-              );
-              this.receiverId = receiver ? receiver.senderId : null;
-
-              const sender = chatData.messages.find(
-                (msg) => msg.senderId === this.currentUserId
-              );
-              this.nickName = sender.nickName;
-              this.profileImgUrl = sender.profileImgUrl;
+            if (chatData.messages.length !== 0) {
+              if (Array.isArray(chatData.messages)) {
+                this.messages = chatData.messages.map((msg) => ({
+                  id: msg.id,
+                  senderId: msg.senderId,
+                  nickName: msg.nickName || "알 수 없음",
+                  profileImgUrl: msg.profileImgUrl,
+                  content: msg.content,
+                  createdAt: new Date(msg.createdAt).toLocaleString(),
+                  unreadCount: msg.unreadCount, // unreadCount 추가
+                }));
+              }
+            } else {
             }
 
             this.isDataLoaded = true;
+            //this.insertUnreadMessagesToChatRead();
           } else {
             console.error("알 수 없는 데이터 구조:", response.data);
             this.messages = [];
@@ -434,6 +447,16 @@ export default {
         this.sendMessage(); // 파일이 없고 메시지가 있을 경우 sendMessage 함수 호출
       }
     },
+    async insertUnreadMessagesToChatRead() {
+      try {
+        console.log("읽지 않은 메시지 읽음 처리");
+        axiosInstance.post(
+          `/chats/${this.chatRoomId}/insertUnreadMessagesToChatRead`
+        );
+      } catch (error) {
+        console.error("읽지 않은 메시지 읽음 처리 중 에러 발생:", error);
+      }
+    },
     //채팅목록으로 최신메시지 전달
     sendRecentMessageToChatList(recentMessage) {
       console.log("채팅목록으로 보낼 최신 메시지 확인: ", recentMessage);
@@ -507,37 +530,6 @@ export default {
         console.error("WebSocket is not connected.");
       }
     },
-
-    //현재 웹소켓에 접속해있는 사람들 받아오기
-    //   async fetchConnectedUsers() {
-    //     try {
-    //       const response = await axiosInstance.get(
-    //         `chats/${this.chatRoomId}/chatRoomConnectedUsers`,
-    //         {
-    //           timeout: 10000,
-    //           headers: {
-    //             "Content-Type": "application/json",
-    //             Authorization: `Bearer ${token}`,
-    //           },
-    //         }
-    //       );
-
-    //       this.totalUsers = response.data.data;
-    //       console.log("현재 접속 중인 사용자:", this.totalUsers);
-    //     } catch (error) {
-    //       console.error(
-    //         "현재 접속 중인 사용자 정보를 가져오는 데 실패했습니다:",
-    //         error
-    //       );
-    //     }
-    //   },
-    //   // 주기적으로 접속자 정보를 업데이트하는 함수
-    //   updateConnectedUsersInterval() {
-    //     this.fetchConnectedUsers();
-    //     setInterval(() => {
-    //       this.fetchConnectedUsers();
-    //     }, 1000000); // 5초마다 업데이트
-    //   },
   },
 };
 </script>
