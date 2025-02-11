@@ -583,7 +583,12 @@ async function updateNotice(selectedNotice) {
 
 // 컴포넌트가 마운트되면 API 호출
 onMounted(async () => {
-  await reloadGroupData();
+  if (localStorage.getItem("access")) {
+    await reloadGroupData();
+    eventSource = await connectSSE();
+  } else {
+    router.push("/user-info");
+  }
 });
 
 // 그룹 데이터 상태

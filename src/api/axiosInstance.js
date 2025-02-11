@@ -38,6 +38,7 @@ const getCookie = (key) => {
 
 // 로그인 후 리다이렉트 처리 함수
 const redirectAfterLogin = (alertMessage, redirectUrl) => {
+  alert(alertMessage);
   setTimeout(() => {
     router.push({ path: "/oauth2Login", query: { redirect: redirectUrl } });
   }, 0);
@@ -62,6 +63,7 @@ const handleErrorMessage = (message, url) => {
     case "Token Category is not access token":
       redirectAfterLogin("로그인 후 이용해주세요.", url);
       break;
+
     case "Access token is blacklisted":
       redirectAfterLogin(
         "다른 PC 또는 브라우저에서 접속되어 재 로그인 후 이용해주세요.",

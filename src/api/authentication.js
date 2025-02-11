@@ -3,8 +3,10 @@ import axios from "axios";
 // import axiosInstance from "../api/axiosInstance";
 import store from "../store/store";
 import * as jwtDecode from "jwt-decode";
+import { useToast } from "vue-toastification";
 
 // 경로 상수
+const toast = useToast();
 const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
@@ -28,6 +30,7 @@ export const oauthLogin = async (provider) => {
     const currentUrl = window.location.href;
     localStorage.setItem("redirectUrl", currentUrl); // 로컬 스토리지에 저장
     const baseUrl = "http://localhost:8080/oauth2/authorization";
+
     // const baseUrl = "http://34.22.98.26:8080/oauth2/authorization";
     const redirectUrl = `${baseUrl}/${provider}`;
     window.location.href = redirectUrl; // OAuth 로그인 페이지로 리다이렉트
@@ -39,7 +42,11 @@ export const oauthLogin = async (provider) => {
 // OAuth 로그인 콜백 핸들러
 export const handleOAuthCallback = async () => {
   try {
-    const response = await axiosInstance.get("/api/check-auth");
+    const response = await axiosInstance.get(
+      "http://localhost:8080/api/check-auth"
+    );
+
+    // alert(response.request.responseURL); // 요청 경로 확인
     if (response.status === 200) {
       const accessToken = getCookie("access");
       if (accessToken) {
@@ -56,6 +63,7 @@ export const handleOAuthCallback = async () => {
         });
 
         store.dispatch("login"); // Vuex를 통해 로그인 상태 변경
+        toast.success("환영합니다.", { timeout: 2000 });
       } else {
         setTimeout(() => alert("토큰이 쿠키에 없습니다."), 100);
         router.push(ROUTE_LOGIN);
