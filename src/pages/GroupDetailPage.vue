@@ -665,16 +665,25 @@ async function updateGroup(updatedData) {
 //해당 사용자의 그룹채팅방 안의 읽지 않은 메시지들을 모두 읽음처리 후 채팅방으로 이동
 async function enterChatRoom() {
   try {
-    const response = await axiosInstance.post(
-      `/chat/updateGroupUnreadMessages/${groupId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+    let chatRoomId = -1;
+    //이전 채팅메시지가 있나 체크 
+    const chattingMessageCountResponse = await axiosInstance.get(
+      `/chat/${groupId}/chatMessageCountCk`
     );
-    console.log("그룹 채팅메시지 읽음처리 완료", response.data);
-    const chatRoomId = response.data.data;
+    console.log("이전 채팅 기록 : ", chattingMessageCountResponse.data.count);
+    //이전 채팅 기록이 있을 때 읽지 않은 메시지들을 모두 읽음처리
+    if (chattingMessageCountResponse.data.count != 0) {
+      const response = await axiosInstance.post(
+        `/chat/updateGroupUnreadMessages/${groupId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log("그룹 채팅메시지 읽음처리 완료", response.data);
+      chatRoomId = response.data.data;
+    }
 
-    if (chatRoomId) {
+    if (chatRoomId != -1) {
       // Vue Router 인스턴스를 사용하여 페이지 이동
       router.push(`/groups/${groupId}/chats/${chatRoomId}`);
     } else {
