@@ -585,7 +585,6 @@ async function updateNotice(selectedNotice) {
 onMounted(async () => {
   if (localStorage.getItem("access")) {
     await reloadGroupData();
-    eventSource = await connectSSE();
   } else {
     router.push("/user-info");
   }
