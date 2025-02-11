@@ -29,7 +29,8 @@ export const oauthLogin = async (provider) => {
     // 현재 페이지 URL을 쿼리로 전달하여 로그인 후 돌아올 페이지를 저장
     const currentUrl = window.location.href;
     localStorage.setItem("redirectUrl", currentUrl); // 로컬 스토리지에 저장
-    const baseUrl = "http://localhost:8080/oauth2/authorization";
+    const baseUrl = import.meta.env.SERVER_HOST + "/oauth2/authorization";
+    // const baseUrl = "http://localhost:8080/oauth2/authorization";
 
     // const baseUrl = "http://34.22.98.26:8080/oauth2/authorization";
     const redirectUrl = `${baseUrl}/${provider}`;
@@ -43,7 +44,8 @@ export const oauthLogin = async (provider) => {
 export const handleOAuthCallback = async () => {
   try {
     const response = await axiosInstance.get(
-      "http://localhost:8080/api/check-auth"
+      import.meta.env.SERVER_HOST + "/api/check-auth"
+      // "http://localhost:8080/api/check-auth"
     );
 
     // alert(response.request.responseURL); // 요청 경로 확인
