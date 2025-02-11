@@ -32,7 +32,7 @@
                 style="font-size: 1rem; transition: all 0.3s ease-in-out"
               ></i>
               <i
-                v-else="isEditing"
+                v-else
                 class="fas fa-check"
                 style="font-size: 1rem; transition: all 0.3s ease-in-out"
                 @click="saveChanges()"
@@ -51,7 +51,7 @@
             </button>
 
             <button
-              v-else="isEditing"
+              v-else
               @click="toggleEditing('deactivate')"
               class="h-[30px] flex items-center justify-center bg-gray-300 text-white hover:bg-blue-500 rounded-full p-2 shadow-md transition duration-200 ease-in-out transform hover:scale-105 relative left-7"
             >
@@ -258,7 +258,7 @@
                   style="font-size: 1rem; transition: all 0.3s ease-in-out"
                 ></i>
                 <i
-                  v-else="group.isEditing"
+                  v-else
                   class="fas fa-check"
                   style="font-size: 1rem; transition: all 0.3s ease-in-out"
                   @click="
@@ -273,7 +273,7 @@
 
               <button
                 @click="ExitGroup(group.groupId)"
-                class="relative left-[205px] h-[30px] bg-gray-300 text-white flex items-center justify-center hover:bg-blue-500 rounded-full p-2 shadow-md transition duration-200 ease-in-out transform hover:scale-105 translate-x-[-50%] translate-y-[-50%]"
+                class="relative left-[205px] h-[30px] bg-gray-300 text-white flex items-center justify-center hover:bg-red-500 rounded-full p-2 shadow-md transition duration-200 ease-in-out transform hover:scale-105 translate-x-[-50%] translate-y-[-50%]"
               >
                 <i
                   class="fas fa-times"
