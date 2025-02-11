@@ -46,7 +46,7 @@
           v-for="chat in groupList"
           :key="chat.id"
           class="chat-item"
-          @dblclick="goToChatRoom(chat.id, chat.unreadMessages)"
+          @dblclick="goToChatRoom(chat.id, chat.unreadMessages, chat.groupId)"
         >
           <img
             :src="chat.recentMessage.profileImgUrl"
@@ -155,7 +155,7 @@ export default {
       }
     },
     //채팅방으로 이동
-    async goToChatRoom(chatRoomId, unreadMessages) {
+    async goToChatRoom(chatRoomId, unreadMessages, groupId) {
       //채팅방의 읽지 않은 메시지들 모두 읽음처리
       try {
         const response = axiosInstance.post(
@@ -172,7 +172,12 @@ export default {
       //웹소켓 연결 해제
       this.disconnectWebSocket();
       //읽음 처리 이후 채팅방으로 이동
-      this.$router.push(`/chats/${chatRoomId}`);
+      //그룹 / DM 경우를 분리
+      if (groupId !== null && groupId !== undefined) {
+        this.$router.push(`/groups/${groupId}/chats/${chatRoomId}`);
+      } else {
+        this.$router.push(`/chats/${chatRoomId}`);
+      }
     },
 
     setActiveTab(tab) {
