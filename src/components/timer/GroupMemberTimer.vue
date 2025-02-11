@@ -1,22 +1,20 @@
-<!-- 그룹원의 타이머들 -->
 <template>
-  <div class="stopwatch">
-    <span style="color: white">
-      <p>{{ timeData.nickname }}</p>
-      <p>오늘의 총 공부시간: {{ timeData.todayTotalTime }}분</p>
-      <p>순위: {{ timeData.ranking }}위</p>
-    </span>
-    <TimerDisplay :time="localTime" />
+  <div class="group-timer flex flex-col justify-between p-3 rounded-lg bg-white shadow-md w-full max-w-sm">
+    <div class="font-bold text-gray-900">이름: {{ timeData.nickname }}</div>
+    <div class="text-lg text-gray-900 font-semibold">시간: {{ formattedTime }}</div>
   </div>
 </template>
-
+  
 <script setup>
-import { defineProps, ref, watch } from "vue";
-import TimerDisplay from "./TimerDisplay.vue";
+import { onMounted, ref, watch,computed } from "vue";
 const { timeData } = defineProps(["timeData"]);
 const localTime = ref(timeData.timeSoFar);
 const localStatus = ref(timeData.status);
 const interval = ref(null);
+
+onMounted(() => {
+  eventHandle();
+});
 
 watch(
   () => timeData,
@@ -27,7 +25,6 @@ watch(
   },
   { deep: true }
 );
-
 
 const eventHandle = () => {
   
@@ -47,17 +44,22 @@ const eventHandle = () => {
     localTime.value = 0;
   }
 };
-</script>
 
-<style scoped>
-.stopwatch {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  max-width: 400px;
-  background-color: gray;
-}
-</style>
+const formattedTime = computed(() => {
+const hours = Math.floor(localTime.value / 3600);
+const minutes = Math.floor((localTime.value % 3600) / 60);
+const seconds = Math.floor((localTime.value % 60) / 1);
+return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+});
+</script>
+  
+  <style scoped>
+  .group-timer {
+    transition: all 0.3s ease-in-out;
+  }
+  .group-timer:hover {
+    transform: scale(1.02);
+    background-color: #f7fff0;
+  }
+  </style>
+  

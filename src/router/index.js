@@ -28,6 +28,7 @@ const routes = [
     path: "/groups/:groupId/focusroom",
     name: "FocusRoom",
     component: FocusRoomPage,
+    meta: { showUserList: true, showToggleButton: true },
   },
   {
     path: "/oauth2Login",
@@ -60,10 +61,23 @@ const routes = [
     component: userinfoPage, // 소셜 로그인 페이지
   },
   {
-    path: "/chats/:chatRoomId",
-    name: "ChattingRoom",
+    path: '/groups/:groupId/chats/:chatRoomId',
+    name: 'GroupChat',
     component: ChatPage,
+    meta: { showUserList: true, showToggleButton: true }, 
+    props: (route) => ({ isGroup: true, ...route.params })
   },
+  {
+    path: '/chats/:chatRoomId',
+    name: 'DMChat',
+    component: ChatPage,
+    props: (route) => ({ isGroup: false, ...route.params })
+  },
+  // {
+  //   path: "/chats/:chatRoomId",
+  //   name: "ChattingRoom",
+  //   component: ChatPage,
+  // },
   {
     path: "/users/:userId/chatRoomList",
     name: "ChatRoomList",

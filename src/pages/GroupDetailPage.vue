@@ -111,12 +111,83 @@
           </div>
           <!-- 탭 내용 -->
           <div class="card-content">
-            <p>{{ tabs[selectedTab].content }}</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
-            <p>placeholder</p>
+            <div class="flex items-end justify-center space-x-16 h-[200px]">
+              <!-- 2등 카드 -->
+              <div
+                class="relative flex flex-col items-center justify-between w-24 h-full bg-white rounded-lg shadow-lg p-4"
+              >
+                <div class="flex flex-col items-center">
+                  <img
+                    class="w-10 h-10 rounded-full"
+                    src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                    alt="Medium avatar"
+                  />
+                  <p class="font-bold mt-2 text-gray-700">김철수</p>
+                  <p class="text-lg font-extrabold text-yellow-500">1,982</p>
+                </div>
+                <div class="bg-yellow-400 text-white rounded-t-lg px-4 py-1">
+                  2
+                </div>
+              </div>
+
+              <!-- 1등 카드 -->
+              <div
+                class="relative flex flex-col items-center justify-between w-32 h-full bg-white rounded-lg shadow-lg p-6"
+              >
+                <div class="flex flex-col items-center">
+                  <div class="relative">
+                    <img
+                      class="w-14 h-14 rounded-full"
+                      src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                      alt="Large avatar"
+                    />
+
+                    <svg
+                      class="absolute top-0 left-10 transform -translate-y-1/2 w-6 h-6 text-yellow-300"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                      <path
+                        d="M12 17.75l-6.172 3.245 1.179-6.873-4.993-4.867 6.9-1.002L12 2l3.086 6.253 6.9 1.002-4.993 4.867 1.179 6.873z"
+                      />
+                    </svg>
+                  </div>
+                  <p class="font-bold mt-2 text-gray-700">정주영</p>
+
+                  <p class="text-2xl font-extrabold text-yellow-500">2,240</p>
+                  <br />
+                </div>
+
+                <div class="bg-yellow-500 text-white rounded-t-lg px-4 py-1">
+                  1
+                </div>
+              </div>
+
+              <!-- 3등 카드 -->
+              <div
+                class="relative flex flex-col items-center justify-between w-24 h-full bg-white rounded-lg shadow-lg p-4"
+              >
+                <div class="flex flex-col items-center">
+                  <img
+                    class="w-10 h-10 rounded-full"
+                    src="https://image.zeta-ai.io/profile-image/ba7023c7-5a4d-4e18-a2b0-471a45416b78/8407277a-836a-402e-8602-152c9a653675.jpeg?w=750&q=75&f=webp"
+                    alt="Medium avatar"
+                  />
+
+                  <p class="font-bold mt-2 text-gray-700">이영희</p>
+                  <p class="text-lg font-extrabold text-yellow-500">1,834</p>
+                </div>
+                <div class="bg-yellow-400 text-white rounded-t-lg px-4 py-1">
+                  3
+                </div>
+              </div>
+            </div>
           </div>
         </fwb-card>
         <!-- 공지사항 시작 -->
@@ -137,7 +208,7 @@
             </div>
           </div>
           <!-- 공지사항 리스트에 스크롤 추가 -->
-          <div class="card-content space-y-2 overflow-y-auto max-h-48 p-2">
+          <div class="card-content space-y-2 overflow-y-auto max-h-60 p-2">
             <!-- 로딩 상태일 때 표시 -->
             <div
               v-if="isNoticeLoading"
@@ -210,13 +281,13 @@
         />
       </div>
 
-      <div class="side-by-side-container">
+      <div class="side-by-side-container" v-if="groupData">
         <fwb-card class="card">
           <!-- 버튼 그룹 -->
           <div class="title">집중방</div>
           <div class="card-content">
             <div class="enter-container">
-              <p>5/10</p>
+              <p>{{ focusRoomMemberCount }}/{{ groupData.maxCapacity }}</p>
               <fwb-button @click="$router.push(`${groupId}/focusroom`)"
                 >입장하기</fwb-button
               >
@@ -228,7 +299,7 @@
           <div class="title">채팅방</div>
           <div class="card-content">
             <div class="enter-container">
-              <p>5/10</p>
+              <p>5/{{ groupData.maxCapacity }}</p>
               <fwb-button @click="enterChatRoom">입장하기</fwb-button>
             </div>
           </div>
@@ -257,14 +328,12 @@ import {
   reactive,
 } from "vue";
 import { useRoute } from "vue-router";
-import { EventSourcePolyfill } from "event-source-polyfill";
 import { useRouter } from "vue-router"; // useRouter 임포트
 import axiosInstance from "../api/axiosInstance";
 import NoticeCreateModal from "./NoticeCreateModal.vue";
 import NoticeEditModal from "./NoticeEditModal.vue";
 import NoticeDetailModal from "./NoticeDetailModal.vue";
 import { useToast } from "vue-toastification";
-import store from "../store/store";
 
 const globalState = inject("globalState");
 if (!globalState) {
@@ -279,6 +348,8 @@ const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공�
 const route = useRoute();
 // const groupId = route.params.groupId; // pathVariable에서 groupId 추출
 const token = localStorage.getItem("access");
+// 집중방 인원 수 SSE 실시간 조회
+const focusRoomMemberCount = computed(() => globalState.focusRoomMemberCount);
 
 const notices = ref([]); // 공지사항 리스트
 const isNoticeLoading = ref(false);
@@ -289,9 +360,6 @@ watch(
     // console.log("groupId 변경 감지:", newG); // 로그로 값 확인
     groupId = newG;
     if (newG !== oldG) {
-      closeSSE(); // 기존 SSE 연결 종료
-      await new Promise((resolve) => setTimeout(resolve, 100)); // 100ms 대기 후 새로운 SSE 연결
-      eventSource = await connectSSE(); // 새로운 SSE 연결
       await reloadGroupData(); // 그룹 데이터 및 공지사항 다시 로드
     }
   }
@@ -304,7 +372,7 @@ async function reloadGroupData() {
     // console.log("데이터 불러오기");
     await Promise.all([fetchGroup(), fetchNotices()]); // 병렬로 데이터 요청
   } catch (error) {
-    // console.error("데이터 로드 중 오류:", error);
+    console.error("데이터 로드 중 오류:", error);
   } finally {
     isLoading.value = false;
   }
@@ -335,64 +403,6 @@ async function exitGroup() {
     isOutLoading.value = false; // 로딩 종료
   }
 }
-
-/** 그룹 페이지 입장 SSE 연결 */
-let eventSource = null;
-const users = reactive({ list: [] });
-
-const connectSSE = async () => {
-  eventSource = new EventSourcePolyfill(
-    `${import.meta.env.VITE_SERVER_HOST}/groups/${groupId}/subscribe`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  eventSource.addEventListener("connect", (event) => {
-    console.log("SSE connect:", event.data);
-  });
-
-  eventSource.addEventListener("heartbeat", (event) => {
-    console.log("heartbeat 수신:", event.data);
-  });
-
-  eventSource.onerror = (error) => {
-    console.error("SSE 연결 오류:", error);
-    eventSource.close();
-  };
-
-  eventSource.addEventListener("memberData", (event) => {
-    try {
-      users.list = JSON.parse(event.data);
-      store.commit("setUsers", users);
-    } catch (error) {
-      console.error("데이터 파싱 오류:", error);
-    }
-  });
-
-  eventSource.addEventListener("statusUpdate", (event) => {
-    const data = JSON.parse(event.data);
-    store.commit("updateStatus", data);
-  });
-
-  return eventSource;
-};
-
-const closeSSE = () => {
-  if (eventSource && typeof eventSource.close === "function") {
-    console.log("SSE 연결 종료");
-    eventSource.close();
-    eventSource = null;
-    // Vuex 상태 초기화
-    store.commit("clearUsers");
-  }
-};
-
-onUnmounted(() => {
-  closeSSE();
-});
 
 // --------------------modal start----------------
 // content 자르기
@@ -580,6 +590,7 @@ onMounted(async () => {
     router.push("/user-info");
   }
 });
+
 // 그룹 데이터 상태
 const groupData = ref(null);
 
@@ -669,7 +680,8 @@ async function enterChatRoom() {
     const chatRoomId = response.data.data;
 
     if (chatRoomId) {
-      router.push(`/chats/${chatRoomId}`); // Vue Router 인스턴스를 사용하여 페이지 이동
+      // Vue Router 인스턴스를 사용하여 페이지 이동
+      router.push(`/groups/${groupId}/chats/${chatRoomId}`);
     } else {
       console.error("채팅방 아이디를 받아오지 못합니다.");
     }
@@ -751,7 +763,7 @@ function selectTab(index) {
   padding: 0.5rem; /* 보더와 텍스트 간 여백 */
 }
 .card {
-  height: 250px;
+  height: 320px;
   flex: 1; /* 남은 공간을 균등하게 채움 */
   max-width: 600px; /* 카드의 최대 크기를 600px로 제한 */
   background-color: white; /* 배경색 설정 */
