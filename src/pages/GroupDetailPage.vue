@@ -349,7 +349,7 @@ const route = useRoute();
 // const groupId = route.params.groupId; // pathVariable에서 groupId 추출
 const token = localStorage.getItem("access");
 // 집중방 인원 수 SSE 실시간 조회
-const focusRoomMemberCount = globalState.focusRoomMemberCount;
+const focusRoomMemberCount = computed(() => globalState.focusRoomMemberCount);
 
 const notices = ref([]); // 공지사항 리스트
 const isNoticeLoading = ref(false);
@@ -583,7 +583,11 @@ async function updateNotice(selectedNotice) {
 
 // 컴포넌트가 마운트되면 API 호출
 onMounted(async () => {
-  await reloadGroupData();
+  if (localStorage.getItem("access")) {
+    await reloadGroupData();
+  } else {
+    router.push("/user-info");
+  }
 });
 
 // 그룹 데이터 상태

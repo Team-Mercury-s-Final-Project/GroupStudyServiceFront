@@ -171,6 +171,7 @@ const connectSSE = async () => {
   eventSource.addEventListener("focusRoomMemberCount", (event) => {
     const data = JSON.parse(event.data);
     globalState.focusRoomMemberCount = data;
+    console.log("focusRoomMemberCount:", data);
   });
 
   return eventSource;
