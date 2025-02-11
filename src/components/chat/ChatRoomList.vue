@@ -28,7 +28,7 @@
             class="profile-picture"
           />
           <div class="chat-details">
-            <span class="username">{{ chat.recentMessage.nickName }}</span>
+            <span class="username">{{ chat.chatRoomName }}</span>
             <span class="message-preview">{{
               chat.recentMessage.content
             }}</span>
@@ -53,7 +53,7 @@
             class="profile-picture"
           />
           <div class="chat-details">
-            <span class="username">{{ chat.recentMessage.nickName }}</span>
+            <span class="username">{{ chat.chatRoomName }}</span>
             <span class="message-preview">{{
               chat.recentMessage.content
             }}</span>
