@@ -50,10 +50,7 @@ export const oauthLogin = async (provider) => {
 // OAuth 로그인 콜백 핸들러
 export const handleOAuthCallback = async () => {
   try {
-    const response = await axiosInstance.get(
-      import.meta.env.SERVER_HOST + "/api/check-auth"
-      // "http://localhost:8080/api/check-auth"
-    );
+    const response = await axiosInstance.get("/check-auth");
 
     // alert(response.request.responseURL); // 요청 경로 확인
     if (response.status === 200) {
