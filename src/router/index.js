@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { handleOAuthCallback } from "../api/authentication";
+import { useToast } from "vue-toastification";
 import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
 import ChatPage from "../pages/ChatPage.vue"; // 채팅페이지
@@ -7,12 +9,8 @@ import FocusRoomPage from "../pages/FocusRoomPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
-// import axiosInstance from "../api/axiosInstance";
-import { handleOAuthCallback } from "../api/authentication";
-// import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
-// axios
-// import axiosInstance from "../api/axiosInstance";
 
+const toast = useToast();
 const routes = [
   {
     path: "/",
@@ -51,6 +49,7 @@ const routes = [
     beforeEnter: async (to, from, next) => {
       const errorMessage = to.query.error; // URL에서 error 파라미터를 추출
       if (errorMessage) {
+        toast.error("탈퇴한 유저입니다.", { timeout: 2000 });
         router.push("/oauth2Login");
       }
     },

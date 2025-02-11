@@ -12,7 +12,11 @@
     </div>
     <div class="my-timer-container">
       <span>{{ userId }}</span>
-      <MyTimer v-bind="toRefs(myTimerData)" :stompClient="stompClient" :isConnect="isConnect"/>
+      <MyTimer
+        v-bind="toRefs(myTimerData)"
+        :stompClient="stompClient"
+        :isConnect="isConnect"
+      />
       <div>
         <p>Connection Status: {{ isConnect }}</p>
         <button @click="connect()">Connect</button>
@@ -67,7 +71,7 @@ function connect() {
     nickname: myTimerData.nickname,
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
-  
+
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
 
@@ -87,10 +91,8 @@ function connect() {
       }
     );
     // sub 완료
-
   });
-};
-
+}
 
 const handleEvent = (eventData) => {
   const eventHandler = timerEventHandlers[eventData.event];
@@ -118,8 +120,6 @@ const timerEventHandlers = {
       myTimerData.timeSoFar = eventData.timeSoFar;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
-    
-    
   },
   STOP: (eventData) => {
     console.log("=====TIMER_STOP 이벤트 발생=====");
@@ -139,7 +139,7 @@ const timerEventHandlers = {
   },
   END: (eventData) => {
     console.log("=====TIMER_END 이벤트 발생=====");
-    
+
     const { userId } = eventData;
     const memberTimer = memberTimers.find((timer) => timer.userId === userId);
     if (memberTimer) {
@@ -148,7 +148,7 @@ const timerEventHandlers = {
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.ranking = eventData.ranking;
     }
-  
+
     if (myTimerData.userId === userId) {
       myTimerData.timeSoFar = 0;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
@@ -191,11 +191,11 @@ const disconnectFromServer = () => {
 };
 const checkLoginAndConnect = async () => {
   const userId = localStorage.getItem("userId");
-  if (!localStorage.getItem("access")&&userId === null) {
-    alert("로그인이 필요합니다.");
+  if (!localStorage.getItem("access") && userId === null) {
+    // alert("로그인이 필요합니다.");
     const router = useRouter();
     router.push("/login");
-  }else{
+  } else {
     await enterAndGetMyTimerData();
     await connect();
     groupMembersTimerDataInit();
@@ -204,7 +204,9 @@ const checkLoginAndConnect = async () => {
 // 내 타이머 데이터 받아오기
 const enterAndGetMyTimerData = async () => {
   try {
-    const response = await axiosInstance.get(`/groups/${groupId.value}/timers/entry`);
+    const response = await axiosInstance.get(
+      `/groups/${groupId.value}/timers/entry`
+    );
     const timerData = response.data;
     Object.assign(myTimerData, timerData);
   } catch (error) {
