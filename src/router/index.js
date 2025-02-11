@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { handleOAuthCallback } from "../api/authentication";
 import { useToast } from "vue-toastification";
 import GroupList from "../pages/GroupList.vue";
 import GroupDetailPage from "../pages/GroupDetailPage.vue";
@@ -9,13 +8,7 @@ import FocusRoomPage from "../pages/FocusRoomPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
-
-// import axiosInstance from "../api/axiosInstance";
 import { handleOAuthCallback } from "../api/authentication_test";
-// import LoginRequiredModal from "../components/modal/LoginPermissionRequired.vue";
-// axios
-// import axiosInstance from "../api/axiosInstance";
-
 
 const toast = useToast();
 const routes = [
@@ -70,10 +63,17 @@ const routes = [
   {
     path: '/groups/:groupId/chats/:chatRoomId',
     name: 'GroupChat',
+
     component: ChatPage,
     meta: { showUserList: true, showToggleButton: true }, 
     props: (route) => ({ isGroup: true, ...route.params })
+
   },
+  // {
+  //   path: "/chats/:chatRoomId",
+  //   name: "ChattingRoom",
+  //   component: ChatPage,
+  // },
   {
     path: '/chats/:chatRoomId',
     name: 'DMChat',
