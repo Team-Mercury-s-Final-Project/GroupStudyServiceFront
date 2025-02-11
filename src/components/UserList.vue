@@ -9,8 +9,8 @@
         />
         <span class="user-name">{{ me.nickname }}</span>
         <fwb-badge v-if="me.isHost" size="xs" type="yellow">👑</fwb-badge>
-        <fwb-badge size="xs" :type="me.status === 'ONLINE' ? 'green' : 'red'">
-          {{ me.status === "ONLINE" ? "접속중" : "부재중" }}
+        <fwb-badge size="xs" :type="statusColorMap[me.status].color">
+          {{ statusColorMap[me.status].label }}
         </fwb-badge>
       </li>
     </ul>
@@ -25,7 +25,9 @@
         />
         <span class="user-name">{{ user.nickname }}</span>
         <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
-        <fwb-badge size="xs" type="green">접속중</fwb-badge>
+        <fwb-badge size="xs" :type="statusColorMap[user.status].color">
+          {{ statusColorMap[user.status].label }}
+        </fwb-badge>
       </li>
     </ul>
 
@@ -39,7 +41,9 @@
         />
         <span class="user-name away">{{ user.nickname }}</span>
         <fwb-badge v-if="user.isHost" size="xs" type="yellow">👑</fwb-badge>
-        <fwb-badge size="xs" type="red">부재중</fwb-badge>
+        <fwb-badge size="xs" :type="statusColorMap[user.status].color">
+          {{ statusColorMap[user.status].label }}
+        </fwb-badge>
       </li>
     </ul>
 
@@ -60,6 +64,14 @@ import { FwbBadge, FwbAvatar } from 'flowbite-vue';
 import UserModal from "./UserModal.vue";
 import store from "../store/store";
 
+const statusColorMap = {
+  ONLINE: { color: "green", label: "접속중" },
+  OFFLINE: { color: "red", label: "부재중" },
+  STUDYING: { color: "indigo", label: "공부중" },
+  RESTING: { color: "dark", label: "휴식중" },
+  CHATTING: { color: "yellow", label: "채팅중" },
+};
+
 const userId = localStorage.getItem("userId"); // 현재 로그인한 사용자 ID
 const selectedUser = ref(null);
 const modalX = ref(0);
@@ -72,7 +84,7 @@ const me = computed(() => store.state.users.list.find(user => user.id == userId)
 
 // 온라인 유저 리스트 (현재 유저 제외)
 const onlineUsers = computed(() => 
-  store.state.users.list.filter(user => user.status === "ONLINE" && user.id != userId)
+  store.state.users.list.filter(user => user.status !== "OFFLINE" && user.id != userId)
 );
 
 // 오프라인 유저 리스트

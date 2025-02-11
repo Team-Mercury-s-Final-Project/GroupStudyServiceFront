@@ -349,7 +349,7 @@ const route = useRoute();
 // const groupId = route.params.groupId; // pathVariable에서 groupId 추출
 const token = localStorage.getItem("access");
 // 집중방 인원 수 SSE 실시간 조회
-const focusRoomMemberCount = globalState.focusRoomMemberCount;
+const focusRoomMemberCount = computed(() => globalState.focusRoomMemberCount);
 
 const notices = ref([]); // 공지사항 리스트
 const isNoticeLoading = ref(false);
