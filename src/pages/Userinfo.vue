@@ -474,9 +474,11 @@ const fetchUserInfo = async () => {
         .replace("T", " ")
         .substring(0, 19);
       originalUserInfo.value = { ...userInfo.value };
+      return { status: 200 };
     }
   } catch (error) {
     console.error(error);
+    return { status: 401 };
   } finally {
     isLoading.value = false;
   }
