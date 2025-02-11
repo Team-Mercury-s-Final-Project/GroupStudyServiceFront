@@ -6,7 +6,8 @@ const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
 
-  baseURL: "https://back.mercurystudy.store/api",
+  // baseURL: "https://back.mercurystudy.store/api",
+  baseURL: import.meta.env.VITE_SERVER_HOST,
   withCredentials: true,
 
   headers: {
