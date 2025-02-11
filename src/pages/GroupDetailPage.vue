@@ -714,16 +714,8 @@ async function fetchRanking() {
         period: period
       },
     });
-    const data = response.data.data;
-    console.log( "데이터 확인 : " , data);
     if(response.data.data !== null){
-      for(let i = 0; i < 3; i++){
-        // console.log("데이터확인 2",data[i].totalTime);
-        
-        // response.data.data[i].totalTime = secondToTime(response.data.data[i].totalTime);
-      }
       rankingData.value = response.data.data;
-      console.log("랭킹 데이터 불러오기", rankingData.value);
     };
   } catch (error) {
     console.log("랭킹 데이터 불러오기 오류", rankingData.value);

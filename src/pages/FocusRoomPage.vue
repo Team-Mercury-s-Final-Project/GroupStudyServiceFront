@@ -26,32 +26,45 @@
     <div
       class="p-4 bg-gray-800 text-white rounded-lg shadow-lg xs:w-[400px] sm:w-[450px] md:w-[550px] lg:w-[300px] h-[668px]np overflow-y-auto"
     >
-      <h2 class="text-xl font-bold text-center mb-4">전체 순위</h2>
+        <!-- 새로고침 버튼 -->
+      <h2 class="text-xl font-bold text-center mb-4">
+        오늘의 랭킹 
+        <img 
+          @click="getRankData" 
+          src="../assets/refresh-ccw.svg" 
+          :class="[
+            'inline',
+            'rotate-180',
+            'cursor-pointer',
+            { 'animate-spin': isLoading }
+          ]"
+        />
+      </h2>
       <div class="space-y-4">
         <!-- 순위 항목 반복 -->
         <div
-          v-for="user in rankData"
-          :key="user.id + '-' + Math.random()"
+          v-for="user in formattedRankingData"
+          :key="user.userId + '-' + Math.random()"
           class="flex items-center justify-between bg-gray-700 rounded-lg p-3 shadow-md"
         >
           <!-- 등수 -->
           <div class="text-xl font-extrabold text-yellow-400">
-            {{ user.rank }}등
+            {{ user.ranking }}등
           </div>
           <!-- 프로필 정보 -->
           <div class="flex items-center space-x-3">
             <img
-              :src="user.avatar"
-              alt="avatar"
+              :src="user.image"
+              alt="image"
               class="w-10 h-10 rounded-full border-2 border-gray-500"
             />
             <div>
-              <p class="font-bold text-sm">{{ user.name }}</p>
+              <p class="font-bold text-sm">{{ user.nickname }}</p>
             </div>
           </div>
           <!-- 시간 정보 -->
           <div class="text-sm font-semibold text-gray-200">
-            {{ user.time }}
+            {{ user.totalTime }}
           </div>
         </div>
       </div>
@@ -60,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, toRefs } from "vue";
+import { ref, reactive, onMounted, onUnmounted, toRefs,computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MyTimer from "../components/timer/MyTimer.vue";
 import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
@@ -73,68 +86,69 @@ const rankData = ref([
     rank: 1,
     name: "정주영",
     time: "12:08:10",
-    avatar: "https://picsum.photos/50",
+    image: "https://picsum.photos/50",
   },
   {
     id: 2,
     rank: 2,
     name: "김철수",
     time: "09:15:43",
-    avatar: "https://picsum.photos/51",
+    image: "https://picsum.photos/51",
   },
   {
     id: 3,
     rank: 3,
     name: "이영희",
     time: "10:05:12",
-    avatar: "https://picsum.photos/52",
+    image: "https://picsum.photos/52",
   },
   {
     id: 4,
     rank: 4,
     name: "박준형",
     time: "08:22:34",
-    avatar: "https://picsum.photos/53",
+    image: "https://picsum.photos/53",
   },
   {
     id: 5,
     rank: 5,
     name: "최수연",
     time: "11:45:19",
-    avatar: "https://picsum.photos/54",
+    image: "https://picsum.photos/54",
   },
   {
     id: 6,
     rank: 6,
     name: "최수연",
     time: "11:45:19",
-    avatar: "https://picsum.photos/54",
+    image: "https://picsum.photos/54",
   },
   {
     id: 7,
     rank: 7,
     name: "최수연",
     time: "11:45:19",
-    avatar: "https://picsum.photos/54",
+    image: "https://picsum.photos/54",
   },
   {
     id: 8,
     rank: 8,
     name: "최수연",
     time: "11:45:19",
-    avatar: "https://picsum.photos/54",
+    image: "https://picsum.photos/54",
   },
   {
     id: 9,
     rank: 9,
     name: "최수연",
     time: "11:45:19",
-    avatar: "https://picsum.photos/54",
+    image: "https://picsum.photos/54",
   },
 ]);
 //  ==== 상태값 시작 ====
 
 const userId = ref(localStorage.getItem("userId"));
+const isLoading = ref(false);
 // 집중방에 있는 유저들의 타이머 데이터 데이터 초기 값
 const memberTimers = reactive([]);
 const myTimerData = reactive({
@@ -295,6 +309,7 @@ const checkLoginAndConnect = async () => {
       groupMembersTimerDataInit();
       await enterAndGetMyTimerData();
       connect();
+      getRankData();
     } catch (error) {
       console.error("API 호출 중 오류 발생:", error);
     }
@@ -332,6 +347,24 @@ const groupMembersTimerDataInit = async () => {
     console.error("API 호출 중 오류 발생:groupMembersTimerDataInit", error);
   }
 };
+// 랭킹 데이터 패치
+const getRankData = async () => {
+  try {
+    isLoading.value = true;
+    const response = await axiosInstance.get(`/timers/ranking/groups/${groupId.value}`, {
+      params: {
+        period: "DAILY"
+      },
+    });
+    console.log("랭킹 데이터 받아오기", response);
+    
+    rankData.value = response.data.data;
+    console.log("랭킹 데이터 받아오기", rankData.value);
+    isLoading.value = false;
+  } catch (error) {
+    console.error("API 호출 중 오류 발생:", error);
+  }
+};
 onMounted(() => {
   // getMyTimerData();
   checkLoginAndConnect();
@@ -342,6 +375,20 @@ onUnmounted(() => {
     disconnectFromServer();
   }
 });
+const formattedRankingData = computed(() => {
+  return rankData.value.map((item, index) => {
+    // 0~2번 인덱스면 totalTime 변환 적용
+    if (item.totalTime != null) {
+      return {
+        ...item,
+        totalTime: secondToTime(item.totalTime)
+      }
+    }
+    return item;
+  });
+});
+function secondToTime(second) { const hour = String(Math.floor(second / 3600)).padStart(2, '0'); const min = String(Math.floor((second % 3600) / 60)).padStart(2, '0'); const sec = String(second % 60).padStart(2, '0'); return `${hour}:${min}:${sec}`; }
+
 </script>
 
 <style scoped>
