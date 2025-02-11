@@ -137,6 +137,10 @@ const sendDM = async () => {
         },
       });
       chatRoomId = response.data.data; // response.data가 객체인 경우 대비
+      //읽지 않은 메시지 확인. 읽지 않은 메시지를 확인하여 update
+      await axiosInstance.post(
+        `/chat/updateGroupUnreadMessagesForDM/${chatRoomId}`
+      );
     }
 
     // 채팅방으로 이동
