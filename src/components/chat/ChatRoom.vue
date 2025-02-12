@@ -383,7 +383,7 @@ export default {
                   senderId: message.data.senderId,
                   nickName: message.data.nickName || this.receiverNickName,
                   content: message.data.messageContent,
-                  createdAt: new Date(message.data.createdAt).toLocaleString(),
+                  createdAt: message.data.createdAt,
                   profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
                 });
@@ -484,7 +484,7 @@ export default {
                   nickName: msg.nickName || "알 수 없음",
                   profileImgUrl: msg.profileImgUrl,
                   content: msg.content,
-                  createdAt: new Date(msg.createdAt).toLocaleString(),
+                  createdAt: msg.createdAt,
                   unreadCount: msg.unreadCount, // unreadCount 추가
                 }));
               }
