@@ -182,7 +182,7 @@ function connect() {
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
 
-  const socket = new WebSocket("ws://back.mercurystudy.dtore/timer");
+  const socket = new WebSocket("wss://back.mercurystudy.store/timer");
   stompClient.value = Stomp.over(socket);
   stompClient.value.heartbeat.outgoing = 0;
   stompClient.value.heartbeat.incoming = 0;
