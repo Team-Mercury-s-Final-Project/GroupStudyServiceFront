@@ -5,12 +5,19 @@
     <div class="w-[calc(100%)]">
       <!-- content: 흰색 배경, 텍스트 색상, 2rem 패딩, rounded, margin-top 3.5rem, flex, center 정렬, 높이 계산 -->
       <div
-        class="bg-green-500 text-gray-800 p-8 rounded-lg mt-14 flex justify-center items-center h-[calc(75vh)]"
+        class="bg-[#f9f9f9] text-gray-800 p-8 rounded-lg mt-14 flex justify-center items-center h-[calc(75vh)]"
       >
         <!-- chat-container: 연한 회색 배경, 1rem 패딩, rounded, full width, 최대 600px, 높이 80vh, flex-col, border -->
         <div
-          class="bg-[#f9f9f9] p-4 rounded-lg w-full max-w-[600px] h-[80vh] flex flex-col border border-gray-300"
+          class="bg-[#f9f9f9] p-4 rounded-lg w-full max-w-[600px] h-[80vh] flex flex-col border border-gray-300 relative"
         >
+          <!-- 채팅 목록으로 이동 버튼을 채팅창 우측 상단에 배치 (절대 위치) -->
+          <button
+            @click="goToChatRoomList"
+            class="absolute top-2 right-2 py-2 px-4 rounded-md bg-green-500 text-white cursor-pointer z-10"
+          >
+            채팅 목록으로 이동
+          </button>
           <!-- 채팅 메시지 리스트 -->
           <div
             v-if="isDataLoaded"
@@ -23,8 +30,8 @@
               :class="[
                 'flex items-end mb-[15px] p-[10px] rounded-lg max-w-[75%]',
                 message.senderId === currentUserId
-                  ? 'ml-auto bg-blue-500'
-                  : 'mr-auto  bg-red-500',
+                  ? 'ml-auto bg-[#f9f9f9] justify-end'
+                  : 'mr-auto  bg-[#f9f9f9] justify-start',
               ]"
             >
               <!-- 내 메시지 -->
@@ -32,15 +39,28 @@
                 <!-- 메시지 내용과 읽음 숫자 컨테이너 (세로 정렬, 오른쪽 정렬) -->
                 <div class="flex flex-col items-end">
                   <!-- 메시지 내용 박스 -->
-                  <div class="bg-white p-2 rounded-lg inline-block text-right">
+                  <div
+                    class="bg-blue-500 p-2 rounded-lg inline-block text-right text-white min-w-[270px]"
+                  >
                     <div class="flex justify-between mb-1">
                       <strong>{{ message.nickName }}</strong>
-                      <span class="text-[0.8rem] text-[#888]">{{
-                        message.createdAt
-                      }}</span>
+                      <span class="text-[0.8rem] text-white opacity-75">
+                        {{ formatTimestamp(message.createdAt) }}
+                      </span>
                     </div>
                     <div class="whitespace-normal break-all">
-                      {{ message.content }}
+                      <template v-if="isImageUrl(message.content)">
+                        <!-- 이미지 URL인 경우 이미지 태그로 렌더링 -->
+                        <img
+                          :src="message.content"
+                          class="max-w-full max-h-60"
+                          alt="Uploaded Image"
+                          @load="scrollToBottom"
+                        />
+                      </template>
+                      <template v-else>
+                        {{ message.content }}
+                      </template>
                     </div>
                   </div>
                   <!-- 읽음 표시 (메시지 내용 박스 바로 아래) -->
@@ -70,15 +90,27 @@
                 <!-- 메시지 내용과 읽음 숫자 컨테이너 (세로 정렬, 왼쪽 정렬) -->
                 <div class="flex flex-col items-start">
                   <!-- 메시지 내용 박스 -->
-                  <div class="bg-white p-2 rounded-lg inline-block text-left">
+                  <div
+                    class="bg-gray-200 p-2 rounded-lg inline-block text-left text-black"
+                  >
                     <div class="flex justify-between mb-1">
                       <strong>{{ message.nickName }}</strong>
-                      <span class="text-[0.8rem] text-[#888]">{{
-                        message.createdAt
-                      }}</span>
+                      <span class="text-[0.8rem] text-gray-600">
+                        {{ formatTimestamp(message.createdAt) }}
+                      </span>
                     </div>
                     <div class="whitespace-normal break-all">
-                      {{ message.content }}
+                      <template v-if="isImageUrl(message.content)">
+                        <img
+                          :src="message.content"
+                          class="max-w-full max-h-60"
+                          alt="Uploaded Image"
+                          @load="scrollToBottom"
+                        />
+                      </template>
+                      <template v-else>
+                        {{ message.content }}
+                      </template>
                     </div>
                   </div>
                   <!-- 읽음 표시 (메시지 내용 박스 바로 아래) -->
@@ -101,9 +133,10 @@
             <!-- 파일 업로드 버튼 (라벨) -->
             <label
               for="file-upload"
-              class="bg-[#007bff] text-white p-2 rounded-md cursor-pointer mr-2"
-              >+</label
+              class="bg-[#007bff] text-white flex justify-center items-center w-8 h-8 rounded-md cursor-pointer mr-2 text-2xl font-bold"
             >
+              +
+            </label>
             <input
               type="file"
               id="file-upload"
@@ -111,14 +144,15 @@
               @change="handleFileUpload"
               class="hidden"
             />
-            <!-- 텍스트 입력창 -->
-            <input
-              type="text"
+            <!-- 텍스트 입력창을 input 대신 textarea로 변경 -->
+            <textarea
               v-model="newMessage"
               @keyup.enter="uploadFile"
-              placeholder="메시지를 입력해주세요"
-              class="flex-1 p-2 border border-gray-300 rounded-md mx-2"
-            />
+              :placeholder="filePreview ? '' : '메시지를 입력해주세요'"
+              :style="{ minHeight: filePreview ? '125px' : '60px' }"
+              class="flex-1 p-2 border border-gray-300 rounded-md mx-2 resize-y"
+            ></textarea>
+
             <!-- 보내기 버튼 -->
             <button
               @click="uploadFile"
@@ -141,13 +175,6 @@
             <p v-else class="m-0 py-[5px]">{{ fileName }}</p>
           </div>
         </div>
-        <!-- 채팅 목록으로 이동 버튼 -->
-        <button
-          @click="goToChatRoomList"
-          class="py-2 px-4 rounded-md bg-blue-500 text-white cursor-pointer mt-4"
-        >
-          채팅 목록으로 이동
-        </button>
       </div>
     </div>
   </div>
@@ -214,6 +241,43 @@ export default {
   },
 
   methods: {
+    formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // 0부터 시작하므로 +1
+      const day = date.getDate();
+
+      let hour = date.getHours();
+      const minute = date.getMinutes();
+      const second = date.getSeconds();
+
+      // 오전/오후 판별
+      const period = hour < 12 ? "오전" : "오후";
+
+      // 12시간제로 변환 (0시(자정)은 12시로)
+      hour = hour % 12;
+      if (hour === 0) {
+        hour = 12;
+      }
+
+      // 분이 10 미만이면 앞에 0 붙이기
+      const paddedMinute = minute < 10 ? "0" + minute : minute;
+      const paddedSecond = second < 10 ? "0" + second : second;
+
+      return `${year}-${month}-${day} ${period} ${hour}시 ${paddedMinute}분 ${paddedSecond}초 `;
+    },
+    isImageUrl(url) {
+      // 간단하게 jpg, jpeg, png, gif 확장자 여부로 판별하거나,
+      // 특정 도메인이 포함되어 있는지 확인할 수 있습니다.
+      return (
+        typeof url === "string" &&
+        (url.endsWith(".jpg") ||
+          url.endsWith(".jpeg") ||
+          url.endsWith(".png") ||
+          url.endsWith(".gif") ||
+          url.includes("storage.googleapis.com"))
+      );
+    },
     //페이지를 떠날 때 실행되는 메서드
     handleBeforeUnload(event) {
       // 페이지를 떠날 때 접속자 update
@@ -235,8 +299,7 @@ export default {
       );
     },
     async connectWebSocket() {
-      const socket = new WebSocket("ws://mercurystudy.store/chat");
-
+      const socket = new WebSocket(`wss://back.mercurystudy.store/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 0;
       this.stompClient.heartbeat.incoming = 0;
@@ -321,7 +384,7 @@ export default {
                   senderId: message.data.senderId,
                   nickName: message.data.nickName || this.receiverNickName,
                   content: message.data.messageContent,
-                  createdAt: new Date(message.data.createdAt).toLocaleString(),
+                  createdAt: message.data.createdAt,
                   profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
                 });
@@ -422,7 +485,7 @@ export default {
                   nickName: msg.nickName || "알 수 없음",
                   profileImgUrl: msg.profileImgUrl,
                   content: msg.content,
-                  createdAt: new Date(msg.createdAt).toLocaleString(),
+                  createdAt: msg.createdAt,
                   unreadCount: msg.unreadCount, // unreadCount 추가
                 }));
               }

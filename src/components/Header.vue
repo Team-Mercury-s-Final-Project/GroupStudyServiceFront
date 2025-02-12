@@ -14,6 +14,12 @@
       <fwb-navbar-collapse :is-show-menu="isShowMenu">
         <!-- 로그인된 경우에만 '내 정보'와 '로그아웃' 메뉴 표시 -->
         <template v-if="isLoggedIn">
+          <router-link
+            to="#"
+            @click="goToMyChatList"
+            class="mr-4 hover:underline"
+            >채팅목록</router-link
+          >
           <router-link to="#" @click="goToMyInfo" class="mr-4 hover:underline"
             >내 정보</router-link
           >
@@ -45,6 +51,11 @@ const router = useRouter(); // Vue Router 사용
 // 로그인 상태 확인
 const isLoggedIn = computed(() => store.state.isLoggedIn);
 
+// 채팅 목록 페이지로 이동
+const goToMyChatList = () => {
+  const currentUserId = localStorage.getItem("userId")
+  router.push(`/users/${currentUserId}/chatRoomList`);
+};
 // 그룹 상세 페이지로 이동
 const goToMyInfo = () => {
   router.push("/userinfoPage");

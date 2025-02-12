@@ -115,7 +115,7 @@
                 <input
                   id="email"
                   v-model="userInfo.email"
-                  disabled
+                  disabledㅎ
                   type="text"
                   class="w-full p-2 border border-gray-300 rounded-md"
                 />

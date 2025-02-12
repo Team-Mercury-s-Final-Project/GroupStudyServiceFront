@@ -8,7 +8,7 @@ import FocusRoomPage from "../pages/FocusRoomPage.vue";
 import LoginPage from "../pages/LoginPage.vue";
 import userinfoPage from "../pages/Userinfo.vue";
 import axiosInstance from "../api/axiosInstance";
-import { handleOAuthCallback } from "../api/authentication_test";
+import { handleOAuthCallback } from "../api/authentication";
 
 const toast = useToast();
 const routes = [

@@ -26,17 +26,17 @@
     <div
       class="p-4 bg-gray-800 text-white rounded-lg shadow-lg xs:w-[400px] sm:w-[450px] md:w-[550px] lg:w-[300px] h-[668px]np overflow-y-auto"
     >
-        <!-- 새로고침 버튼 -->
+      <!-- 새로고침 버튼 -->
       <h2 class="text-xl font-bold text-center mb-4">
-        오늘의 랭킹 
-        <img 
-          @click="getRankData" 
-          src="../assets/refresh-ccw.svg" 
+        오늘의 랭킹
+        <img
+          @click="getRankData"
+          src="../assets/refresh-ccw.svg"
           :class="[
             'inline',
             'rotate-180',
             'cursor-pointer',
-            { 'animate-spin': isLoading }
+            { 'animate-spin': isLoading },
           ]"
         />
       </h2>
@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, toRefs,computed } from "vue";
+import { ref, reactive, onMounted, onUnmounted, toRefs, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import MyTimer from "../components/timer/MyTimer.vue";
 import GroupMemberTimer from "../components/timer/GroupMemberTimer.vue";
@@ -182,7 +182,7 @@ function connect() {
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
 
-  const socket = new WebSocket("ws://localhost:8080/timer");
+  const socket = new WebSocket("wss://back.mercurystudy.store/timer");
   stompClient.value = Stomp.over(socket);
   stompClient.value.heartbeat.outgoing = 0;
   stompClient.value.heartbeat.incoming = 0;
@@ -351,20 +351,39 @@ const groupMembersTimerDataInit = async () => {
 const getRankData = async () => {
   try {
     isLoading.value = true;
-    const response = await axiosInstance.get(`/timers/ranking/groups/${groupId.value}`, {
-      params: {
-        period: "DAILY"
-      },
-    });
+    const response = await axiosInstance.get(
+      `/timers/ranking/groups/${groupId.value}`,
+      {
+        params: {
+          period: "DAILY",
+        },
+      }
+    );
     console.log("랭킹 데이터 받아오기", response);
-    
+
     rankData.value = response.data.data;
     console.log("랭킹 데이터 받아오기", rankData.value);
     isLoading.value = false;
+    // 랭킹 myTimer에 반영
+    setRankingToMyTimer();
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
   }
 };
+
+// 랭킹 데이터를 내 타이머에 반영
+const setRankingToMyTimer = () => {
+  
+  const myRanking = rankData.value.find((data) => {
+    if(data.userId == userId.value) {
+      return data;
+    }
+  });
+  if (myRanking) {
+    myTimerData.ranking = myRanking.ranking;
+  }
+};
+
 onMounted(() => {
   // getMyTimerData();
   checkLoginAndConnect();
@@ -381,14 +400,18 @@ const formattedRankingData = computed(() => {
     if (item.totalTime != null) {
       return {
         ...item,
-        totalTime: secondToTime(item.totalTime)
-      }
+        totalTime: secondToTime(item.totalTime),
+      };
     }
     return item;
   });
 });
-function secondToTime(second) { const hour = String(Math.floor(second / 3600)).padStart(2, '0'); const min = String(Math.floor((second % 3600) / 60)).padStart(2, '0'); const sec = String(second % 60).padStart(2, '0'); return `${hour}:${min}:${sec}`; }
-
+function secondToTime(second) {
+  const hour = String(Math.floor(second / 3600)).padStart(2, "0");
+  const min = String(Math.floor((second % 3600) / 60)).padStart(2, "0");
+  const sec = String(second % 60).padStart(2, "0");
+  return `${hour}:${min}:${sec}`;
+}
 </script>
 
 <style scoped>

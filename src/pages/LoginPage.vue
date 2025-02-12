@@ -32,7 +32,7 @@
 
 <script setup>
 import { FwbAvatar } from "flowbite-vue";
-import { oauthLogin } from "../api/authentication_test"; // Authentication.js에서 함수 가져오기
+import { oauthLogin } from "../api/authentication"; // Authentication.js에서 함수 가져오기
 </script>
 
 <style scoped>
