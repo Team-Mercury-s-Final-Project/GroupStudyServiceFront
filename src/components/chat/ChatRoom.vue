@@ -205,6 +205,7 @@ export default {
   beforeUnmount() {
     // 컴포넌트가 파괴되기 전에 beforeunload 이벤트 리스너 제거
     window.removeEventListener("beforeunload", this.handleBeforeUnload);
+    this.stompClient.disconnect();
   },
   watch: {
     messages() {
@@ -234,7 +235,8 @@ export default {
       );
     },
     async connectWebSocket() {
-      const socket = new WebSocket(`ws://localhost:8080/chat`);
+      const socket = new WebSocket("ws://mercurystudy.store/chat");
+
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 0;
       this.stompClient.heartbeat.incoming = 0;
