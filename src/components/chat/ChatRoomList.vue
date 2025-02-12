@@ -1,75 +1,134 @@
 <template>
-  <div class="chat-container">
-    <div class="tab-buttons">
+  <div class="w-[600px] border mx-auto">
+    <!-- 탭 버튼 영역 -->
+    <div class="flex justify-around">
       <button
         @click="setActiveTab('DM')"
-        :class="{ active: activeTab === 'DM' }"
+        :class="[
+          'flex-1 p-2.5 cursor-pointer',
+          activeTab === 'DM' ? 'bg-[#007bff] text-white' : 'text-gray-800',
+        ]"
       >
         DM
       </button>
       <button
         @click="setActiveTab('GROUP')"
-        :class="{ active: activeTab === 'GROUP' }"
+        :class="[
+          'flex-1 p-2.5 cursor-pointer',
+          activeTab === 'GROUP' ? 'bg-[#007bff] text-white' : 'text-gray-800',
+        ]"
       >
         GROUP
       </button>
     </div>
 
-    <div class="chat-list">
-      <ul v-if="activeTab === 'DM'">
-        <li
-          v-for="chat in dmList"
-          :key="chat.id"
-          class="chat-item"
-          @dblclick="goToChatRoom(chat.id, chat.unreadMessages)"
+    <!-- 채팅 목록 영역 -->
+    <div class="mt-2.5 min-h-[40vh] max-h-[70vh] overflow-y-auto">
+      <!-- 데이터 로딩 중이면 스피너 표시 -->
+      <template v-if="!isDataLoaded">
+        <div class="flex justify-center items-center h-full">
+          <svg
+            class="animate-spin h-8 w-8 text-blue-500"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8z"
+            ></path>
+          </svg>
+        </div>
+        <div
+          v-if="isLoading"
+          class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50 z-50"
         >
-          <img
-            :src="chat.recentMessage.profileImgUrl"
-            class="profile-picture"
-          />
-          <div class="chat-details">
-            <span class="username">{{ chat.chatRoomName }}</span>
-            <span class="message-preview">{{
-              chat.recentMessage.content
-            }}</span>
-          </div>
-          <span class="timestamp">
-            {{ formatTimestamp(chat.recentMessage.createdAt) }}
-          </span>
-          <span v-if="chat.unreadMessages.length > 0" class="unread">
-            {{ chat.unreadMessages.length }}
-          </span>
-        </li>
-      </ul>
-      <ul v-else>
-        <li
-          v-for="chat in groupList"
-          :key="chat.id"
-          class="chat-item"
-          @dblclick="goToChatRoom(chat.id, chat.unreadMessages, chat.groupId)"
-        >
-          <img
-            :src="chat.recentMessage.profileImgUrl"
-            class="profile-picture"
-          />
-          <div class="chat-details">
-            <span class="username">{{ chat.chatRoomName }}</span>
-            <span class="message-preview">{{
-              chat.recentMessage.content
-            }}</span>
-          </div>
-          <span class="timestamp">
-            {{ formatTimestamp(chat.recentMessage.createdAt) }}
-          </span>
-          <span v-if="chat.unreadMessages.length > 0" class="unread">
-            {{ chat.unreadMessages.length }}
-          </span>
-        </li>
-      </ul>
+          <fwb-spinner size="12" />
+          <div class="text-xl text-gray-800">로딩중...</div>
+        </div>
+      </template>
+
+      <!-- 데이터 로딩 완료되면 채팅 목록 표시 -->
+      <template v-else>
+        <ul v-if="activeTab === 'DM'">
+          <li
+            v-for="chat in dmList"
+            :key="chat.id"
+            class="flex items-center p-2.5 border-b border-gray-300"
+            @dblclick="goToChatRoom(chat.id, chat.unreadMessages)"
+          >
+            <img
+              :src="chat.recentMessage.profileImgUrl"
+              class="w-10 h-10 rounded-full mr-2.5"
+              alt="Profile"
+            />
+            <div class="flex-1 overflow-hidden">
+              <span class="font-bold block truncate">
+                {{ chat.chatRoomName }}
+              </span>
+              <span class="block text-gray-600 truncate">
+                {{ formatContent(chat.recentMessage.content) }}
+              </span>
+            </div>
+            <div class="flex flex-col items-end ml-2.5">
+              <span class="text-[0.8rem] text-gray-500">
+                {{ formatTimestamp(chat.recentMessage.createdAt) }}
+              </span>
+              <span
+                v-if="chat.unreadMessages.length > 0"
+                class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center mt-1 text-xs"
+              >
+                {{ chat.unreadMessages.length }}
+              </span>
+            </div>
+          </li>
+        </ul>
+        <ul v-else>
+          <li
+            v-for="chat in groupList"
+            :key="chat.id"
+            class="flex items-center p-2.5 border-b border-gray-300"
+            @dblclick="goToChatRoom(chat.id, chat.unreadMessages, chat.groupId)"
+          >
+            <img
+              :src="chat.recentMessage.profileImgUrl"
+              alt="Profile"
+              class="w-10 h-10 rounded-full mr-2.5"
+            />
+            <div class="flex-1 overflow-hidden">
+              <span class="font-bold block truncate">
+                {{ chat.chatRoomName }}
+              </span>
+              <span class="block text-gray-600 truncate">
+                {{ formatContent(chat.recentMessage.content) }}
+              </span>
+            </div>
+            <div class="flex flex-col items-end ml-2.5">
+              <span class="text-[0.8rem] text-gray-500">
+                {{ formatTimestamp(chat.recentMessage.createdAt) }}
+              </span>
+              <span
+                v-if="chat.unreadMessages.length > 0"
+                class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center mt-1 text-xs"
+              >
+                {{ chat.unreadMessages.length }}
+              </span>
+            </div>
+          </li>
+        </ul>
+      </template>
     </div>
   </div>
 </template>
-
 <script>
 import * as jwtDecode from "jwt-decode";
 import axiosInstance from "../../api/axiosInstance.js";
@@ -83,6 +142,7 @@ export default {
       chatList: [],
       newMessages: [],
       processedMessages: new Set(), // 메시지 ID를 추적하기 위한 Set
+      isDataLoaded: false, // 로딩 여부 플래그 추가
     };
   },
   mounted() {
@@ -105,6 +165,12 @@ export default {
     },
   },
   methods: {
+    formatContent(content) {
+      if (content && content.startsWith("https://storage.googleapis.com/")) {
+        return "사진을 보냈습니다";
+      }
+      return content;
+    },
     //새로운 메시지를 받아 기존 채팅목록 업데이트
     async updateChatRoomList(newMessage) {
       console.log("새로 받은 메시지입니다.", newMessage);
@@ -242,8 +308,10 @@ export default {
         );
         console.log(response.data);
         this.connectWebSocket();
+        this.isDataLoaded = true;
       } catch (error) {
         console.error(error);
+        this.isDataLoaded = true;
       }
     },
     // 이 메시지를 읽었는지 확인 및 상태 업데이트
@@ -263,78 +331,28 @@ export default {
       }
     },
     formatTimestamp(timestamp) {
-      // 타임스탬프 형식을 변환하는 함수 (예시)
       const date = new Date(timestamp);
-      return `${date.getFullYear()}-${
-        date.getMonth() + 1
-      }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // 0부터 시작하므로 +1
+      const day = date.getDate();
+
+      let hour = date.getHours();
+      const minute = date.getMinutes();
+
+      // 오전/오후 판별
+      const period = hour < 12 ? "오전" : "오후";
+
+      // 12시간제로 변환 (0시(자정)은 12시로)
+      hour = hour % 12;
+      if (hour === 0) {
+        hour = 12;
+      }
+
+      // 분이 10 미만이면 앞에 0 붙이기
+      const paddedMinute = minute < 10 ? "0" + minute : minute;
+
+      return `${year}-${month}-${day} ${period} ${hour}시 ${paddedMinute}분`;
     },
   },
 };
 </script>
-
-<style>
-.chat-container {
-  width: 400px; /* 채팅 목록을 더 넓게 */
-}
-
-.tab-buttons {
-  display: flex;
-  justify-content: space-around;
-}
-
-.tab-buttons button {
-  flex: 1;
-  padding: 10px;
-  cursor: pointer;
-}
-
-.tab-buttons .active {
-  background-color: #007bff;
-  color: white;
-}
-
-.chat-list {
-  margin-top: 10px;
-}
-
-.chat-item {
-  display: flex;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-.profile-picture {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.chat-details {
-  flex: 1;
-}
-
-.username {
-  font-weight: bold;
-}
-
-.message-preview {
-  display: block;
-  color: #666;
-}
-
-.timestamp {
-  margin-left: 10px;
-  color: #999;
-}
-
-.unread {
-  background-color: red;
-  color: white;
-  border-radius: 50%;
-  padding: 5px 10px;
-  margin-left: 10px;
-}
-</style>
