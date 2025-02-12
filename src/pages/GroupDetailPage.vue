@@ -14,6 +14,7 @@
       <fwb-spinner size="12" />
       <div class="text-xl text-gray-800">로딩중...</div>
     </div>
+    
     <div class="group-container" v-if="groupData">
       <fwb-avatar size="lg" :img="groupData.image" :key="groupData.image">
       </fwb-avatar>
