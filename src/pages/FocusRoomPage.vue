@@ -361,10 +361,26 @@ const getRankData = async () => {
     rankData.value = response.data.data;
     console.log("랭킹 데이터 받아오기", rankData.value);
     isLoading.value = false;
+    // 랭킹 myTimer에 반영
+    setRankingToMyTimer();
   } catch (error) {
     console.error("API 호출 중 오류 발생:", error);
   }
 };
+
+// 랭킹 데이터를 내 타이머에 반영
+const setRankingToMyTimer = () => {
+  
+  const myRanking = rankData.value.find((data) => {
+    if(data.userId == userId.value) {
+      return data;
+    }
+  });
+  if (myRanking) {
+    myTimerData.ranking = myRanking.ranking;
+  }
+};
+
 onMounted(() => {
   // getMyTimerData();
   checkLoginAndConnect();
