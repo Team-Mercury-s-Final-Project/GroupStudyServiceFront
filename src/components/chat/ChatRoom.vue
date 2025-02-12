@@ -234,7 +234,7 @@ export default {
       );
     },
     async connectWebSocket() {
-      const socket = new WebSocket(`ws://localhost:8080/chat`);
+      const socket = new WebSocket(`ws://back.mercurystudy.store/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 0;
       this.stompClient.heartbeat.incoming = 0;
