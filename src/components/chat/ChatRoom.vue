@@ -40,12 +40,12 @@
                 <div class="flex flex-col items-end">
                   <!-- 메시지 내용 박스 -->
                   <div
-                    class="bg-blue-500 p-2 rounded-lg inline-block text-right text-white"
+                    class="bg-blue-500 p-2 rounded-lg inline-block text-right text-white min-w-[270px]"
                   >
                     <div class="flex justify-between mb-1">
                       <strong>{{ message.nickName }}</strong>
                       <span class="text-[0.8rem] text-white opacity-75">
-                        {{ message.createdAt }}
+                        {{ formatTimestamp(message.createdAt) }}
                       </span>
                     </div>
                     <div class="whitespace-normal break-all">
@@ -96,7 +96,7 @@
                     <div class="flex justify-between mb-1">
                       <strong>{{ message.nickName }}</strong>
                       <span class="text-[0.8rem] text-gray-600">
-                        {{ message.createdAt }}
+                        {{ formatTimestamp(message.createdAt) }}
                       </span>
                     </div>
                     <div class="whitespace-normal break-all">
@@ -133,7 +133,7 @@
             <!-- 파일 업로드 버튼 (라벨) -->
             <label
               for="file-upload"
-              class="bg-[#007bff] text-white flex justify-center items-center w-10 h-10 rounded-md cursor-pointer mr-2  text-xl font-bold"
+              class="bg-[#007bff] text-white flex justify-center items-center w-8 h-8 rounded-md cursor-pointer mr-2 text-2xl font-bold"
             >
               +
             </label>
@@ -149,7 +149,6 @@
               v-model="newMessage"
               @keyup.enter="uploadFile"
               :placeholder="filePreview ? '' : '메시지를 입력해주세요'"
-              :disabled="filePreview"
               :style="{ minHeight: filePreview ? '125px' : '60px' }"
               class="flex-1 p-2 border border-gray-300 rounded-md mx-2 resize-y"
             ></textarea>
@@ -241,6 +240,31 @@ export default {
   },
 
   methods: {
+    formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1; // 0부터 시작하므로 +1
+      const day = date.getDate();
+
+      let hour = date.getHours();
+      const minute = date.getMinutes();
+      const second = date.getSeconds();
+
+      // 오전/오후 판별
+      const period = hour < 12 ? "오전" : "오후";
+
+      // 12시간제로 변환 (0시(자정)은 12시로)
+      hour = hour % 12;
+      if (hour === 0) {
+        hour = 12;
+      }
+
+      // 분이 10 미만이면 앞에 0 붙이기
+      const paddedMinute = minute < 10 ? "0" + minute : minute;
+      const paddedSecond = second < 10 ? "0" + second : second;
+
+      return `${year}-${month}-${day} ${period} ${hour}시 ${paddedMinute}분 ${paddedSecond}초 `;
+    },
     isImageUrl(url) {
       // 간단하게 jpg, jpeg, png, gif 확장자 여부로 판별하거나,
       // 특정 도메인이 포함되어 있는지 확인할 수 있습니다.
