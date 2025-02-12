@@ -45,6 +45,7 @@ import axiosInstance from "./api/axiosInstance";
 const globalState = reactive({
   myGroups: [],
   focusRoomMemberCount: 0,
+  chatRoomMemberCount: 0,
 });
 provide("globalState", globalState);
 
@@ -172,6 +173,12 @@ const connectSSE = async () => {
     const data = JSON.parse(event.data);
     globalState.focusRoomMemberCount = data;
     console.log("focusRoomMemberCount:", data);
+  });
+
+  eventSource.addEventListener("chatRoomMemberCount", (event) => {
+    const data = JSON.parse(event.data);
+    globalState.chatRoomMemberCount = data;
+    console.log("chatRoomMemberCount:", data);
   });
 
   return eventSource;
