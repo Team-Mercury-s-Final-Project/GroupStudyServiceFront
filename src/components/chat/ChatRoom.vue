@@ -232,6 +232,7 @@ export default {
   beforeUnmount() {
     // 컴포넌트가 파괴되기 전에 beforeunload 이벤트 리스너 제거
     window.removeEventListener("beforeunload", this.handleBeforeUnload);
+    this.stompClient.disconnect();
   },
   watch: {
     messages() {
