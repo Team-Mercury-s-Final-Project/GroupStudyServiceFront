@@ -13,7 +13,7 @@
             <span class="font-bold text-red-600">{{ formattedTotalTime }}</span>
           </div>
           <div class="flex justify-between items-center mt-2 text-xs md:text-sm">
-            <span class="font-semibold text-red-700"><strong class="text-black">{{nickname}}</strong>님의 Ranking:</span>
+            <span class="font-semibold text-red-700"><strong class="text-black">{{nickname}}</strong>님의 오늘의 Ranking:</span>
             <div class="flex items-center space-x-1">
               <span class="material-symbols-outlined text-yellow-500 text-base">trophy</span>
               <span class="font-bold text-red-600">#{{ranking}}</span>
