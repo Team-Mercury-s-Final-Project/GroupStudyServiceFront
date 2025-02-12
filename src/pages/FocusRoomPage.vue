@@ -221,7 +221,7 @@ const timerEventHandlers = {
     const memberTimer = memberTimers.find((timer) => timer.userId === userId);
     if (memberTimer) {
       memberTimer.ranking = eventData.ranking;
-      memberTimer.time = eventData.timeSoFar;
+      memberTimer.timeSoFar = eventData.timeSoFar;
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.status = "START";
     }
