@@ -22,10 +22,9 @@
             <!-- button Section -->
 
             <button
-              @click="toggleEditing('nickname')"
+              @click="handleEditClick"
               class="h-[30px] flex items-center justify-center bg-gray-300 text-white hover:bg-blue-600 rounded-full p-2 shadow-md transition duration-200 ease-in-out transform hover:scale-105 relative left-3"
             >
-              <!-- isEditing이 true일 경우 완료 아이콘, 아니면 연필 아이콘 -->
               <i
                 v-if="!isEditing"
                 class="fas fa-pencil-alt"
@@ -35,7 +34,6 @@
                 v-else
                 class="fas fa-check"
                 style="font-size: 1rem; transition: all 0.3s ease-in-out"
-                @click="saveChanges()"
               ></i>
             </button>
 
@@ -248,10 +246,9 @@
           >
             <div class="flex">
               <button
-                @click="toggleEditingGroup(group.groupId)"
+                @click="handleGroupClick(group)"
                 class="relative left-[200px] h-[30px] bg-gray-300 text-white flex items-center justify-center hover:bg-blue-500 rounded-full p-2 shadow-md transition duration-200 ease-in-out transform hover:scale-105 translate-x-[-50%] translate-y-[-50%]"
               >
-                <!-- isEditing이 true일 경우 완료 아이콘, 아니면 연필 아이콘 -->
                 <i
                   v-if="!group.isEditing"
                   class="fas fa-pencil-alt w-[12px]"
@@ -261,13 +258,6 @@
                   v-else
                   class="fas fa-check"
                   style="font-size: 1rem; transition: all 0.3s ease-in-out"
-                  @click="
-                    update(
-                      group.groupId,
-                      group.nickname,
-                      group.currentHost.memberId
-                    )
-                  "
                 ></i>
               </button>
 
@@ -414,6 +404,7 @@ const groupListEditing = ref([]);
 const currentHost = ref({});
 
 const toggleEditing = (field) => {
+  console.log("toggle clicked");
   if (isEditing.value) {
     userInfo.value = { ...originalUserInfo.value };
   } else {
@@ -421,7 +412,24 @@ const toggleEditing = (field) => {
   }
   isEditing.value = !isEditing.value;
 };
-
+const handleEditClick = () => {
+  if (isEditing.value) {
+    // 편집 상태이면 저장 동작 실행
+    saveChanges();
+  } else {
+    // 편집 상태가 아니면 편집 모드로 전환
+    toggleEditing("nickname");
+  }
+};
+const handleGroupClick = (group) => {
+  if (group.isEditing) {
+    // 편집 중이면 업데이트 함수를 호출합니다.
+    update(group.groupId, group.nickname, group.currentHost.memberId);
+  } else {
+    // 편집 모드가 아니면 편집 모드로 전환합니다.
+    toggleEditingGroup(group.groupId);
+  }
+};
 const toggleEditingGroup = (groupId) => {
   groupList.value.forEach((group) => {
     if (group.groupId === groupId) {
@@ -695,6 +703,7 @@ const saveChanges = async () => {
   if (!nicknameError.value && !FileValidError.value) {
     try {
       const formData = new FormData();
+      console.log("저장중?");
       if (editField.value === "nickname")
         formData.append("nickname", userInfo.value.nickname);
 
