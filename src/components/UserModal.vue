@@ -62,7 +62,9 @@ import { defineProps, ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { FwbAvatar, FwbButton } from "flowbite-vue";
 import axiosInstance from "../api/axiosInstance";
 import { useToast } from "vue-toastification";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const toast = useToast();
 const props = defineProps(["user", "userId", "x", "y", "closeModal"]);
 const modalRef = ref(null);
