@@ -11,7 +11,7 @@
         :img="user.image"
         rounded
         status-position="top-right"
-        :status="user.status.toLowerCase()"
+        :status="user.status === 'OFFLINE' ? 'offline' : 'online'"
         class="user-avatar"
       />
       <div class="nickname-container">
