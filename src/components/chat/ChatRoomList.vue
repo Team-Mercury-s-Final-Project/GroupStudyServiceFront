@@ -252,7 +252,7 @@ export default {
     connectWebSocket() {
       const socket = new WebSocket(`ws://localhost:8080/chat`);
       this.stompClient = Stomp.over(socket);
-      this.stompClient.heartbeat.outgoing = 0;
+      this.stompClient.heartbeat.outgoing = 25000;
       this.stompClient.heartbeat.incoming = 0;
 
       this.stompClient.connect(

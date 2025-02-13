@@ -184,7 +184,7 @@ function connect() {
 
   const socket = new WebSocket("ws://localhost:8080/timer");
   stompClient.value = Stomp.over(socket);
-  stompClient.value.heartbeat.outgoing = 0;
+  stompClient.value.heartbeat.outgoing = 25000;
   stompClient.value.heartbeat.incoming = 0;
 
   stompClient.value.connect(headers, () => {
@@ -218,10 +218,11 @@ const timerEventHandlers = {
     console.log("=====TIMER_START 이벤트 발생=====");
 
     const { userId } = eventData;
-    const memberTimer = memberTimers.find((timer) => timer.userId === userId);
+    const memberTimer = memberTimers.find((timer) => timer.userId == userId);
+    
     if (memberTimer) {
       memberTimer.ranking = eventData.ranking;
-      memberTimer.time = eventData.timeSoFar;
+      memberTimer.timeSoFar = eventData.timeSoFar;
       memberTimer.todayTotalTime = eventData.todayTotalTime;
       memberTimer.status = "START";
     }
@@ -235,7 +236,7 @@ const timerEventHandlers = {
     console.log("=====TIMER_STOP 이벤트 발생=====");
 
     const { userId } = eventData;
-    const memberTimer = memberTimers.find((timer) => timer.userId === userId);
+    const memberTimer = memberTimers.find((timer) => timer.userId == userId);
     if (memberTimer) {
       memberTimer.ranking = eventData.ranking;
       memberTimer.todayTotalTime = eventData.todayTotalTime;
@@ -251,7 +252,7 @@ const timerEventHandlers = {
     console.log("=====TIMER_END 이벤트 발생=====");
 
     const { userId } = eventData;
-    const memberTimer = memberTimers.find((timer) => timer.userId === userId);
+    const memberTimer = memberTimers.find((timer) => timer.userId == userId);
     if (memberTimer) {
       memberTimer.status = "END";
       memberTimer.timeSoFar = 0;
@@ -269,7 +270,7 @@ const timerEventHandlers = {
 
     const { userId, nickname, timeSoFar, todayTotalTime, ranking, status } =
       eventData;
-    if (userId === myTimerData.userId) {
+    if (userId == myTimerData.userId) {
       return;
     }
     memberTimers.unshift({
@@ -284,7 +285,7 @@ const timerEventHandlers = {
   DISCONNECT: (eventData) => {
     console.log("=====DISCONNECT 이벤트 발생=====");
     const { userId } = eventData;
-    const index = memberTimers.findIndex((timer) => timer.userId === userId);
+    const index = memberTimers.findIndex((timer) => timer.userId == userId);
     if (index !== -1) {
       memberTimers.splice(index, 1);
     }
