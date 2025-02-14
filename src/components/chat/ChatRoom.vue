@@ -300,7 +300,8 @@ export default {
       );
     },
     async connectWebSocket() {
-      const socket = new WebSocket(`wss://back.mercurystudy.store/chat`);
+      const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
+      const socket = new WebSocket(`wss://${baseUrl}/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 25000;
       this.stompClient.heartbeat.incoming = 0;

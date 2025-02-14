@@ -182,7 +182,8 @@ function connect() {
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
 
-  const socket = new WebSocket("wss://back.mercurystudy.store/timer");
+  const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
+  const socket = new WebSocket(`wss://${baseUrl}/timer`);
   stompClient.value = Stomp.over(socket);
   stompClient.value.heartbeat.outgoing = 25000;
   stompClient.value.heartbeat.incoming = 0;
