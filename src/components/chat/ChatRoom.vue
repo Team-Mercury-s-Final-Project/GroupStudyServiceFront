@@ -230,8 +230,10 @@ export default {
   },
 
   beforeUnmount() {
+    this.handleBeforeUnload();
     // 컴포넌트가 파괴되기 전에 beforeunload 이벤트 리스너 제거
     window.removeEventListener("beforeunload", this.handleBeforeUnload);
+    this.stompClient.disconnect();
   },
   watch: {
     messages() {
@@ -298,7 +300,8 @@ export default {
       );
     },
     async connectWebSocket() {
-      const socket = new WebSocket(`ws://localhost:8080/chat`);
+      const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
+      const socket = new WebSocket(`wss://${baseUrl}/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 25000;
       this.stompClient.heartbeat.incoming = 0;
@@ -383,7 +386,7 @@ export default {
                   senderId: message.data.senderId,
                   nickName: message.data.nickName || this.receiverNickName,
                   content: message.data.messageContent,
-                  createdAt: new Date(message.data.createdAt).toLocaleString(),
+                  createdAt: message.data.createdAt,
                   profileImgUrl: message.data.profileImgUrl,
                   unreadCount: message.data.unreadCount,
                 });
@@ -484,7 +487,7 @@ export default {
                   nickName: msg.nickName || "알 수 없음",
                   profileImgUrl: msg.profileImgUrl,
                   content: msg.content,
-                  createdAt: new Date(msg.createdAt).toLocaleString(),
+                  createdAt: msg.createdAt,
                   unreadCount: msg.unreadCount, // unreadCount 추가
                 }));
               }

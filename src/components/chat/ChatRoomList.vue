@@ -64,7 +64,7 @@
             v-for="chat in dmList"
             :key="chat.id"
             class="flex items-center p-2.5 border-b border-gray-300"
-            @dblclick="goToChatRoom(chat.id, chat.unreadMessages)"
+            @click="goToChatRoom(chat.id, chat.unreadMessages)"
           >
             <img
               :src="chat.recentMessage.profileImgUrl"
@@ -97,7 +97,7 @@
             v-for="chat in groupList"
             :key="chat.id"
             class="flex items-center p-2.5 border-b border-gray-300"
-            @dblclick="goToChatRoom(chat.id, chat.unreadMessages, chat.groupId)"
+            @click="goToChatRoom(chat.id, chat.unreadMessages, chat.groupId)"
           >
             <img
               :src="chat.recentMessage.profileImgUrl"
@@ -250,7 +250,8 @@ export default {
       this.activeTab = tab;
     },
     connectWebSocket() {
-      const socket = new WebSocket(`ws://localhost:8080/chat`);
+      const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
+      const socket = new WebSocket(`wss://${baseUrl}/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 25000;
       this.stompClient.heartbeat.incoming = 0;

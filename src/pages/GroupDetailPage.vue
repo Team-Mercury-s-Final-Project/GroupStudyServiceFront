@@ -302,7 +302,7 @@
           <div class="title">채팅방</div>
           <div class="card-content">
             <div class="enter-container">
-              <p>5/{{ groupData.maxCapacity }}</p>
+              <p>{{ chatRoomMemberCount }}/{{ groupData.maxCapacity }}</p>
               <fwb-button @click="enterChatRoom">입장하기</fwb-button>
             </div>
           </div>
@@ -351,8 +351,9 @@ const selectedNoticeDetail = ref(null); // 상세보기 모달에 사용할 공�
 const route = useRoute();
 // const groupId = route.params.groupId; // pathVariable에서 groupId 추출
 const token = localStorage.getItem("access");
-// 집중방 인원 수 SSE 실시간 조회
+// 집중방 & 채팅방 인원 수 SSE 실시간 조회
 const focusRoomMemberCount = computed(() => globalState.focusRoomMemberCount);
+const chatRoomMemberCount = computed(() => globalState.chatRoomMemberCount);
 
 const notices = ref([]); // 공지사항 리스트
 const isNoticeLoading = ref(false);

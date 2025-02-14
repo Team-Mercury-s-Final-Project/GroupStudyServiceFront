@@ -5,7 +5,11 @@ import router from "../router";
 const ROUTE_LOGIN = "/oauth2Login";
 const ROUTE_DASHBOARD = "/";
 const axiosInstance = axios.create({
+
+  // baseURL: "https://back.mercurystudy.store/api",
   baseURL: import.meta.env.VITE_SERVER_HOST,
+  withCredentials: true,
+
   headers: {
     "Content-Type": "application/json",
   },

@@ -11,7 +11,7 @@
         :img="user.image"
         rounded
         status-position="top-right"
-        :status="user.status.toLowerCase()"
+        :status="user.status === 'OFFLINE' ? 'offline' : 'online'"
         class="user-avatar"
       />
       <div class="nickname-container">
@@ -62,7 +62,9 @@ import { defineProps, ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { FwbAvatar, FwbButton } from "flowbite-vue";
 import axiosInstance from "../api/axiosInstance";
 import { useToast } from "vue-toastification";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const toast = useToast();
 const props = defineProps(["user", "userId", "x", "y", "closeModal"]);
 const modalRef = ref(null);
@@ -84,6 +86,10 @@ const saveNickname = async () => {
     toast.success("닉네임이 변경되었습니다.", { timeout: 2000 });
     props.user.nickname = response.data.data.nickname;
     editing.value = false;
+
+    if (route.name === "GroupChat" && route.params.groupId && route.params.chatRoomId) {
+      window.location.reload();
+    }
   } catch (error) {
     console.error(error.message);
     toast.error("닉네임 변경 실패", { timeout: 2000 });
