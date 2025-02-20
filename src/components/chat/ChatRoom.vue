@@ -301,7 +301,8 @@ export default {
     },
     async connectWebSocket() {
       const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
-      const socket = new WebSocket(`wss://${baseUrl}/chat`);
+      const protocol = import.meta.env.VITE_SERVER_HOST_BASE.startsWith("https") ? "wss" : "ws";
+      const socket = new WebSocket(`${protocol}://${baseUrl}/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 25000;
       this.stompClient.heartbeat.incoming = 0;

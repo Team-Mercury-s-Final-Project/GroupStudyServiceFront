@@ -183,7 +183,8 @@ function connect() {
   };
 
   const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
-  const socket = new WebSocket(`wss://${baseUrl}/timer`);
+  const protocol = import.meta.env.VITE_SERVER_HOST_BASE.startsWith("https") ? "wss" : "ws";
+  const socket = new WebSocket(`${protocol}://${baseUrl}/timer`);
   stompClient.value = Stomp.over(socket);
   stompClient.value.heartbeat.outgoing = 25000;
   stompClient.value.heartbeat.incoming = 0;
