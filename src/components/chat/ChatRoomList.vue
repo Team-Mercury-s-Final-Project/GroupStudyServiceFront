@@ -250,13 +250,7 @@ export default {
       this.activeTab = tab;
     },
     connectWebSocket() {
-      const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(
-        /^https?:\/\//,
-        ""
-      );
-      const protocol = import.meta.env.VITE_SERVER_HOST_BASE.startsWith("https")
-        ? "wss"
-        : "ws";
+      const protocol = import.meta.env.VITE_SERVER_HOST_BASE.startsWith("https") ? "wss" : "ws";
       const socket = new WebSocket(`${protocol}://${baseUrl}/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 25000;
