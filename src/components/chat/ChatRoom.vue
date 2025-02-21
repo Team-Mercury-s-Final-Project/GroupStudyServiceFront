@@ -300,8 +300,13 @@ export default {
       );
     },
     async connectWebSocket() {
-      const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(/^https?:\/\//, "");
-      const protocol = import.meta.env.VITE_SERVER_HOST_BASE.startsWith("https") ? "wss" : "ws";
+      const baseUrl = import.meta.env.VITE_SERVER_HOST_BASE.replace(
+        /^https?:\/\//,
+        ""
+      );
+      const protocol = import.meta.env.VITE_SERVER_HOST_BASE.startsWith("https")
+        ? "wss"
+        : "ws";
       const socket = new WebSocket(`${protocol}://${baseUrl}/chat`);
       this.stompClient = Stomp.over(socket);
       this.stompClient.heartbeat.outgoing = 25000;
@@ -464,6 +469,10 @@ export default {
             this.nickName = this.chatMembers.find(
               (member) => member.id === this.currentUserId
             ).nickName;
+            this.profileImgUrl = this.chatMembers.find(
+              (member) => member.id === this.currentUserId
+            ).profileImg;
+
             //채팅방 타입 체크
             if (chatData.chatRoomType === "GROUP") {
               this.chatRoomType = "GROUP";
