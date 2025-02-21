@@ -4,7 +4,7 @@
       <div class="flex flex-col items-center space-y-3">
         <!-- 타이머 박스 -->
         <div class="text-2xl md:text-4xl font-bold tracking-wider bg-white/80 backdrop-blur-sm w-full py-3 md:py-4 rounded-lg shadow-inner text-center transition-all duration-300 hover:bg-white/90 text-red-600">
-          <div>{{ formattedTime }}</div>
+          <div>{{ formattedTimeSoFar }}</div>
         </div>
         <!-- 공부 시간 & 랭킹 -->
         <div class="w-full bg-white/80 backdrop-blur-sm rounded-lg p-2 md:p-3 shadow-inner">
@@ -41,10 +41,10 @@
 import { computed } from "vue";
 import { ref, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
-
+import { useToast } from "vue-toastification";
 const route = useRoute();
 const groupId = route.params.groupId;
-
+const toast = useToast();
 const {
   userId,
   nickname,
@@ -61,73 +61,104 @@ const {
   "ranking",
   "status"
 ]);
-
+// props.timeSoFar이 변경되면 localTime도 업데이트
+const localTime = ref(timeSoFar);
 const localTotalTime = ref(todayTotalTime);
 
-const formattedTime = computed(() => {
-  const localtime = timeSoFar.value;
+// 현재 진행중인 타이머
+const formattedTimeSoFar = computed(
+  () => stopWatchDisplay(timeSoFar.value)
+);
+// 오늘 총 공부 시간
+const formattedTotalTime = computed(
+  () => stopWatchDisplay(todayTotalTime.value)
+);
+// 초 단위 시간을 시:분:초 형태로 변환
+function stopWatchDisplay(timeSecondValue) {
+  const localtime = timeSecondValue;
   const hours = Math.floor(localtime / 3600);
   const minutes = Math.floor((localtime % 3600) / 60);
   const seconds = Math.floor((localtime % 60) / 1);
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-});
-const formattedTotalTime = computed(() => {
-  const localtime = todayTotalTime.value;
-  const hours = Math.floor(localtime / 3600);
-  const minutes = Math.floor((localtime % 3600) / 60);
-  const seconds = Math.floor((localtime % 60) / 1);
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-});
+}
 
-const localTime = ref(timeSoFar);
-// props.time이 변경되면 localTime도 업데이트
-const interval = ref(null);
+// 타이머 ID 값(setTimeout 함수의 반환값 - clear할 때 사용)
+const timer = ref(null);
+// 예상 시간 값 (현재 기준 +1초)
+const expectedTime = ref(0);
 
 const start = () => {
-  if (!interval.value && status.value !== "START") {
-    sendStartSign();
+  if (!timer.value && status.value !== "START") {
+    
+    /* 
+     오차 보정 파트.
+     타이머 시작, 지금 기준 1초 뒤에 실행되도록함.
+    */
+    expectedTime.value = Date.now() + 1000;
+    timer.value = setTimeout(increaseLocalTimeByOneSecond,1000);
+    
+    // 서버로 타이머 작동 알림.
+    sendStartSignToServer();
   }
 };
 const stop = () => {
-  if (interval.value) {
-    clearInterval(interval.value);
-    interval.value = null;
-    sendStopsign();
+  if (timer.value) {
+    clearTimeout(timer.value);
+    timer.value = null;
+    sendStopsignToServer();
   }
 };
 const end = () => {
-  if (interval.value) {
-    clearInterval(interval.value);
-    interval.value = null;
+  if (timer.value) {
+    clearTimeout(timer.value);
+    timer.value = null;
     localTime.value = 0;
   }
-  sendEndSign();
+  sendEndSignToServer();
 };
 
-const sendStartSign = () => {
+const sendStartSignToServer = () => {
   if (stompClient && stompClient.connected) {
-    interval.value = setInterval(() => {
-      localTime.value++;
-      localTotalTime.value++;
-    }, 1000);
     stompClient.send(`/pub/groups/${groupId}/timers/start`, userId.value, {});
   } else {
-    console.error("WebSocket is not connected");
+    alertNotConnected();
   }
 };
-const sendStopsign = () => {
+// 타이머 오차 보정 재귀함수
+function increaseLocalTimeByOneSecond() {
+  // 드리프트 계산: 현재 시각과 예상 시각의 차이
+  const drift = Date.now() - expectedTime.value;
+  
+  // 타이머 값 업데이트
+  localTime.value++;
+  localTotalTime.value++;
+  
+  // 다음 예상 시각 갱신
+  expectedTime.value += 1000;
+  
+  // 오차 보정: 1000ms에서 드리프트를 빼고, 최소 0ms로 예약
+  timer.value = setTimeout(increaseLocalTimeByOneSecond, Math.max(0, 1000 - drift));
+}
+const sendStopsignToServer = () => {
   if (stompClient && stompClient.connected) {
     stompClient.send(`/pub/groups/${groupId}/timers/stop`, userId.value, {});
   } else {
+    alertNotConnected();
     console.error("WebSocket is not connected");
   }
 };
-const sendEndSign = () => {
+const sendEndSignToServer = () => {
   if (stompClient && stompClient.connected) {
     stompClient.send(`/pub/groups/${groupId}/timers/end`, userId.value, {});
   } else {
+    alertNotConnected();
     console.error("WebSocket is not connected");
   }
+};
+const alertNotConnected = () => {
+  toast.error("서버와 연결되어 있지 않습니다. \n새로고침 해주세요.", {
+    timeout: 2000,
+  });
 };
 onBeforeUnmount(() => {
   stop(); // stop 함수 호출
