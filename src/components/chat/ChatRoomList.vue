@@ -67,7 +67,7 @@
             @click="goToChatRoom(chat.id, chat.unreadMessages)"
           >
             <img
-              :src="chat.recentMessage.profileImgUrl"
+              :src="chat.chatRoomImage"
               class="w-10 h-10 rounded-full mr-2.5"
               alt="Profile"
             />
@@ -100,7 +100,7 @@
             @click="goToChatRoom(chat.id, chat.unreadMessages, chat.groupId)"
           >
             <img
-              :src="chat.recentMessage.profileImgUrl"
+              :src="chat.chatRoomImage"
               alt="Profile"
               class="w-10 h-10 rounded-full mr-2.5"
             />

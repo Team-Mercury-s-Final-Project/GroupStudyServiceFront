@@ -464,6 +464,10 @@ export default {
             this.nickName = this.chatMembers.find(
               (member) => member.id === this.currentUserId
             ).nickName;
+            this.profileImgUrl = this.chatMembers.find(
+              (member) => member.id === this.currentUserId
+            ).profileImg;
+
             //채팅방 타입 체크
             if (chatData.chatRoomType === "GROUP") {
               this.chatRoomType = "GROUP";
