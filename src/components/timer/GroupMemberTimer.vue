@@ -10,7 +10,11 @@ import { onMounted, ref, watch,computed } from "vue";
 const { timeData } = defineProps(["timeData"]);
 const localTime = ref(timeData.timeSoFar);
 const localStatus = ref(timeData.status);
-const interval = ref(null);
+
+// 타이머 ID 값(setTimeout 함수의 반환값 - clear할 때 사용)
+const timeoutId = ref(null);
+// 예상 시간 값 (현재 기준 +1초)
+const expectedTime = ref(0);
 
 onMounted(() => {
   eventHandle();
@@ -29,18 +33,21 @@ watch(
 const eventHandle = () => {
   
   // 타이머 시작
-  if (!interval.value && localStatus.value === "START") {
+  if (!timeoutId.value && localStatus.value === "START") {
     
-    interval.value = setInterval(() => {
-      localTime.value++;
-    }, 1000);
+    /* 
+     오차 보정 파트.
+     타이머 시작, 지금 기준 1초 뒤에 실행되도록함.
+    */
+    expectedTime.value = Date.now() + 1000;
+    timeoutId.value = setTimeout(increaseLocalTimeByOneSecond,1000);
   }
-  else if (interval.value && timeData.status === "STOP") {
-    clearInterval(interval.value);
-    interval.value = null;
-  }else if (interval.value && timeData.status === "END") {
-    clearInterval(interval.value);
-    interval.value = null;
+  else if (timeoutId.value && timeData.status === "STOP") {
+    clearTimeout(timeoutId.value);
+    timeoutId.value = null;
+  }else if (timeoutId.value && timeData.status === "END") {
+    clearTimeout(timeoutId.value);
+    timeoutId.value = null;
     localTime.value = 0;
   }
 };
@@ -51,6 +58,25 @@ const minutes = Math.floor((localTime.value % 3600) / 60);
 const seconds = Math.floor((localTime.value % 60) / 1);
 return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 });
+
+// 타이머 오차 보정 재귀함수
+function increaseLocalTimeByOneSecond() {
+  // 드리프트 계산: 현재 시각과 예상 시각의 차이
+  const drift = Date.now() - expectedTime.value;
+  
+  // 타이머 값 업데이트
+  localTime.value++;
+  
+  // 다음 예상 시각 갱신
+  expectedTime.value += 1000;
+  
+  // 오차 보정: 1000ms에서 드리프트를 빼고, 최소 0ms로 예약
+  timeoutId.value = setTimeout(increaseLocalTimeByOneSecond, Math.max(0, 1000 - drift));
+  // console.log("drift: ", drift);
+  // console.log("localTime: ", localTime.value);
+  
+  
+}
 </script>
   
   <style scoped>

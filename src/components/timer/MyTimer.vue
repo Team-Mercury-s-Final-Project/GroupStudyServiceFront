@@ -83,35 +83,35 @@ function stopWatchDisplay(timeSecondValue) {
 }
 
 // 타이머 ID 값(setTimeout 함수의 반환값 - clear할 때 사용)
-const timer = ref(null);
+const timeoutId = ref(null);
 // 예상 시간 값 (현재 기준 +1초)
 const expectedTime = ref(0);
 
 const start = () => {
-  if (!timer.value && status.value !== "START") {
+  if (!timeoutId.value && status.value !== "START") {
     
     /* 
      오차 보정 파트.
      타이머 시작, 지금 기준 1초 뒤에 실행되도록함.
     */
     expectedTime.value = Date.now() + 1000;
-    timer.value = setTimeout(increaseLocalTimeByOneSecond,1000);
+    timeoutId.value = setTimeout(increaseLocalTimeByOneSecond,1000);
     
     // 서버로 타이머 작동 알림.
     sendStartSignToServer();
   }
 };
 const stop = () => {
-  if (timer.value) {
-    clearTimeout(timer.value);
-    timer.value = null;
+  if (timeoutId.value) {
+    clearTimeout(timeoutId.value);
+    timeoutId.value = null;
     sendStopsignToServer();
   }
 };
 const end = () => {
-  if (timer.value) {
-    clearTimeout(timer.value);
-    timer.value = null;
+  if (timeoutId.value) {
+    clearTimeout(timeoutId.value);
+    timeoutId.value = null;
     localTime.value = 0;
   }
   sendEndSignToServer();
@@ -137,7 +137,7 @@ function increaseLocalTimeByOneSecond() {
   expectedTime.value += 1000;
   
   // 오차 보정: 1000ms에서 드리프트를 빼고, 최소 0ms로 예약
-  timer.value = setTimeout(increaseLocalTimeByOneSecond, Math.max(0, 1000 - drift));
+  timeoutId.value = setTimeout(increaseLocalTimeByOneSecond, Math.max(0, 1000 - drift));
 }
 const sendStopsignToServer = () => {
   if (stompClient && stompClient.connected) {
