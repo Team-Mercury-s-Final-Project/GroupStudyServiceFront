@@ -24,29 +24,8 @@
           <fwb-avatar :img="group.imageUrl" rounded />
           <h3 class="text-sm font-bold text-gray-800">{{ group.name }}</h3>
           <br />
-
-          <!-- 그룹장이면 선택할 수 있는 멤버 목록 -->
-          <!-- <select
-            v-if="
-              group.isHost === '1' &&
-              Array.isArray(group.members) &&
-              group.members.length > 0
-            "
-            v-model="group.selectedMembers.nickname"
-            class="w-full p-2 border border-gray-300 rounded-md"
-            disable:true
-          >
-            <option
-              v-for="member in group.members"
-              :key="member.id"
-              :value="member.nickname"
-            >
-              {{ member.nickname }}
-            </option>
-          </select> -->
         </div>
       </div>
-
       <div v-if="modalData.type === '탈퇴'" class="space-y-4">
         <input
           v-model="confirmationInput"
@@ -62,8 +41,19 @@
           >
             취소
           </button>
+
           <button
+            v-if="modalData.title == '회원 탈퇴'"
             @click="deleteAccount"
+            :disabled="confirmationInput !== '탈퇴하겠습니다'"
+            class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-300"
+          >
+            탈퇴
+          </button>
+
+          <button
+            v-else
+            @click="ExitAllGroup"
             :disabled="confirmationInput !== '탈퇴하겠습니다'"
             class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 disabled:bg-gray-300"
           >
@@ -85,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, inject } from "vue";
 import { FwbAvatar } from "flowbite-vue";
 import { useStore } from "vuex"; // Vuex에서 상태 관리
 import axiosInstance from "../../api/axiosInstance";
@@ -105,6 +95,10 @@ const props = defineProps({
     type: Array, // 수정: Object에서 Array로 변경
     required: true,
   },
+  status: {
+    type: String,
+    required: true,
+  },
 });
 
 // 'close' 이벤트를 부모에게 전달하기 위해 emit을 사용
@@ -113,11 +107,10 @@ const store = useStore();
 const router = useRouter();
 const toast = useToast();
 const confirmationInput = ref("");
-const selectedMember = ref(null);
+const globalState = inject("globalState");
 
 // 수정된 부분: props.groupList로 접근
 const modalSizeClass = computed(() => {
-  // console.log("groupList: ", groupList.value); 오류 발생생
   return props.groupList.length === 0 ? "w-[500px]" : "w-11/12 max-w-3xl";
 });
 
@@ -130,7 +123,7 @@ async function deleteAccount() {
     });
     if (response.status === 200) {
       close();
-      toast.success("탈퇴가 완료되었습니다.", { timeout: 2000 });
+      toast.success("회원 탈퇴가 완료되었습니다.", { timeout: 2000 });
 
       // 로컬 저장소 데이터 삭제 및 상태 초기화
       localStorage.removeItem("access");
@@ -145,7 +138,7 @@ async function deleteAccount() {
     }
   } catch (e) {
     toast.error(
-      "탈퇴가 실패하였습니다: " + (e.response?.data?.message || e.message),
+      "회원 탈퇴가 실패하였습니다: " + (e.response?.data?.message || e.message),
       { timeout: 2000 }
     );
   }
@@ -156,6 +149,34 @@ function close() {
   emit("closeModal");
 }
 
+// 전체 그룹 탈퇴
+async function ExitAllGroup() {
+  const requestData = prepareLeaveData();
+  console.log(requestData);
+  try {
+    const response = await axiosInstance.delete("/userJoinGroup", {
+      data: requestData,
+    });
+    if (response.status === 200) {
+      emit("updateUserJoinedGroupList"); // 부모에게 업데이트 요청
+      close();
+      toast.success(`${props.groupList.length}개 그룹을 탈퇴 하였습니다.`, {
+        timeout: 2000,
+      });
+      const response = await axiosInstance.get("/groups/myGroups");
+      if (response.status == 200) {
+        globalState.myGroups = response.data.data;
+      }
+    }
+  } catch (e) {
+    toast.error(
+      "탈퇴가 실패하였습니다: " + (e.response?.data?.message || e.message),
+      { timeout: 2000 }
+    );
+  }
+}
+
+// 전체 그룹 탈퇴 데이터 init()
 function prepareLeaveData() {
   if (props.groupList.length >= 1) {
     const requestPrepareData = {
