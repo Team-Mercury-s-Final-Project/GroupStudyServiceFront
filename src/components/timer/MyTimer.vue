@@ -67,9 +67,10 @@ import { useToast } from "vue-toastification";
 const route = useRoute();
 const groupId = route.params.groupId;
 const toast = useToast();
-const { userId, nickname, todayTotalTime, timeSoFar, stompClient, status } =
+const { userId, groupMemberId,nickname, todayTotalTime, timeSoFar, stompClient, status } =
   defineProps([
     "userId",
+    "groupMemberId",
     "nickname",
     "todayTotalTime",
     "timeSoFar",
@@ -104,6 +105,13 @@ const timeoutId = ref(null);
 // 예상 시간 값 (현재 기준 +1초)
 const expectedTime = ref(0);
 
+// 타이머 이벤트 송신용.
+const TIMER_EVENTS = Object.freeze({
+  START: "START",
+  STOP: "STOP",
+  END: "END"
+});
+
 const start = () => {
   if (!timeoutId.value && status.value !== "START") {
     /* 
@@ -114,14 +122,14 @@ const start = () => {
     timeoutId.value = setTimeout(increaseLocalTimeByOneSecond, 1000);
 
     // 서버로 타이머 작동 알림.
-    sendStartSignToServer();
+    sendTimerEventToServer(TIMER_EVENTS.START);
   }
 };
 const stop = () => {
   if (timeoutId.value) {
     clearTimeout(timeoutId.value);
     timeoutId.value = null;
-    sendStopsignToServer();
+    sendTimerEventToServer(TIMER_EVENTS.STOP);
   }
 };
 const end = () => {
@@ -130,16 +138,36 @@ const end = () => {
     timeoutId.value = null;
     localTime.value = 0;
   }
-  sendEndSignToServer();
+  sendTimerEventToServer(TIMER_EVENTS.END);
 };
 
-const sendStartSignToServer = () => {
+const createEventData = (eventName) => {
+  // const allowedEventNames = Object.values(TIMER_EVENTS);
+  // if (!allowedEventNames.includes(eventName)) {
+  //   throw new Error(`Invalid event name: ${eventName}`);
+  // }
+  
+  const data = {
+    userId: userId.value,
+    groupMemberId: groupMemberId.value,
+    timerEvent: eventName
+  };
+  return data;
+};
+
+const sendTimerEventToServer = (eventName) => {
   if (stompClient && stompClient.connected) {
-    stompClient.send(`/pub/groups/${groupId}/timers/start`, userId.value, {});
+    const eventData = createEventData(eventName);
+    const eventMessage = JSON.stringify(eventData);
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    stompClient.send(`/pub/groups/${groupId}/timers`, eventMessage, headers);
   } else {
     alertNotConnected();
   }
 };
+
 // 타이머 오차 보정 재귀함수
 function increaseLocalTimeByOneSecond() {
   // 드리프트 계산: 현재 시각과 예상 시각의 차이
@@ -158,22 +186,6 @@ function increaseLocalTimeByOneSecond() {
     Math.max(0, 1000 - drift)
   );
 }
-const sendStopsignToServer = () => {
-  if (stompClient && stompClient.connected) {
-    stompClient.send(`/pub/groups/${groupId}/timers/stop`, userId.value, {});
-  } else {
-    alertNotConnected();
-    console.error("WebSocket is not connected");
-  }
-};
-const sendEndSignToServer = () => {
-  if (stompClient && stompClient.connected) {
-    stompClient.send(`/pub/groups/${groupId}/timers/end`, userId.value, {});
-  } else {
-    alertNotConnected();
-    console.error("WebSocket is not connected");
-  }
-};
 const alertNotConnected = () => {
   toast.error("서버와 연결되어 있지 않습니다. \n새로고침 해주세요.", {
     timeout: 2000,

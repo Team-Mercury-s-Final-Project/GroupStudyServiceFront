@@ -176,8 +176,9 @@ const stompClient = ref(null);
 function connect() {
   const headers = {
     roomType: "focus",
-    groupId: groupId.value,
     userId: userId.value,
+    groupId: groupId.value,
+    groupMemberId:myTimerData.groupMemberId,
     nickname: myTimerData.nickname,
     Authorization: "Bearer " + localStorage.getItem("access"),
   };
@@ -229,7 +230,7 @@ const timerEventHandlers = {
       memberTimer.status = "START";
     }
     // Start Event 시, 서버 기준으로 내 타이머 데이터 업데이트
-    if (myTimerData.userId === userId) {
+    if (myTimerData.userId == userId) {
       myTimerData.timeSoFar = eventData.timeSoFar;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
@@ -245,7 +246,7 @@ const timerEventHandlers = {
       memberTimer.timeSoFar = eventData.timeSoFar;
       memberTimer.status = "STOP";
     }
-    if (myTimerData.userId === userId) {
+    if (myTimerData.userId == userId) {
       myTimerData.timeSoFar = eventData.timeSoFar;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
@@ -262,7 +263,7 @@ const timerEventHandlers = {
       memberTimer.ranking = eventData.ranking;
     }
 
-    if (myTimerData.userId === userId) {
+    if (myTimerData.userId == userId) {
       myTimerData.timeSoFar = 0;
       myTimerData.todayTotalTime = eventData.todayTotalTime;
     }
@@ -270,13 +271,14 @@ const timerEventHandlers = {
   ENTRY: (eventData) => {
     console.log("=====ENTRY 이벤트 발생=====");
 
-    const { userId, nickname, timeSoFar, todayTotalTime, ranking, status } =
+    const { userId,groupMemberId ,nickname, timeSoFar, todayTotalTime, ranking, status } =
       eventData;
     if (userId == myTimerData.userId) {
       return;
     }
     memberTimers.unshift({
       userId,
+      groupMemberId,
       nickname,
       timeSoFar,
       todayTotalTime,
@@ -309,8 +311,8 @@ const checkLoginAndConnect = async () => {
     router.push("/login");
   } else {
     try {
-      groupMembersTimerDataInit();
       await enterAndGetMyTimerData();
+      groupMembersTimerDataInit();
       connect();
       getRankData();
     } catch (error) {
@@ -337,10 +339,9 @@ const groupMembersTimerDataInit = async () => {
   try {
     const response = await axiosInstance.get(`/timers/groups/${groupId.value}`);
     const timerDatas = response.data;
-    console.log("그룹 타이머 데이터 받아오기", timerDatas);
 
     timerDatas.forEach((timer) => {
-      if (timer.userId == userId.value) {
+      if (timer.groupMemberId == myTimerData.groupMemberId) {
         Object.assign(myTimerData, timer);
       } else {
         memberTimers.unshift(timer);
@@ -376,9 +377,8 @@ const getRankData = async () => {
 
 // 랭킹 데이터를 내 타이머에 반영
 const setRankingToMyTimer = () => {
-  
   const myRanking = rankData.value.find((data) => {
-    if(data.userId == userId.value) {
+    if(data.groupMemberId == myTimerData.groupMemberId) {
       return data;
     }
   });
